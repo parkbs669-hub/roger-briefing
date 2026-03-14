@@ -14,8 +14,8 @@ import anthropic
 # 설정값 (GitHub Secrets에서 자동으로 불러옴)
 # ─────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-GMAIL_ADDRESS     = os.environ["GMAIL_ADDRESS"]      # 발신 Gmail 주소
-GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"] # Gmail 앱 비밀번호
+GMAIL_ADDRESS     = os.environ["naver_ADDRESS"]      # 발신 naver 주소
+GMAIL_APP_PASSWORD = os.environ["naver_APP_PASSWORD"] # naver 앱 비밀번호
 RECIPIENT_EMAIL   = "parkbs669@naver.com"
 
 # ─────────────────────────────────────────
@@ -102,9 +102,9 @@ def send_email(body: str):
 
     msg.attach(MIMEText(full_body, "plain", "utf-8"))
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-        server.sendmail(GMAIL_ADDRESS, RECIPIENT_EMAIL, msg.as_string())
+    with smtplib.SMTP_SSL("smtp.naver.com", 465) as server:
+        server.login(naver_ADDRESS, GMAIL_APP_PASSWORD)
+        server.sendmail(naver_ADDRESS, RECIPIENT_EMAIL, msg.as_string())
 
     print(f"✅ 이메일 발송 완료 → {RECIPIENT_EMAIL}")
 
