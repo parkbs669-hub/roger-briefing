@@ -1,28 +1,19 @@
 name: 폐렴구균 백신 뉴스 브리핑
-
 on:
   schedule:
     - cron: "0 23 * * *"
   workflow_dispatch:
-
 jobs:
   send-briefing:
     runs-on: ubuntu-latest
     steps:
-      - name: 코드 체크아웃
-        uses: actions/checkout@v4
-
-      - name: Python 설정
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: 패키지 설치
-        run: pip install anthropic
-
-      - name: 브리핑 실행 및 이메일 발송
-        env:
-          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
-          GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
-          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+      - run: pip install anthropic
+      - env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
         run: python briefing.py
