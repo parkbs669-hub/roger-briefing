@@ -1,0 +1,22 @@
+name: 폐렴구균 주간 업무 보고서
+
+on:
+  schedule:
+    # 매주 금요일 오후 5시 KST = UTC 금요일 08:00
+    - cron: "0 8 * * 5"
+  workflow_dispatch:
+
+jobs:
+  send-weekly-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install anthropic
+      - env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+        run: python weekly_report.py
