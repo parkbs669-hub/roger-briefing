@@ -1,0 +1,22 @@
+name: 보건소 NIP 정책 트래커
+
+on:
+  schedule:
+    # 매일 오전 8시 30분 KST = UTC 23:30 (전날)
+    - cron: "30 23 * * *"
+  workflow_dispatch:
+
+jobs:
+  send-nip-briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install anthropic
+      - env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+        run: python nip_tracker.py
