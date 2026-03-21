@@ -11,7 +11,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 def analyze_with_gemini(g2b_data, pubmed_data):
     """Gemini로 수집 데이터 종합 분석"""
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     today = datetime.date.today().strftime("%Y년 %m월 %d일")
 
