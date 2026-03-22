@@ -1,28 +1,31 @@
-name: Daily Intelligence Briefing
+name: Weekly Intelligence Briefing
 
 on:
   schedule:
-    - cron: '0 23 * * *'  # 매일 오전 8시 KST
-  workflow_dispatch:       # 수동 실행 가능
+    - cron: '0 22 * * 0'  # 매주 월요일 오전 7시 KST
+  workflow_dispatch:
 
 jobs:
   run-intelligence:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install packages
-        run: pip install requests google-generativeai
+        run: |
+          pip install requests
+          pip install anthropic
+          pip install google-generativeai
 
       - name: Run Intelligence System
         env:
-          GEMINI_API_KEY:   ${{ secrets.GEMINI_API_KEY }}
-          G2B_API_KEY:      ${{ secrets.G2B_API_KEY }}
-          NAVER_ADDRESS:    ${{ secrets.NAVER_ADDRESS }}
-          NAVER_PASSWORD:   ${{ secrets.NAVER_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          G2B_API_KEY:       ${{ secrets.G2B_API_KEY }}
+          NAVER_ADDRESS:     ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD:    ${{ secrets.NAVER_PASSWORD }}
         run: python daily_intelligence.py
