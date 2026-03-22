@@ -1,6 +1,7 @@
 """
 질병관리청 수집기 - 전수신고 감염병 발생현황
-End Point: https://apis.data.go.kr/1790387/EIDAPIService
+Base URL: https://apis.data.go.kr/1790387/EIDAPIService
+오퍼레이션: /Disease (감염병별 감염병 발생 현황)
 """
 import requests
 import os
@@ -15,16 +16,8 @@ API_KEY = (
 
 BASE_URL = "https://apis.data.go.kr/1790387/EIDAPIService"
 
-# 가능한 오퍼레이션명 목록 (공식 확인된 순서대로)
-OPERATIONS = [
-    "/getInfSttsOccrrncInfoList",
-    "/getInfectSttsOccrrncInfoList",
-    "/getInfDissOccrrncInfoList",
-    "/getInfSttsInfo",
-    "/getInfectDissOccrrncInfoList",
-    "/getInfectDissOccrrncInfo",
-    "/getDissOccrrncInfoList",
-]
+# 폐렴구균 질병코드 (ICD-10: A40.3 폐렴구균 패혈증, J13 폐렴구균폐렴)
+PNEUMO_KEYWORDS = ["폐렴구균", "Streptococcus pneumoniae"]
 
 
 def collect_kdca():
@@ -32,22 +25,23 @@ def collect_kdca():
     year = today.strftime("%Y")
     prev_year = str(int(year) - 1)
 
-    for op in OPERATIONS:
+    results = []
+
+    # /Disease 오퍼레이션: 감염병별 발생 현황
+    for op in ["/Disease", "/PeriodBasic", "/PeriodRegion"]:
         url = BASE_URL + op
-        # JSON 시도
         params = {
             "serviceKey": API_KEY,
             "pageNo": 1,
             "numOfRows": 100,
-            "resType": "2",
-            "searchStartYear": prev_year,
-            "searchEndYear": year,
+            "startCreateDt": prev_year + "0101",
+            "endCreateDt": year + "1231",
         }
         try:
             resp = requests.get(url, params=params, timeout=15)
             print(f"  KDCA {op} HTTP: {resp.status_code}")
 
-            if resp.status_code == 404:
+            if resp.status_code != 200:
                 continue
 
             text = resp.text.strip()
@@ -59,35 +53,50 @@ def collect_kdca():
                 data = resp.json()
                 header = data.get("response", {}).get("header", {})
                 code = header.get("resultCode", "")
-                print(f"  KDCA JSON 결과코드: {code}")
+                print(f"  KDCA {op} JSON 결과코드: {code}")
                 if code == "00":
-                    items = data.get("response", {}).get("body", {}).get("items", {})
+                    body = data.get("response", {}).get("body", {})
+                    items = body.get("items", {})
                     if isinstance(items, dict):
                         items = items.get("item", [])
                     if isinstance(items, dict):
                         items = [items]
-                    pneumo = [i for i in (items or []) if "폐렴구균" in str(i.get("icdNm", ""))]
-                    result = pneumo if pneumo else (items or [])[:10]
-                    print(f"  KDCA 전체: {len(items or [])}건, 폐렴구균: {len(pneumo)}건")
-                    return result
+                    items = items or []
+                    # 폐렴구균 필터
+                    pneumo = [i for i in items if any(
+                        kw in str(i.get("diseaseNm", "")) or
+                        kw in str(i.get("icdNm", "")) or
+                        kw in str(i.get("diseaseCd", ""))
+                        for kw in PNEUMO_KEYWORDS
+                    )]
+                    print(f"  KDCA {op} 전체: {len(items)}건, 폐렴구균: {len(pneumo)}건")
+                    if items:
+                        results.extend(pneumo if pneumo else items[:5])
+                        return results
 
             # XML 파싱 시도
             elif text.startswith("<"):
                 root = ET.fromstring(text)
                 code = root.findtext(".//resultCode", "")
-                print(f"  KDCA XML 결과코드: {code}")
+                print(f"  KDCA {op} XML 결과코드: {code}")
                 if code in ("00", "0000"):
                     items = []
                     for item in root.findall(".//item"):
                         d = {c.tag: (c.text or "") for c in item}
-                        if "폐렴구균" in d.get("icdNm", ""):
-                            items.append(d)
-                    print(f"  KDCA 폐렴구균: {len(items)}건")
-                    return items
+                        items.append(d)
+                    pneumo = [i for i in items if any(
+                        kw in str(i.get("diseaseNm", "")) or
+                        kw in str(i.get("icdNm", ""))
+                        for kw in PNEUMO_KEYWORDS
+                    )]
+                    print(f"  KDCA {op} XML 전체: {len(items)}건, 폐렴구균: {len(pneumo)}건")
+                    if items:
+                        results.extend(pneumo if pneumo else items[:5])
+                        return results
 
         except Exception as e:
             print(f"  KDCA {op} 오류: {e}")
             continue
 
-    print("  KDCA: 유효한 오퍼레이션 없음")
-    return []
+    print(f"  KDCA 최종: {len(results)}건")
+    return results
