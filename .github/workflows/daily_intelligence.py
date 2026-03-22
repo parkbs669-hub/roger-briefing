@@ -1,6 +1,5 @@
 """
-폐렴구균 백신 일일 인텔리전스 시스템 (5개 API 통합)
-실행: python daily_intelligence.py
+폐렴구균 백신 주간 인텔리전스 시스템 (Claude AI)
 """
 import os, smtplib, datetime
 from email.mime.text import MIMEText
@@ -11,7 +10,7 @@ from pubmed_collector import collect_pneumo_papers
 from kdca_collector   import collect_kdca
 from mfds_collector   import collect_mfds
 from hira_collector   import collect_hira
-from gemini_agent     import analyze_with_gemini
+from claude_agent     import analyze_with_claude
 
 NAVER_ADDRESS  = os.environ.get("NAVER_ADDRESS", "")
 NAVER_PASSWORD = os.environ.get("NAVER_PASSWORD", "")
@@ -23,38 +22,37 @@ def send_email(subject, body):
     msg["From"]    = NAVER_ADDRESS
     msg["To"]      = NAVER_ADDRESS
 
-    # 마크다운 → HTML 간단 변환
-    html_body = body
-    for h2 in ["## "]:
-        lines = html_body.split("\n")
-        new_lines = []
-        for line in lines:
-            if line.startswith("# "):
-                line = f"<h2 style='color:#1a3a5c;border-bottom:2px solid #1a3a5c;padding-bottom:5px;'>{line[2:]}</h2>"
-            elif line.startswith("## "):
-                line = f"<h3 style='color:#2563a8;margin-top:20px;'>{line[3:]}</h3>"
-            elif line.startswith("- "):
-                line = f"<li>{line[2:]}</li>"
-            else:
-                line = line + "<br>"
-            new_lines.append(line)
-        html_body = "\n".join(new_lines)
+    lines = body.split("\n")
+    html_lines = []
+    for line in lines:
+        if line.startswith("# "):
+            html_lines.append(f"<h2 style='color:#1a3a5c;border-bottom:2px solid #1a3a5c;padding-bottom:5px;margin-top:25px;'>{line[2:]}</h2>")
+        elif line.startswith("## "):
+            html_lines.append(f"<h3 style='color:#2563a8;margin-top:18px;'>{line[3:]}</h3>")
+        elif line.startswith("### "):
+            html_lines.append(f"<h4 style='color:#333;margin-top:12px;'>{line[4:]}</h4>")
+        elif line.startswith("- ") or line.startswith("* "):
+            html_lines.append(f"<li style='margin:4px 0;'>{line[2:]}</li>")
+        elif line.strip() == "":
+            html_lines.append("<br>")
+        else:
+            html_lines.append(f"<p style='margin:4px 0;'>{line}</p>")
 
     today = datetime.date.today().strftime("%Y년 %m월 %d일")
     html = f"""
 <html><body style="font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333;">
 <div style="background:linear-gradient(135deg,#1a3a5c,#2563a8);color:white;padding:25px;border-radius:10px;margin-bottom:25px;">
-  <h1 style="margin:0;font-size:24px;">💉 폐렴구균 백신 인텔리전스</h1>
-  <p style="margin:8px 0 0;opacity:0.85;">{today} | 5개 공공 API 자동 수집</p>
+  <h1 style="margin:0;font-size:22px;">💉 폐렴구균 백신 인텔리전스</h1>
+  <p style="margin:8px 0 0;opacity:0.85;font-size:13px;">{today} | 5개 공공 API 자동 수집</p>
 </div>
 <div style="line-height:1.8;">
-{html_body}
+{"".join(html_lines)}
 </div>
 <hr style="margin-top:30px;border:1px solid #eee;">
 <p style="color:#999;font-size:11px;text-align:center;">
-  📊 데이터: 나라장터(조달청) · PubMed(NIH) · 질병관리청 · 식약처 · 심평원<br>
-  🤖 AI 분석: Google Gemini 2.0 Flash (무료)<br>
-  ⏰ 자동 발송: GitHub Actions (매일 오전 8시)
+  📊 데이터: 나라장터 · PubMed · 질병관리청 · 식약처 · 심평원<br>
+  🤖 AI 분석: Claude Haiku (Anthropic)<br>
+  ⏰ 자동 발송: GitHub Actions (매주 월요일 오전 7시)
 </p>
 </body></html>"""
 
@@ -71,30 +69,36 @@ def send_email(subject, body):
 def main():
     today = datetime.date.today().strftime("%Y년 %m월 %d일")
     print(f"\n{'='*60}")
-    print(f"  💉 폐렴구균 백신 일일 인텔리전스")
+    print(f"  💉 폐렴구균 백신 주간 인텔리전스 (Claude AI)")
     print(f"  {today}")
     print(f"{'='*60}")
 
     print("\n[1/5] 나라장터 수집 중...")
     g2b = collect_g2b_notices()
+    print(f"  → {len(g2b)}건")
 
     print("\n[2/5] PubMed 수집 중...")
     pubmed = collect_pneumo_papers()
+    print(f"  → {len(pubmed)}건")
 
     print("\n[3/5] 질병관리청 수집 중...")
     kdca = collect_kdca()
+    print(f"  → {len(kdca)}건")
 
     print("\n[4/5] 식약처 수집 중...")
     mfds = collect_mfds()
+    print(f"  → {len(mfds)}건")
 
     print("\n[5/5] 심평원 수집 중...")
     hira = collect_hira()
+    print(f"  → {len(hira)}건")
 
-    print("\n[AI] Gemini 종합 분석 중...")
-    report = analyze_with_gemini(g2b, pubmed, kdca, mfds, hira)
+    print("\n[AI] Claude 종합 분석 중...")
+    report = analyze_with_claude(g2b, pubmed, kdca, mfds, hira)
+    print("  → 분석 완료")
 
     print("\n[📧] 이메일 발송 중...")
-    subject = f"💉 폐렴구균 백신 인텔리전스 — {today}"
+    subject = f"💉 폐렴구균 백신 주간 인텔리전스 — {today}"
     send_email(subject, report)
 
     print(f"\n{'='*60}")
