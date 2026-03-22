@@ -7,9 +7,9 @@ from email.mime.multipart import MIMEMultipart
 
 from g2b_collector      import collect_g2b_notices
 from pubmed_collector   import collect_pneumo_papers
-from kdca_collector_v2  import collect_kdca
-from mfds_collector_v2  import collect_mfds
-from hira_collector_v2  import collect_hira
+from kdca_collector  import collect_kdca
+from mfds_collector  import collect_mfds
+from hira_collector  import collect_hira
 from claude_agent       import analyze_with_claude
 
 NAVER_ADDRESS  = os.environ.get("NAVER_ADDRESS", "")
