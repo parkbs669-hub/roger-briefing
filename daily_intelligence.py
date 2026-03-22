@@ -1,17 +1,16 @@
 """
-폐렴구균 백신 일일 인텔리전스 시스템 (Claude AI 버전)
-실행: python daily_intelligence.py
+폐렴구균 백신 주간 인텔리전스 시스템 (Claude AI + 수정된 API)
 """
 import os, smtplib, datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from g2b_collector    import collect_g2b_notices
-from pubmed_collector import collect_pneumo_papers
-from kdca_collector   import collect_kdca
-from mfds_collector   import collect_mfds
-from hira_collector   import collect_hira
-from claude_agent     import analyze_with_claude
+from g2b_collector      import collect_g2b_notices
+from pubmed_collector   import collect_pneumo_papers
+from kdca_collector_v2  import collect_kdca
+from mfds_collector_v2  import collect_mfds
+from hira_collector_v2  import collect_hira
+from claude_agent       import analyze_with_claude
 
 NAVER_ADDRESS  = os.environ.get("NAVER_ADDRESS", "")
 NAVER_PASSWORD = os.environ.get("NAVER_PASSWORD", "")
@@ -30,7 +29,9 @@ def send_email(subject, body):
             html_lines.append(f"<h2 style='color:#1a3a5c;border-bottom:2px solid #1a3a5c;padding-bottom:5px;margin-top:25px;'>{line[2:]}</h2>")
         elif line.startswith("## "):
             html_lines.append(f"<h3 style='color:#2563a8;margin-top:18px;'>{line[3:]}</h3>")
-        elif line.startswith("- "):
+        elif line.startswith("### "):
+            html_lines.append(f"<h4 style='color:#333;margin-top:12px;'>{line[4:]}</h4>")
+        elif line.startswith("- ") or line.startswith("* "):
             html_lines.append(f"<li style='margin:4px 0;'>{line[2:]}</li>")
         elif line.strip() == "":
             html_lines.append("<br>")
@@ -51,7 +52,7 @@ def send_email(subject, body):
 <p style="color:#999;font-size:11px;text-align:center;">
   📊 데이터: 나라장터 · PubMed · 질병관리청 · 식약처 · 심평원<br>
   🤖 AI 분석: Claude Haiku (Anthropic)<br>
-  ⏰ 자동 발송: GitHub Actions (매일 오전 8시)
+  ⏰ 자동 발송: GitHub Actions (매주 월요일 오전 7시)
 </p>
 </body></html>"""
 
@@ -68,7 +69,7 @@ def send_email(subject, body):
 def main():
     today = datetime.date.today().strftime("%Y년 %m월 %d일")
     print(f"\n{'='*60}")
-    print(f"  💉 폐렴구균 백신 일일 인텔리전스 (Claude AI 버전)")
+    print(f"  💉 폐렴구균 백신 주간 인텔리전스 (Claude AI)")
     print(f"  {today}")
     print(f"{'='*60}")
 
@@ -97,7 +98,7 @@ def main():
     print("  → 분석 완료")
 
     print("\n[📧] 이메일 발송 중...")
-    subject = f"💉 폐렴구균 백신 인텔리전스 — {today}"
+    subject = f"💉 폐렴구균 백신 주간 인텔리전스 — {today}"
     send_email(subject, report)
 
     print(f"\n{'='*60}")
