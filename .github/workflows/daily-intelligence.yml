@@ -24,8 +24,10 @@ jobs:
 
       - name: Run Intelligence System
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          G2B_API_KEY:       ${{ secrets.G2B_API_KEY }}
-          NAVER_ADDRESS:     ${{ secrets.NAVER_ADDRESS }}
-          NAVER_PASSWORD:    ${{ secrets.NAVER_PASSWORD }}
+          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+          G2B_API_KEY:          ${{ secrets.G2B_API_KEY }}
+          NAVER_ADDRESS:        ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD:       ${{ secrets.NAVER_PASSWORD }}
+          NAVER_CLIENT_ID:      ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET:  ${{ secrets.NAVER_CLIENT_SECRET }}
         run: python daily_intelligence.py
