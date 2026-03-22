@@ -1,66 +1,52 @@
 """
 식약처 수집기 - 의약품 국가출하승인정보
-End Point: https://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService
+공식 참고문서 기반 정확한 파라미터 사용
+End Point: http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService
+오퍼레이션: getDrugNatnShipmntAprvInfoInq
+파라미터: goods_name (제품명), manuf_entp_name (제조수입업자)
 """
 import requests, os
 import xml.etree.ElementTree as ET
 
 API_KEY = os.environ.get("G2B_API_KEY", "")
-BASE_URL = "https://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService"
-
-OPERATIONS = [
-    "/getDrugNatnShipmntAprvInfoInq",
-    "/getNatnShipmntAprvList",
-    "/getList",
-]
-
-KEYWORDS = ["폐렴구균", "프리베나", "캡박시브", "Prevnar", "Capvaxive"]
-PARAM_NAMES = ["prdctNm", "PRDT_NM", "productName", "itemName"]
+URL = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatnShipmntAprvInfoInq"
 
 def collect_mfds():
+    keywords = ["폐렴구균", "프리베나", "캡박시브", "Prevnar", "Capvaxive"]
     all_items = []
     seen = set()
 
-    for op in OPERATIONS:
-        url = BASE_URL + op
-        for kw in KEYWORDS:
-            for param in PARAM_NAMES:
-                params = {
-                    "serviceKey": API_KEY,
-                    "pageNo":     1,
-                    "numOfRows":  5,
-                    param:        kw,
-                }
-                try:
-                    resp = requests.get(url, params=params, timeout=15)
-                    print(f"  MFDS {op[-20:]} '{kw}' HTTP: {resp.status_code}")
+    for kw in keywords:
+        params = {
+            "serviceKey": API_KEY,
+            "pageNo":     1,
+            "numOfRows":  5,
+            "type":       "xml",
+            "goods_name": kw,       # ← 공식 파라미터명 확인!
+        }
+        try:
+            resp = requests.get(URL, params=params, timeout=15)
+            print(f"  MFDS '{kw}' HTTP: {resp.status_code}")
 
-                    if resp.status_code != 200:
-                        break
+            if not resp.text.strip().startswith("<"):
+                print(f"  MFDS 응답: {resp.text[:100]}")
+                continue
 
-                    text = resp.text.strip()
-                    if not text.startswith("<"):
-                        break
+            root = ET.fromstring(resp.text)
+            code = root.findtext(".//resultCode", "")
+            msg  = root.findtext(".//resultMsg", "")
+            print(f"  MFDS 결과: {code} / {msg}")
 
-                    root = ET.fromstring(text)
-                    code = root.findtext(".//resultCode", "")
-                    msg  = root.findtext(".//resultMsg", "")
-                    print(f"  MFDS 결과: {code} / {msg}")
+            if code == "00":
+                for item in root.findall(".//item"):
+                    data = {c.tag: (c.text or "") for c in item}
+                    key = data.get("RECEIPT_NO", "") or str(data)[:50]
+                    if key not in seen:
+                        seen.add(key)
+                        all_items.append(data)
+                print(f"  MFDS '{kw}' → {len(all_items)}건")
 
-                    if code == "00":
-                        for item in root.findall(".//item"):
-                            data = {c.tag: (c.text or "") for c in item}
-                            key = str(data)[:80]
-                            if key not in seen:
-                                seen.add(key)
-                                all_items.append(data)
-                        break  # 성공한 파라미터 사용
-
-                except Exception as e:
-                    print(f"  MFDS 오류: {e}")
-                    break
-
-            if all_items:
-                return all_items
+        except Exception as e:
+            print(f"  MFDS 오류: {e}")
 
     return all_items
