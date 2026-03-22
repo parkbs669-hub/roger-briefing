@@ -1,0 +1,30 @@
+name: Daily Data Briefing (Free)
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # 매일 오전 8시 KST
+  workflow_dispatch:       # 수동 실행 가능
+
+jobs:
+  run-data-briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install packages
+        run: |
+          pip install requests
+
+      - name: Run Daily Data Briefing
+        env:
+          G2B_API_KEY:          ${{ secrets.G2B_API_KEY }}
+          NAVER_ADDRESS:        ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD:       ${{ secrets.NAVER_PASSWORD }}
+          NAVER_CLIENT_ID:      ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET:  ${{ secrets.NAVER_CLIENT_SECRET }}
+        run: python daily_data_briefing.py
