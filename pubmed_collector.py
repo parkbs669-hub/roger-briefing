@@ -23,11 +23,16 @@ def collect_pneumo_papers():
                 params={"db": "pubmed", "id": ",".join(ids), "retmode": "xml"},
                 timeout=15)
 
-            # 응답 첫 50바이트 출력 → 실제 원인 확인
-            print(f"  [DEBUG] PubMed hex: {fr.content[:50].hex()}")
-            print(f"  [DEBUG] PubMed raw: {fr.content[:100]}")
+            import time
+            time.sleep(1)
 
             xml_text = fr.content.decode("utf-8-sig").strip()
+
+            # JSON 오류 응답 확인 (rate limit 등)
+            if xml_text.startswith("{"):
+                print(f"  PubMed API 오류: {xml_text[:100]}")
+                continue
+
             root = ET.fromstring(xml_text)
 
             for art in root.findall(".//PubmedArticle"):
