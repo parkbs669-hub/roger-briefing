@@ -15,7 +15,6 @@ from naver_news_collector import collect_naver_news
 from pubmed_collector     import collect_pneumo_papers
 from kdca_collector       import collect_kdca
 from mfds_collector       import collect_mfds
-from hira_collector       import collect_hira
 
 # 이메일 설정
 NAVER_ADDRESS  = os.environ.get("NAVER_ADDRESS", "")
@@ -183,54 +182,13 @@ def fmt_mfds(items):
     </table>"""
 
 
-def fmt_hira(items):
-    if not items:
-        return """
-        <div style='background:#f0faf4;border:1px solid #b7e4c7;border-left:4px solid #27ae60;
-                    border-radius:6px;padding:12px 16px;color:#555;font-size:13px;'>
-          <div style='font-weight:bold;color:#1e8449;margin-bottom:4px;'>📋 모니터링 중</div>
-          <div>건강보험 급여 등재 시 자동으로 표시됩니다.</div>
-          <div style='margin-top:4px;color:#777;'>※ 캡박시브(PCV21) 급여 신청 현황 모니터링 중</div>
-        </div>"""
-    vaccine_keywords = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브", "폐렴구균", "pneumo", "Prevnar", "Synflorix"]
-    filtered = [i for i in items if any(
-        kw.lower() in str(i.get("itmNm","")).lower() for kw in vaccine_keywords
-    )]
-    display_items = filtered if filtered else items
-    rows = ""
-    for i in display_items:
-        name      = i.get("itmNm", "")
-        company   = i.get("mnfEntpNm", i.get("cpnyNm", ""))
-        price     = i.get("mxPatntAmt", i.get("uprcAmt", ""))
-        start_dt  = i.get("adtStaDd", i.get("aplYmd", ""))
-        if len(str(start_dt)) == 8:
-            start_dt = f"{start_dt[:4]}-{start_dt[4:6]}-{start_dt[6:8]}"
-        price_str = f"{int(price):,}원" if price and str(price).replace('.','').isdigit() else (price or "-")
-        rows += f"""
-        <tr>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;'><b>{name}</b></td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{company}</td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#27ae60;text-align:right;'>{price_str}</td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{start_dt}</td>
-        </tr>"""
-    return f"""
-    <table width='100%' style='border-collapse:collapse;font-size:13px;'>
-      <tr style='background:#f8f9fa;'>
-        <th style='padding:8px;text-align:left;'>품목명</th>
-        <th style='padding:8px;text-align:left;'>제조사</th>
-        <th style='padding:8px;text-align:right;'>최대환자부담금</th>
-        <th style='padding:8px;text-align:left;'>적용일</th>
-      </tr>
-      {rows}
-    </table>"""
-
 
 # ────────────────────────────────────────────
 # HTML 이메일 생성
 # ────────────────────────────────────────────
 
-def build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira):
-    total = len(g2b) + len(news) + len(pubmed) + len(kdca) + len(mfds) + len(hira)
+def build_html_email(today_str, g2b, news, pubmed, kdca, mfds):
+    total = len(g2b) + len(news) + len(pubmed) + len(kdca) + len(mfds)
 
     # ── KDCA 배지: 질병 항목 수(1건) 대신 실제 감염 누계 건수 표시 ──
     kdca_total = sum(
@@ -294,7 +252,6 @@ def build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira):
         {card("🔬",  "PubMed",     f"{len(pubmed)}건", "#9b59b6")}
         {card("🏥",  "질병관리청", kdca_badge,         "#e74c3c")}
         {card("💊",  "식약처",     f"{len(mfds)}건",   "#1abc9c")}
-        {card("💰",  "심평원",     f"{len(hira)}건",   "#27ae60")}
       </tr>
     </table>
 
@@ -304,12 +261,11 @@ def build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira):
     {section("🔬","최신 논문",           len(pubmed), "#9b59b6", fmt_pubmed(pubmed))}
     {section("🏥","질병관리청 감염병 현황", kdca_total, "#e74c3c", fmt_kdca(kdca))}
     {section("💊","식약처 국가출하승인",  len(mfds),  "#1abc9c", fmt_mfds(mfds))}
-    {section("💰","심평원 약가/급여",     len(hira),  "#27ae60", fmt_hira(hira))}
 
     <!-- 푸터 -->
     <div style='text-align:center;color:#aaa;font-size:12px;
                 padding:16px;border-top:1px solid #e0e0e0;margin-top:8px;'>
-      📊 데이터 출처: 나라장터 · 네이버뉴스 · PubMed · 질병관리청 · 식약처 · 심평원<br>
+      📊 데이터 출처: 나라장터 · 네이버뉴스 · PubMed · 질병관리청 · 식약처<br>
       🤖 자동 발송: GitHub Actions (매일 오전 8시) &nbsp;|&nbsp; 💰 비용: 0원<br>
       🧠 AI 분석 브리핑은 매주 월요일 오전 7시 별도 발송
     </div>
@@ -372,19 +328,15 @@ def main():
     kdca = collect_kdca()
     print(f"  → {len(kdca)}건")
 
-    print("\n[5/6] 식약처 수집 중...")
+    print("\n[5/5] 식약처 수집 중...")
     mfds = collect_mfds()
     print(f"  → {len(mfds)}건")
 
-    print("\n[6/6] 심평원 수집 중...")
-    hira = collect_hira()
-    print(f"  → {len(hira)}건")
-
-    total = len(g2b) + len(news) + len(pubmed) + len(kdca) + len(mfds) + len(hira)
+    total = len(g2b) + len(news) + len(pubmed) + len(kdca) + len(mfds)
 
     print("\n[📧] 이메일 발송 중...")
     subject   = f"💉 폐렴구균 백신 브리핑 — {today_str} ({total}건 수집)"
-    html_body = build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira)
+    html_body = build_html_email(today_str, g2b, news, pubmed, kdca, mfds)
     send_email(subject, html_body)
 
     print("\n" + "=" * 60)
