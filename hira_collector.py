@@ -1,11 +1,9 @@
 """
 심평원 수집기 - 약가기준정보조회서비스
-End Point: https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2
-Operation: getDgamtList
+파라미터명 후보를 순서대로 시도하여 작동하는 것 확인
 """
 import requests
 import os
-import datetime
 import xml.etree.ElementTree as ET
 
 API_KEY = (
@@ -16,99 +14,87 @@ API_KEY = (
 
 BASE_URL = "https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2/getDgamtList"
 
-KEYWORDS = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브"]
+VACCINE_KEYWORDS = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브", "폐렴구균", "pneumo", "prevnar"]
 
-CUTOFF_YEAR = str(datetime.date.today().year - 7)
+# 검색 파라미터명 후보 (심평원 API는 문서와 실제가 다를 수 있음)
+SEARCH_PARAM_CANDIDATES = ["itmNm", "itm_nm", "itemName", "item_name", "medNm", "drugNm"]
 
 
 def collect_hira():
     all_items = []
     seen = set()
 
-    for kw in KEYWORDS:
+    # ── Step 1: 파라미터 없이 전체 조회로 DB 구조 파악 ──
+    print("  [DEBUG] HIRA 전체 조회 시도 (파라미터 없이)...")
+    try:
+        params = {"serviceKey": API_KEY, "pageNo": 1, "numOfRows": 5}
+        resp = requests.get(BASE_URL, params=params, timeout=30)
+        print(f"  [DEBUG] 전체조회 HTTP: {resp.status_code}")
+        text = resp.text.strip()
+        root = ET.fromstring(text)
+        total = root.findtext(".//totalCount", "0")
+        items = root.findall(".//item")
+        print(f"  [DEBUG] 전체조회 totalCount={total}, item 수={len(items)}")
+        if items:
+            sample = {c.tag: (c.text or "") for c in items[0]}
+            print(f"  [DEBUG] 전체조회 필드명: {list(sample.keys())}")
+            print(f"  [DEBUG] 전체조회 샘플값: {sample}")
+    except Exception as e:
+        print(f"  [DEBUG] 전체조회 오류: {e}")
+
+    # ── Step 2: 파라미터명 후보 시도 ──
+    working_param = None
+    print(f"\n  [DEBUG] 파라미터명 후보 테스트 중...")
+    for param_name in SEARCH_PARAM_CANDIDATES:
         try:
-            items = _fetch_dgamt_list(kw)
-            print(f"  HIRA '{kw}': {len(items)}건 수집")
-            for item in items:
-                key = item.get("itmCd") or item.get("itmNm", str(item)[:80])
+            params = {
+                "serviceKey": API_KEY,
+                "pageNo":     1,
+                "numOfRows":  5,
+                param_name:   "프리베나",
+            }
+            resp = requests.get(BASE_URL, params=params, timeout=15)
+            text = resp.text.strip()
+            root = ET.fromstring(text)
+            total = int(root.findtext(".//totalCount", "0") or 0)
+            print(f"  [DEBUG] '{param_name}'=프리베나 → totalCount={total}")
+            if total > 0:
+                working_param = param_name
+                print(f"  [DEBUG] ✅ 작동하는 파라미터명: {param_name}")
+                break
+        except Exception as e:
+            print(f"  [DEBUG] '{param_name}' 오류: {e}")
+
+    if not working_param:
+        print("  ⚠️  작동하는 파라미터명을 찾지 못함 → HIRA 수집 불가")
+        return []
+
+    # ── Step 3: 작동하는 파라미터로 실제 수집 ──
+    for kw in VACCINE_KEYWORDS:
+        try:
+            params = {
+                "serviceKey": API_KEY,
+                "pageNo":     1,
+                "numOfRows":  100,
+                working_param: kw,
+            }
+            resp = requests.get(BASE_URL, params=params, timeout=30)
+            text = resp.text.strip()
+            root = ET.fromstring(text)
+            total = int(root.findtext(".//totalCount", "0") or 0)
+            items = root.findall(".//item")
+            print(f"  HIRA '{kw}' [{working_param}] totalCount={total}, item={len(items)}")
+
+            for item_el in items:
+                data = {c.tag: (c.text or "") for c in item_el}
+                key = data.get("itmCd") or data.get("itmNm", str(data)[:80])
                 if key not in seen:
                     seen.add(key)
-                    all_items.append(item)
+                    all_items.append(data)
+
         except Exception as e:
             print(f"  HIRA '{kw}' 오류: {e}")
 
     print(f"  HIRA 최종 수집: {len(all_items)}건 (중복제거)")
-    return all_items
-
-
-def _fetch_dgamt_list(keyword, num_of_rows=100):
-    all_items = []
-    page = 1
-
-    while True:
-        params = {
-            "serviceKey": API_KEY,
-            "pageNo":     page,
-            "numOfRows":  num_of_rows,
-            "itmNm":      keyword,
-        }
-        resp = requests.get(BASE_URL, params=params, timeout=30)
-        print(f"    HTTP {resp.status_code} | page={page} | kw='{keyword}'")
-        resp.raise_for_status()
-
-        text = resp.text.strip()
-        if not text:
-            break
-
-        root = ET.fromstring(text)
-        result_code = root.findtext(".//resultCode", "")
-        result_msg  = root.findtext(".//resultMsg", "")
-        print(f"    결과코드: {result_code} / {result_msg}")
-
-        if result_code not in ("00", "0000", "OK"):
-            break
-
-        total_count_text = root.findtext(".//totalCount", "0")
-        total_count = int(total_count_text) if total_count_text.isdigit() else 0
-        print(f"    [DEBUG] totalCount={total_count}")
-
-        items = root.findall(".//item")
-        print(f"    [DEBUG] <item> 태그 수={len(items)}")
-
-        if not items:
-            # XML 구조 확인
-            print(f"    [DEBUG] XML 샘플 (500자):\n{text[:500]}")
-            all_tags = sorted(set(el.tag for el in root.iter()))
-            print(f"    [DEBUG] 모든 태그: {all_tags}")
-            break
-
-        # 첫 번째 item 필드명 확인
-        if page == 1:
-            first = {child.tag: (child.text or "") for child in items[0]}
-            print(f"    [DEBUG] item 필드명: {list(first.keys())}")
-            print(f"    [DEBUG] item 샘플값: {first}")
-
-        filtered_count = 0
-        for item_el in items:
-            data = {child.tag: (child.text or "") for child in item_el}
-
-            # 날짜 필터
-            date_val = (
-                data.get("adtStaDd") or
-                data.get("aplYmd") or
-                data.get("chgYmd") or ""
-            )
-            if date_val and len(date_val) >= 4:
-                if date_val[:4] < CUTOFF_YEAR:
-                    filtered_count += 1
-                    continue
-
-            all_items.append(data)
-
-        print(f"    [DEBUG] 날짜필터로 제거={filtered_count}건 / 누적={len(all_items)}/{total_count}건")
-
-        if len(all_items) >= total_count or len(items) < num_of_rows:
-            break
-        page += 1
-
+    print(f"  → {len(all_items)}건")
     return all_items
