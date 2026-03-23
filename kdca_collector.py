@@ -64,11 +64,6 @@ def collect_kdca():
             pneumo = [i for i in items if any(kw in str(i) for kw in PNEUMO_KEYWORDS)]
             print(f"  KDCA 폐렴구균: {len(pneumo)}건")
 
-            # ── 디버그: 월별 필드명 확인 ──
-            sample = pneumo[0] if pneumo else items[0]
-            print(f"  [DEBUG] item 전체 키: {list(sample.keys())}")
-            print(f"  [DEBUG] item 전체 값: {sample}")
-
             return pneumo if pneumo else items[:5]
 
     except Exception as e:
@@ -96,10 +91,6 @@ def collect_kdca():
             if items:
                 pneumo = [i for i in items if any(kw in str(i) for kw in PNEUMO_KEYWORDS)]
                 print(f"  KDCA ({prev_year}) 폐렴구균: {len(pneumo)}건")
-
-                sample = pneumo[0] if pneumo else items[0]
-                print(f"  [DEBUG] item 전체 키: {list(sample.keys())}")
-                print(f"  [DEBUG] item 전체 값: {sample}")
 
                 return pneumo if pneumo else items[:5]
     except Exception as e:
