@@ -79,6 +79,9 @@ def collect_mfds():
         except Exception as e:
             print(f"  MFDS '{kw}' 오류: {e}")
 
+    # 2025년 이후 데이터만 필터링
+    all_items = [i for i in all_items if i.get("RESULT_TIME", "")[:4] >= "2025"]
+
     # RESULT_TIME 내림차순 정렬 → 최근 MAX_ITEMS건만
     all_items.sort(key=lambda x: x.get("RESULT_TIME", ""), reverse=True)
     all_items = all_items[:MAX_ITEMS]
