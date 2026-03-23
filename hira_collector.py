@@ -2,7 +2,6 @@
 심평원 수집기 - 약가기준정보조회서비스
 End Point: https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2
 Operation: getDgamtList
-응답형식: XML (서비스 기본값)
 """
 import requests
 import os
@@ -17,11 +16,9 @@ API_KEY = (
 
 BASE_URL = "https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2/getDgamtList"
 
-# ✅ 정확한 폐렴구균 백신 품목명만 검색 (일반 약품 제외)
 KEYWORDS = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브"]
 
-# 최근 5년치만 수집
-CUTOFF_YEAR = str(datetime.date.today().year - 7)  # 최근 7년
+CUTOFF_YEAR = str(datetime.date.today().year - 7)
 
 
 def collect_hira():
@@ -51,11 +48,10 @@ def _fetch_dgamt_list(keyword, num_of_rows=100):
     while True:
         params = {
             "serviceKey": API_KEY,
-            "pageNo": page,
-            "numOfRows": num_of_rows,
-            "itmNm": keyword,
+            "pageNo":     page,
+            "numOfRows":  num_of_rows,
+            "itmNm":      keyword,
         }
-
         resp = requests.get(BASE_URL, params=params, timeout=30)
         print(f"    HTTP {resp.status_code} | page={page} | kw='{keyword}'")
         resp.raise_for_status()
@@ -74,15 +70,29 @@ def _fetch_dgamt_list(keyword, num_of_rows=100):
 
         total_count_text = root.findtext(".//totalCount", "0")
         total_count = int(total_count_text) if total_count_text.isdigit() else 0
+        print(f"    [DEBUG] totalCount={total_count}")
 
         items = root.findall(".//item")
+        print(f"    [DEBUG] <item> 태그 수={len(items)}")
+
         if not items:
+            # XML 구조 확인
+            print(f"    [DEBUG] XML 샘플 (500자):\n{text[:500]}")
+            all_tags = sorted(set(el.tag for el in root.iter()))
+            print(f"    [DEBUG] 모든 태그: {all_tags}")
             break
 
+        # 첫 번째 item 필드명 확인
+        if page == 1:
+            first = {child.tag: (child.text or "") for child in items[0]}
+            print(f"    [DEBUG] item 필드명: {list(first.keys())}")
+            print(f"    [DEBUG] item 샘플값: {first}")
+
+        filtered_count = 0
         for item_el in items:
             data = {child.tag: (child.text or "") for child in item_el}
 
-            # ── 날짜 필터: 최근 5년 이내만 ──
+            # 날짜 필터
             date_val = (
                 data.get("adtStaDd") or
                 data.get("aplYmd") or
@@ -90,39 +100,15 @@ def _fetch_dgamt_list(keyword, num_of_rows=100):
             )
             if date_val and len(date_val) >= 4:
                 if date_val[:4] < CUTOFF_YEAR:
+                    filtered_count += 1
                     continue
 
             all_items.append(data)
 
-        print(f"    누적: {len(all_items)}/{total_count}건")
+        print(f"    [DEBUG] 날짜필터로 제거={filtered_count}건 / 누적={len(all_items)}/{total_count}건")
 
         if len(all_items) >= total_count or len(items) < num_of_rows:
             break
-
         page += 1
 
     return all_items
-
-
-def get_hira_summary(items):
-    if not items:
-        return {"total": 0, "note": "수집된 데이터 없음"}
-    return {
-        "total": len(items),
-        "products": [
-            {
-                "name":    item.get("itmNm", ""),
-                "company": item.get("mnfEntpNm", item.get("cpnyNm", "")),
-                "price":   item.get("mxPatntAmt", ""),
-                "applied": item.get("adtStaDd", item.get("aplYmd", "")),
-            }
-            for item in items[:10]
-        ]
-    }
-
-
-if __name__ == "__main__":
-    import json, logging
-    logging.basicConfig(level=logging.INFO)
-    result = collect_hira()
-    print(json.dumps(get_hira_summary(result), ensure_ascii=False, indent=2))
