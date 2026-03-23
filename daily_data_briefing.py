@@ -69,7 +69,8 @@ def fmt_naver(items):
         title = i.get("title", "제목 없음")
         desc  = i.get("description", "")[:80] + "..." if len(i.get("description","")) > 80 else i.get("description","")
         date  = i.get("pubDate", "")[:16] if i.get("pubDate") else ""
-        link  = i.get("url", f"https://pubmed.ncbi.nlm.nih.gov/{i.get('pmid','')}/")
+        link  = i.get("link", "")
+        link_str = f"<a href='{link}' style='color:#1a73e8;'>기사보기</a>" if link else ""
         rows += f"""
         <tr>
           <td style='padding:8px;border-bottom:1px solid #f0f0f0;'>
