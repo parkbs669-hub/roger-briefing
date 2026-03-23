@@ -5,6 +5,7 @@ End Point: http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService
 """
 import requests
 import os
+import datetime
 import xml.etree.ElementTree as ET
 
 API_KEY = (
@@ -14,8 +15,10 @@ API_KEY = (
 )
 
 URL = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatnShipmntAprvInfoInq"
-
 KEYWORDS = ["폐렴구균", "프리베나", "캡박시브", "Prevnar", "Capvaxive"]
+
+# 최근 3년치만 수집
+CUTOFF_YEAR = str(datetime.date.today().year - 3)  # 예: 2023
 
 
 def collect_mfds():
@@ -26,7 +29,7 @@ def collect_mfds():
         params = {
             "serviceKey": API_KEY,
             "pageNo": 1,
-            "numOfRows": 10,
+            "numOfRows": 100,   # 넉넉히 가져와서 날짜 필터링
             "goods_name": kw,
         }
         try:
@@ -34,11 +37,7 @@ def collect_mfds():
             print(f"  MFDS '{kw}' HTTP: {resp.status_code}")
 
             text = resp.text.strip()
-            if not text:
-                print(f"  MFDS 응답: 빈 응답")
-                continue
-
-            if not text.startswith("<"):
+            if not text or not text.startswith("<"):
                 print(f"  MFDS 응답: {text[:150]}")
                 continue
 
@@ -47,14 +46,24 @@ def collect_mfds():
             msg  = root.findtext(".//resultMsg", "")
             print(f"  MFDS 결과: {code} / {msg}")
 
-            if code in ("00", "0000"):
-                for item in root.findall(".//item"):
-                    data = {c.tag: (c.text or "") for c in item}
-                    key = data.get("RECEIPT_NO", "") or data.get("aprvNo", "") or str(data)[:50]
-                    if key not in seen:
-                        seen.add(key)
-                        all_items.append(data)
-                print(f"  MFDS '{kw}' → {len(all_items)}건 누적")
+            if code not in ("00", "0000"):
+                continue
+
+            for item in root.findall(".//item"):
+                data = {c.tag: (c.text or "") for c in item}
+
+                # ── 날짜 필터: 최근 3년 이내만 수집 ──
+                result_time = data.get("RESULT_TIME", "")
+                if result_time and len(result_time) >= 4:
+                    if result_time[:4] < CUTOFF_YEAR:
+                        continue  # 오래된 데이터 제외
+
+                key = data.get("RECEIPT_NO", "") or str(data)[:50]
+                if key not in seen:
+                    seen.add(key)
+                    all_items.append(data)
+
+            print(f"  MFDS '{kw}' → 누적 {len(all_items)}건 (최근 3년)")
 
         except Exception as e:
             print(f"  MFDS '{kw}' 오류: {e}")
