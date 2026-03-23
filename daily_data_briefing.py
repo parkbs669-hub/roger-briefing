@@ -27,7 +27,6 @@ NAVER_PASSWORD = os.environ.get("NAVER_PASSWORD", "")
 # ────────────────────────────────────────────
 
 def fmt_g2b(items):
-    """나라장터 입찰공고 포맷"""
     if not items:
         return "<p style='color:#888;'>최근 7일 신규 공고 없음</p>"
     rows = ""
@@ -61,7 +60,6 @@ def fmt_g2b(items):
 
 
 def fmt_naver(items):
-    """네이버 뉴스 포맷"""
     if not items:
         return "<p style='color:#888;'>오늘 관련 뉴스 없음</p>"
     rows = ""
@@ -92,7 +90,6 @@ def fmt_naver(items):
 
 
 def fmt_pubmed(items):
-    """PubMed 논문 포맷"""
     if not items:
         return "<p style='color:#888;'>최근 논문 없음</p>"
     rows = ""
@@ -127,10 +124,8 @@ def fmt_pubmed(items):
 
 
 def fmt_kdca(items):
-    """질병관리청 감염병 발생현황 포맷 - 요약 카드 형태"""
     if not items:
         return "<p style='color:#888;'>질병관리청 데이터 없음</p>"
-
     cards = ""
     for i in items:
         year    = i.get("year", "").replace("년", "")
@@ -149,18 +144,14 @@ def fmt_kdca(items):
             <a href='{url}' style='font-size:11px;color:#1a73e8;'>질병관리청 상세보기 →</a>
           </div>
         </div>"""
-
     return f"""
-    <div style='padding:4px;'>
-      {cards}
-    </div>
+    <div style='padding:4px;'>{cards}</div>
     <p style='color:#aaa;font-size:11px;margin-top:8px;'>
       ※ 출처: 질병관리청 감염병포털 (방역통합정보시스템 전수신고 기준)
     </p>"""
 
 
 def fmt_mfds(items):
-    """식약처 국가출하승인 포맷"""
     if not items:
         return "<p style='color:#888;'>최근 국가출하승인 내역 없음 (신규 출하 시 표시됩니다)</p>"
     rows = ""
@@ -193,25 +184,19 @@ def fmt_mfds(items):
 
 
 def fmt_hira(items):
-    """심평원 약가기준 포맷 - 폐렴구균 백신만 필터링"""
     if not items:
         return "<p style='color:#888;'>최근 약가 변동 내역 없음 (변경 고시 시 표시됩니다)</p>"
-
-    # 폐렴구균 백신 관련 키워드 필터
     vaccine_keywords = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브", "폐렴구균", "pneumo", "Prevnar", "Synflorix"]
     filtered = [i for i in items if any(
         kw.lower() in str(i.get("itmNm","")).lower() for kw in vaccine_keywords
     )]
-    # 필터 결과 없으면 전체 표시
     display_items = filtered if filtered else items
-
     rows = ""
     for i in display_items:
         name      = i.get("itmNm", "")
         company   = i.get("mnfEntpNm", i.get("cpnyNm", ""))
         price     = i.get("mxPatntAmt", i.get("uprcAmt", ""))
         start_dt  = i.get("adtStaDd", i.get("aplYmd", ""))
-        # 날짜 포맷
         if len(str(start_dt)) == 8:
             start_dt = f"{start_dt[:4]}-{start_dt[4:6]}-{start_dt[6:8]}"
         price_str = f"{int(price):,}원" if price and str(price).replace('.','').isdigit() else (price or "-")
@@ -240,6 +225,26 @@ def fmt_hira(items):
 
 def build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira):
     total = len(g2b) + len(news) + len(pubmed) + len(kdca) + len(mfds) + len(hira)
+
+    # ── KDCA 배지: 질병 항목 수(1건) 대신 실제 감염 누계 건수 표시 ──
+    kdca_total = sum(
+        int(i.get("resultVal", i.get("patntCnt", 0)) or 0)
+        for i in kdca
+    )
+    kdca_badge = f"{kdca_total}건" if kdca_total else "0건"
+
+    # ── 요약 카드 1개 생성 헬퍼 ──
+    def card(emoji, name, badge, color):
+        return (
+            f"<td style='padding:4px;'>"
+            f"<div style='background:white;border-radius:8px;padding:12px 6px;"
+            f"text-align:center;border-top:3px solid {color};"
+            f"box-shadow:0 1px 3px rgba(0,0,0,0.08);'>"
+            f"<div style='font-size:20px;'>{emoji}</div>"
+            f"<div style='font-size:11px;color:#666;margin:2px 0;'>{name}</div>"
+            f"<div style='font-size:18px;font-weight:bold;color:{color};'>{badge}</div>"
+            f"</div></td>"
+        )
 
     def section(emoji, title, count, color, content):
         return f"""
@@ -270,37 +275,30 @@ def build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira):
         💉 폐렴구균 백신 일일 인텔리전스 브리핑
       </div>
       <div style='opacity:0.85;font-size:14px;'>{today_str} &nbsp;|&nbsp;
-        총 {total}건 수집 &nbsp;|&nbsp;
-        자동 발송 (GitHub Actions)
+        총 {total}건 수집 &nbsp;|&nbsp; 자동 발송 (GitHub Actions)
       </div>
     </div>
 
-    <!-- 요약 카드 -->
-    <div style='display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;'>
-      {"".join([
-        f"<div style='flex:1;min-width:90px;background:white;border-radius:8px;"
-        f"padding:12px;text-align:center;border-top:3px solid {c};box-shadow:0 1px 3px rgba(0,0,0,0.08);'>"
-        f"<div style='font-size:20px;'>{e}</div>"
-        f"<div style='font-size:11px;color:#666;margin:2px 0;'>{n}</div>"
-        f"<div style='font-size:18px;font-weight:bold;color:{c};'>{v}건</div></div>"
-        for e,n,v,c in [
-            ("🏛️","나라장터",len(g2b),"#e67e22"),
-            ("📰","네이버뉴스",len(news),"#3498db"),
-            ("🔬","PubMed",len(pubmed),"#9b59b6"),
-            ("🏥","질병관리청",len(kdca),"#e74c3c"),
-            ("💊","식약처",len(mfds),"#1abc9c"),
-            ("💰","심평원",len(hira),"#27ae60"),
-        ]
-      ])}
-    </div>
+    <!-- 요약 카드 (table 레이아웃 - 이메일 클라이언트 완벽 호환, 6개 한 줄) -->
+    <table width='100%' cellspacing='0' cellpadding='0'
+           style='margin-bottom:20px;table-layout:fixed;'>
+      <tr>
+        {card("🏛️", "나라장터",   f"{len(g2b)}건",    "#e67e22")}
+        {card("📰",  "네이버뉴스", f"{len(news)}건",   "#3498db")}
+        {card("🔬",  "PubMed",     f"{len(pubmed)}건", "#9b59b6")}
+        {card("🏥",  "질병관리청", kdca_badge,         "#e74c3c")}
+        {card("💊",  "식약처",     f"{len(mfds)}건",   "#1abc9c")}
+        {card("💰",  "심평원",     f"{len(hira)}건",   "#27ae60")}
+      </tr>
+    </table>
 
     <!-- 각 섹션 -->
-    {section("🏛️","나라장터 입찰공고",len(g2b),"#e67e22",fmt_g2b(g2b))}
-    {section("📰","국내 최신 뉴스",len(news),"#3498db",fmt_naver(news))}
-    {section("🔬","최신 논문",len(pubmed),"#9b59b6",fmt_pubmed(pubmed))}
-    {section("🏥","질병관리청 감염병 현황",len(kdca),"#e74c3c",fmt_kdca(kdca))}
-    {section("💊","식약처 국가출하승인",len(mfds),"#1abc9c",fmt_mfds(mfds))}
-    {section("💰","심평원 약가/급여",len(hira),"#27ae60",fmt_hira(hira))}
+    {section("🏛️","나라장터 입찰공고",   len(g2b),    "#e67e22", fmt_g2b(g2b))}
+    {section("📰","국내 최신 뉴스",      len(news),   "#3498db", fmt_naver(news))}
+    {section("🔬","최신 논문",           len(pubmed), "#9b59b6", fmt_pubmed(pubmed))}
+    {section("🏥","질병관리청 감염병 현황", len(kdca), "#e74c3c", fmt_kdca(kdca))}
+    {section("💊","식약처 국가출하승인",  len(mfds),  "#1abc9c", fmt_mfds(mfds))}
+    {section("💰","심평원 약가/급여",     len(hira),  "#27ae60", fmt_hira(hira))}
 
     <!-- 푸터 -->
     <div style='text-align:center;color:#aaa;font-size:12px;
@@ -329,7 +327,6 @@ def send_email(subject, html_body):
         msg["From"]    = NAVER_ADDRESS
         msg["To"]      = NAVER_ADDRESS
         msg.attach(MIMEText(html_body, "html", "utf-8"))
-
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
             s.login(NAVER_ADDRESS, NAVER_PASSWORD)
             s.send_message(msg)
@@ -353,39 +350,32 @@ def main():
     print(f"  {today_str}")
     print("=" * 60)
 
-    # 1. 나라장터
     print("\n[1/6] 나라장터 수집 중...")
     g2b = collect_g2b_notices()
     print(f"  → {len(g2b)}건")
 
-    # 2. 네이버 뉴스
     print("\n[2/6] 네이버 뉴스 수집 중...")
     news = collect_naver_news()
     print(f"  → {len(news)}건")
 
-    # 3. PubMed
     print("\n[3/6] PubMed 수집 중...")
     pubmed = collect_pneumo_papers()
     print(f"  → {len(pubmed)}건")
 
-    # 4. 질병관리청
     print("\n[4/6] 질병관리청 수집 중...")
     kdca = collect_kdca()
     print(f"  → {len(kdca)}건")
 
-    # 5. 식약처
     print("\n[5/6] 식약처 수집 중...")
     mfds = collect_mfds()
     print(f"  → {len(mfds)}건")
 
-    # 6. 심평원
     print("\n[6/6] 심평원 수집 중...")
     hira = collect_hira()
     print(f"  → {len(hira)}건")
 
     total = len(g2b) + len(news) + len(pubmed) + len(kdca) + len(mfds) + len(hira)
 
-    # 이메일 발송
     print("\n[📧] 이메일 발송 중...")
     subject   = f"💉 폐렴구균 백신 브리핑 — {today_str} ({total}건 수집)"
     html_body = build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira)
