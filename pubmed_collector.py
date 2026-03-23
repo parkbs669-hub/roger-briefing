@@ -23,9 +23,11 @@ def collect_pneumo_papers():
                 params={"db": "pubmed", "id": ",".join(ids), "retmode": "xml"},
                 timeout=15)
 
-            # BOM 및 앞뒤 공백 제거 후 파싱
-            xml_text = fr.content.decode("utf-8-sig").strip()
+            # 응답 첫 50바이트 출력 → 실제 원인 확인
+            print(f"  [DEBUG] PubMed hex: {fr.content[:50].hex()}")
+            print(f"  [DEBUG] PubMed raw: {fr.content[:100]}")
 
+            xml_text = fr.content.decode("utf-8-sig").strip()
             root = ET.fromstring(xml_text)
 
             for art in root.findall(".//PubmedArticle"):
