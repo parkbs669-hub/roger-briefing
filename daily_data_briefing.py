@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 # 수집기 임포트
 from g2b_collector        import collect_g2b_notices
 from naver_news_collector import collect_naver_news
-from pubmed_collector     import collect_pubmed
+from pubmed_collector     import collect_pneumo_papers
 from kdca_collector       import collect_kdca
 from mfds_collector       import collect_mfds
 from hira_collector       import collect_hira
@@ -69,8 +69,7 @@ def fmt_naver(items):
         title = i.get("title", "제목 없음")
         desc  = i.get("description", "")[:80] + "..." if len(i.get("description","")) > 80 else i.get("description","")
         date  = i.get("pubDate", "")[:16] if i.get("pubDate") else ""
-        link  = i.get("link", "")
-        link_str = f"<a href='{link}' style='color:#1a73e8;'>기사보기</a>" if link else ""
+        link  = i.get("url", f"https://pubmed.ncbi.nlm.nih.gov/{i.get('pmid','')}/")
         rows += f"""
         <tr>
           <td style='padding:8px;border-bottom:1px solid #f0f0f0;'>
@@ -364,7 +363,7 @@ def main():
 
     # 3. PubMed
     print("\n[3/6] PubMed 수집 중...")
-    pubmed = collect_pubmed()
+    pubmed = collect_pneumo_papers()
     print(f"  → {len(pubmed)}건")
 
     # 4. 질병관리청
