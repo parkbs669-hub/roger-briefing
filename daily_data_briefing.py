@@ -185,7 +185,13 @@ def fmt_mfds(items):
 
 def fmt_hira(items):
     if not items:
-        return "<p style='color:#888;'>최근 약가 변동 내역 없음 (변경 고시 시 표시됩니다)</p>"
+        return """
+        <div style='background:#f0faf4;border:1px solid #b7e4c7;border-left:4px solid #27ae60;
+                    border-radius:6px;padding:12px 16px;color:#555;font-size:13px;'>
+          <div style='font-weight:bold;color:#1e8449;margin-bottom:4px;'>📋 모니터링 중</div>
+          <div>건강보험 급여 등재 시 자동으로 표시됩니다.</div>
+          <div style='margin-top:4px;color:#777;'>※ 캡박시브(PCV21) 급여 신청 현황 모니터링 중</div>
+        </div>"""
     vaccine_keywords = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브", "폐렴구균", "pneumo", "Prevnar", "Synflorix"]
     filtered = [i for i in items if any(
         kw.lower() in str(i.get("itmNm","")).lower() for kw in vaccine_keywords
