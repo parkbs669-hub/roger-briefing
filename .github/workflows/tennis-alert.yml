@@ -1,0 +1,41 @@
+name: 테니스 스트링 블로그/카페 알림
+
+on:
+  schedule:
+    # 매일 오전 8시 (KST) = UTC 23시 (전날)
+    - cron: '0 23 * * *'
+  workflow_dispatch:  # 수동 실행 버튼
+
+jobs:
+  tennis-alert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # seen 파일 커밋용
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: pip install requests
+
+      - name: 테니스 스트링 알림 실행
+        env:
+          NAVER_CLIENT_ID:     ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_ADDRESS:       ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD:      ${{ secrets.NAVER_PASSWORD }}
+        run: python naver_tennis_alert.py
+
+      - name: seen 링크 목록 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/tennis_seen_links.json || true
+          git diff --cached --quiet || git commit -m "chore: 테니스 seen 링크 업데이트 $(date +'%Y-%m-%d')"
+          git push || true
