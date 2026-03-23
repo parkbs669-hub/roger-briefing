@@ -163,8 +163,8 @@ def fmt_mfds(items):
         date     = f"{date_raw[:4]}-{date_raw[4:6]}-{date_raw[6:8]}" if len(str(date_raw)) == 8 else date_raw
         rows += f"""
         <tr>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;'><b>{product}</b></td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{sample}</td>
+          <td style='padding:8px;border-bottom:1px solid #f0f0f0;'><b>{sample}</b></td>
+          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{product}</td>
           <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{company}</td>
           <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{lot}</td>
           <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{date}</td>
@@ -173,7 +173,7 @@ def fmt_mfds(items):
     <table width='100%' style='border-collapse:collapse;font-size:13px;'>
       <tr style='background:#f8f9fa;'>
         <th style='padding:8px;text-align:left;'>제품명</th>
-        <th style='padding:8px;text-align:left;'>백신명</th>
+        <th style='padding:8px;text-align:left;'>성분명</th>
         <th style='padding:8px;text-align:left;'>제조사</th>
         <th style='padding:8px;text-align:left;'>Lot No.</th>
         <th style='padding:8px;text-align:left;'>승인일</th>
