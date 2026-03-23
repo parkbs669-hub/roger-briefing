@@ -127,35 +127,36 @@ def fmt_pubmed(items):
 
 
 def fmt_kdca(items):
-    """질병관리청 감염병 발생현황 포맷"""
+    """질병관리청 감염병 발생현황 포맷 - 요약 카드 형태"""
     if not items:
         return "<p style='color:#888;'>질병관리청 데이터 없음</p>"
-    rows = ""
+
+    cards = ""
     for i in items:
-        year     = i.get("year", "")
-        disease  = i.get("icdNm", i.get("diseaseNm", ""))
-        group    = i.get("icdGroupNm", "")
-        count    = i.get("resultVal", i.get("patntCnt", ""))
-        pat_type = i.get("patntType", "")
-        rows += f"""
-        <tr>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;'><b>{disease}</b></td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{group}</td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{pat_type}</td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#e74c3c;text-align:right;'>{count}건</td>
-          <td style='padding:8px;border-bottom:1px solid #f0f0f0;color:#555;'>{year}</td>
-        </tr>"""
+        year    = i.get("year", "").replace("년", "")
+        disease = i.get("icdNm", i.get("diseaseNm", ""))
+        group   = i.get("icdGroupNm", "")
+        count   = i.get("resultVal", i.get("patntCnt", ""))
+        url     = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+        cards += f"""
+        <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
+                    border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
+                    margin:4px;min-width:200px;vertical-align:top;'>
+          <div style='font-size:15px;font-weight:bold;color:#c0392b;'>{disease}</div>
+          <div style='font-size:12px;color:#888;margin:4px 0;'>{group} &nbsp;|&nbsp; {year}년 누계</div>
+          <div style='font-size:22px;font-weight:bold;color:#e74c3c;'>{count}<span style='font-size:13px;color:#888;'>건</span></div>
+          <div style='margin-top:6px;'>
+            <a href='{url}' style='font-size:11px;color:#1a73e8;'>질병관리청 상세보기 →</a>
+          </div>
+        </div>"""
+
     return f"""
-    <table width='100%' style='border-collapse:collapse;font-size:13px;'>
-      <tr style='background:#f8f9fa;'>
-        <th style='padding:8px;text-align:left;'>감염병명</th>
-        <th style='padding:8px;text-align:left;'>분류</th>
-        <th style='padding:8px;text-align:left;'>환자구분</th>
-        <th style='padding:8px;text-align:right;'>발생수</th>
-        <th style='padding:8px;text-align:left;'>연도</th>
-      </tr>
-      {rows}
-    </table>"""
+    <div style='padding:4px;'>
+      {cards}
+    </div>
+    <p style='color:#aaa;font-size:11px;margin-top:8px;'>
+      ※ 출처: 질병관리청 감염병포털 (방역통합정보시스템 전수신고 기준)
+    </p>"""
 
 
 def fmt_mfds(items):
