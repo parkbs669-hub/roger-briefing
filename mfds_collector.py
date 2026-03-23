@@ -65,6 +65,11 @@ def collect_mfds():
                     # 파라미터명 문제일 수 있으니 다음 후보 시도
                     continue
 
+                # ── 디버그: 첫 번째 item 필드명 & 값 출력 ──
+                first_item_data = {c.tag: (c.text or "") for c in items_found[0]}
+                print(f"  [DEBUG] item 필드명: {list(first_item_data.keys())}")
+                print(f"  [DEBUG] item 샘플값: {first_item_data}")
+
                 # ── 아이템 수집 ──
                 before = len(all_items)
                 for item in items_found:
