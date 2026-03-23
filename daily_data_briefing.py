@@ -296,7 +296,7 @@ def build_html_email(today_str, g2b, news, pubmed, kdca, mfds, hira):
     {section("🏛️","나라장터 입찰공고",   len(g2b),    "#e67e22", fmt_g2b(g2b))}
     {section("📰","국내 최신 뉴스",      len(news),   "#3498db", fmt_naver(news))}
     {section("🔬","최신 논문",           len(pubmed), "#9b59b6", fmt_pubmed(pubmed))}
-    {section("🏥","질병관리청 감염병 현황", len(kdca), "#e74c3c", fmt_kdca(kdca))}
+    {section("🏥","질병관리청 감염병 현황", kdca_total, "#e74c3c", fmt_kdca(kdca))}
     {section("💊","식약처 국가출하승인",  len(mfds),  "#1abc9c", fmt_mfds(mfds))}
     {section("💰","심평원 약가/급여",     len(hira),  "#27ae60", fmt_hira(hira))}
 
