@@ -162,7 +162,7 @@ def fmt_kdca(items):
 def fmt_mfds(items):
     """식약처 국가출하승인 포맷"""
     if not items:
-        return "<p style='color:#888;'>식약처 데이터 없음</p>"
+        return "<p style='color:#888;'>최근 국가출하승인 내역 없음 (신규 출하 시 표시됩니다)</p>"
     rows = ""
     for i in items:
         product  = i.get("GOODS_NAME", i.get("goodsName", ""))
@@ -195,7 +195,7 @@ def fmt_mfds(items):
 def fmt_hira(items):
     """심평원 약가기준 포맷 - 폐렴구균 백신만 필터링"""
     if not items:
-        return "<p style='color:#888;'>심평원 데이터 없음</p>"
+        return "<p style='color:#888;'>최근 약가 변동 내역 없음 (변경 고시 시 표시됩니다)</p>"
 
     # 폐렴구균 백신 관련 키워드 필터
     vaccine_keywords = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브", "폐렴구균", "pneumo", "Prevnar", "Synflorix"]

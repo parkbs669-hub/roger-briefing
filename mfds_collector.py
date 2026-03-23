@@ -18,7 +18,7 @@ URL = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatn
 KEYWORDS = ["폐렴구균", "프리베나", "캡박시브", "Prevnar", "Capvaxive"]
 
 # 최근 3년치만 수집
-CUTOFF_YEAR = str(datetime.date.today().year - 3)  # 예: 2023
+CUTOFF_YEAR = str(datetime.date.today().year - 10)  # 최근 10년
 
 
 def collect_mfds():
@@ -63,7 +63,7 @@ def collect_mfds():
                     seen.add(key)
                     all_items.append(data)
 
-            print(f"  MFDS '{kw}' → 누적 {len(all_items)}건 (최근 3년)")
+            print(f"  MFDS '{kw}' → 누적 {len(all_items)}건 (최근 10년)")
 
         except Exception as e:
             print(f"  MFDS '{kw}' 오류: {e}")

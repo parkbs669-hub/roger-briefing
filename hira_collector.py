@@ -21,7 +21,7 @@ BASE_URL = "https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2/getDgamtList
 KEYWORDS = ["프리베나", "신플로릭스", "뉴모박스", "캡박시브"]
 
 # 최근 5년치만 수집
-CUTOFF_YEAR = str(datetime.date.today().year - 5)
+CUTOFF_YEAR = str(datetime.date.today().year - 7)  # 최근 7년
 
 
 def collect_hira():
