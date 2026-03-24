@@ -2,8 +2,8 @@ name: Daily Beom SF Checker
 
 on:
   schedule:
-    - cron: '0 23 * * *' # 한국 시간 오전 8시 (UTC 23:00)
-  workflow_dispatch: # 수동 실행 버튼 추가
+    - cron: '0 23 * * *' # 매일 아침 8시 (한국 시간)
+  workflow_dispatch: 
 
 jobs:
   run-bot:
@@ -23,5 +23,5 @@ jobs:
       - name: 범 SF 봇 실행
         env:
           NL_API_KEY: ${{ secrets.NL_API_KEY }}
-          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }} # 비밀번호 연결 통로 추가
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
         run: python beom_sf_bot.py
