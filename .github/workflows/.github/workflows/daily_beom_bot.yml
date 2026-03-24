@@ -1,0 +1,27 @@
+name: Daily Beom SF Checker
+
+on:
+  schedule:
+    # 한국 시간(KST) 오전 8시는 UTC 기준 전날 오후 11시입니다.
+    - cron: '0 23 * * *'
+  workflow_dispatch: # 직접 버튼을 눌러 실행할 수 있는 기능을 추가합니다.
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: 파이썬 환경 설정
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: 필요한 라이브러리 설치
+        run: pip install requests
+
+      - name: 범 SF 봇 실행
+        env:
+          NL_API_KEY: ${{ secrets.NL_API_KEY }}
+        run: python beom_sf_bot.py
