@@ -1,0 +1,20 @@
+name: Daily Beom SF Checker
+
+on:
+  schedule:
+    - cron: '0 23 * * *' # 한국 시간 오전 8시
+  workflow_dispatch: 
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install requests
+      - name: Run Bot
+        env:
+          NL_API_KEY: ${{ secrets.NL_API_KEY }}
+        run: python beom_sf_bot.py
