@@ -1,4 +1,31 @@
-- name: Install Chrome
+name: BUM Sports Blog Automation (Selenium)
+
+on:
+  workflow_dispatch: # 수동 실행 버튼
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Chrome and Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
+        python -m pip install --upgrade pip
+        pip install requests selenium webdriver-manager
+
+    - name: Run BUM Sports Bot
+      env:
+        NL_API_KEY: ${{ secrets.NL_API_KEY }}
+        NAVER_ID: ${{ secrets.NAVER_ID }}
+        NAVER_PW: ${{ secrets.NAVER_PW }}
+      run: python bum_sports.py
