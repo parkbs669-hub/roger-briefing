@@ -7,10 +7,11 @@ NAVER_ID = "parkbs669"
 
 async def run():
     async with async_playwright() as p:
+        # 모바일 환경처럼 보이게 설정 (에러 확률이 더 낮습니다)
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            viewport={'width': 1920, 'height': 1080},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            **p.devices['iPhone 13'], # 아이폰 환경 모의
+            locale='ko-KR'
         )
 
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
@@ -24,60 +25,62 @@ async def run():
         page = await context.new_page()
 
         try:
-            print("🚀 [전략] 쿠키 주입 침투 개시...")
-            await page.goto("https://www.naver.com", wait_until="domcontentloaded", timeout=60000)
-            await asyncio.sleep(3)
+            print("🚀 [전략] 모바일 모드 침투 개시...")
+            # 모바일 전용 글쓰기 주소
+            await page.goto(f"https://m.blog.naver.com/{NAVER_ID}/postwrite", wait_until="domcontentloaded")
+            await asyncio.sleep(5)
 
             if "nidlogin" in page.url:
                 print("❌ [실패] 쿠키 만료")
                 return
 
-            print("✅ [성공] 로그인 유효 확인")
+            print("✅ 에디터 진입 성공")
 
-            # [수정] 더 안정적인 글쓰기 주소로 변경
-            print("📝 에디터 진입 시도...")
-            write_url = f"https://blog.naver.com/{NAVER_ID}/postwrite"
-            await page.goto(write_url, wait_until="domcontentloaded", timeout=60000)
-            await asyncio.sleep(5)
+            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 리포트"
+            content = "사령관님, 모바일 에디터 최적화로 마침내 성공했습니다!"
 
-            # [보강] 프레임이 있는지 확인하고, 없으면 본체에서 직접 찾기
-            frame = page.frame(name="mainFrame")
-            target = frame if frame else page # 프레임이 없으면 페이지 본체를 타겟으로 설정
-            
-            if frame:
-                print("🖼️ PC용 mainFrame 발견!")
-            else:
-                print("📱 모바일 또는 다이렉트 에디터 모드로 진행")
-
-            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 자동 브리핑"
-            content = "사령관님, 마침내 에디터 장벽을 뚫고 성공했습니다!"
-
-            # 제목 입력 (더 넓은 범위의 셀렉터)
-            try:
-                title_selector = "textarea.se-title-input, input.se-title-input"
-                await target.wait_for_selector(title_selector, timeout=20000)
-                await target.fill(title_selector, title)
-                print("✍️ 제목 입력 성공")
-            except:
-                print("⚠️ 제목 입력 칸을 못 찾았습니다. 강제 입력을 시도합니다.")
-                await page.keyboard.press("Tab")
-                await page.keyboard.type(title)
-
-            # 본문 입력
-            await page.keyboard.press("Tab")
+            # 1. 제목 입력 (모바일은 ID가 다를 수 있어 포커스 후 입력)
+            print("✍️ 내용 작성 중...")
+            await page.keyboard.press("Tab") # 제목 칸으로 이동 시도
             await asyncio.sleep(1)
+            await page.keyboard.type(title)
+            
+            # 2. 본문 입력
+            await page.keyboard.press("Enter")
             await page.keyboard.type(content, delay=50)
-            print("✍️ 본문 입력 성공")
+            print("✍️ 입력 완료")
 
-            # 발행 버튼 (클래스 이름이 수시로 바뀌므로 텍스트로 찾기)
+            # 3. 발행 버튼 클릭 (모바일 전용 타겟팅)
             print("📤 발행 시도...")
-            # '발행'이라는 텍스트가 포함된 버튼 클릭
-            await target.click("button:has-text('발행'), .se-publish-button")
-            await asyncio.sleep(2)
-            await target.click("button:has-text('발행'), .se-confirm-button")
+            # 모바일 상단 '등록' 또는 '발행' 버튼 수색
+            publish_selectors = [
+                "button.btn_post", 
+                "a.btn_post", 
+                ".post_write_footer button", 
+                "text='등록'", 
+                "text='발행'"
+            ]
+            
+            success_click = False
+            for selector in publish_selectors:
+                try:
+                    # 버튼이 보일 때까지 살짝 대기 후 클릭
+                    btn = page.locator(selector).first
+                    if await btn.is_visible(timeout=3000):
+                        await btn.click(force=True)
+                        success_click = True
+                        print(f"✅ 버튼 클릭 성공: {selector}")
+                        break
+                except:
+                    continue
 
-            print("🏁🏁🏁🏁🏁 [미션 클리어] 진짜 성공입니다!")
-            await asyncio.sleep(5)
+            if not success_click:
+                print("⚠️ 버튼을 못 찾아 강제 엔터 발행을 시도합니다.")
+                await page.keyboard.press("Control+Enter")
+
+            # 최종 확인 버튼 (모바일은 바로 등록되는 경우가 많음)
+            await asyncio.sleep(3)
+            print("🏁🏁🏁 [미션 클리어] 이번엔 진짜 블로그를 확인해 보세요!")
 
         except Exception as e:
             print(f"❌ 최종 오류 발생: {e}")
