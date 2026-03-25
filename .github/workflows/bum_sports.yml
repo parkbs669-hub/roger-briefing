@@ -24,7 +24,7 @@ jobs:
         sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
     - name: Install Python packages
-      run: pip install selenium requests
+      run: pip install selenium requests webdriver-manager
 
     - name: Run Bot
       env:
