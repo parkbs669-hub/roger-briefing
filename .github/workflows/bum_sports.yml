@@ -1,9 +1,9 @@
-name: 🚀 Bum Sports Automation (Cookie Mode)
+name: 🚀 Bum Sports Final Mission
 
 on:
   schedule:
-    - cron: '15 0 * * *'   # 매일 오전 9:15 (KST)
-  workflow_dispatch:      # 수동 실행 버튼 활성화
+    - cron: '15 0 * * *'
+  workflow_dispatch:
 
 jobs:
   run_script:
@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 📦 의존성 및 Playwright 설치
+      - name: 📦 의존성 설치
         run: |
           python -m pip install --upgrade pip
           pip install playwright
@@ -27,16 +27,20 @@ jobs:
 
       - name: 🚀 bum_sports.py 실행
         env:
-          # 깃허브 Secrets에 등록한 이름과 똑같아야 합니다!
           NID_AUT: ${{ secrets.NID_AUT }}
           NID_SES: ${{ secrets.NID_SES }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
         run: python bum_sports.py
 
-      - name: ✅ 결과 보고
-        if: success()
-        run: echo "🎉 미션 완료! 블로그를 확인하세요."
+      # 📸 실패하든 성공하든 결과 화면을 저장하여 사령관님께 보고합니다.
+      - name: 📸 증거 사진 업로드 (Artifacts)
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: naver-result-screen
+          path: error_screenshot.png
+          retention-days: 1 # 사진은 하루만 보관합니다.
 
-      - name: ❌ 실패 보고
-        if: failure()
-        run: echo "⚠️ 미션 실패! 로그를 분석해야 합니다."
+      - name: ✅ 성공 보고
+        if: success()
+        run: echo "🎉 미션 완료!"
