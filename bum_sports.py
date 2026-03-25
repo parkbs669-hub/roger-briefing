@@ -10,11 +10,9 @@ async def run():
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             viewport={'width': 1920, 'height': 1080},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            locale="ko-KR"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
 
-        # 쿠키 주입
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
         ses_val = str(os.environ.get('NID_SES') or "").strip()
 
@@ -26,61 +24,54 @@ async def run():
         page = await context.new_page()
 
         try:
-            print("🚀 [전략] 에디터 정밀 수색 모드 개시...")
-            # 에디터 주소 접속
-            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="domcontentloaded")
+            print("🚀 [최종 작전] 도움말 창 제거 및 정밀 타격 개시...")
+            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             
-            # 페이지 안정화를 위해 충분히 대기 (해외 서버 특성 고려)
-            print("🔍 화면 로딩 대기 중 (10초)...")
-            await asyncio.sleep(10) 
-
-            # 쿠키 만료 여부 최종 확인
-            if "nidlogin" in page.url:
-                print("❌ [실패] 쿠키가 만료되어 로그인 페이지로 튕겼습니다.")
-                await page.screenshot(path="error_screenshot.png")
-                return
-
-            # 프레임 및 요소 수색
+            # 1. 프레임 진입 대기
+            await page.wait_for_selector("#mainFrame", timeout=30000)
             frame = page.frame(name="mainFrame")
-            target = frame if frame else page
-            
-            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 승전보"
-            content = "사령관님, 집념의 끝에 도달했습니다! 자동 포스팅 성공 리포트입니다."
+            print("✅ 에디터 프레임 접속")
 
-            print("✍️ 제목 입력 시도...")
-            # 여러 개의 셀렉터를 후보로 둡니다 (네이버의 변화에 대응)
+            # 2. [중요] 도움말 창 닫기 (사진 우측 상단의 X 버튼 타격)
             try:
-                title_input = await target.wait_for_selector(".se-title-input, textarea.se-title-input", timeout=20000)
-                await title_input.click()
-                await page.keyboard.type(title)
-                print("✅ 제목 작성 완료")
-            except Exception as e:
-                print(f"⚠️ 제목 칸 발견 실패: {e}")
-                await page.screenshot(path="error_screenshot.png")
-                raise e
+                print("🛡️ 도움말 창 제거 시도...")
+                # 여러 방식의 X 버튼 셀렉터를 시도합니다.
+                close_btn = await frame.wait_for_selector("button.help_close, .se-help-close-button", timeout=5000)
+                await close_btn.click()
+                print("✅ 도움말 창 제거 완료")
+            except:
+                print("⚠️ 도움말 창이 없거나 이미 닫혀 있습니다. 계속 진행합니다.")
 
-            print("✍️ 본문 작성 시도...")
+            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 완벽 성공 리포트"
+            content = "사령관님, 도움말 장벽을 뚫고 마침내 자동 포스팅에 성공했습니다!"
+
+            # 3. 제목 입력 (강제 클릭 후 입력)
+            print("✍️ 제목 작성 중...")
+            await frame.click(".se-title-input")
+            await page.keyboard.type(title)
+            await asyncio.sleep(1)
+
+            # 4. 본문 입력
+            print("✍️ 본문 작성 중...")
             await page.keyboard.press("Tab")
             await asyncio.sleep(1)
             await page.keyboard.type(content, delay=50)
-            print("✅ 본문 작성 완료")
 
-            print("📤 발행 프로세스 시작...")
-            publish_btn = await target.wait_for_selector(".se-publish-button", timeout=10000)
+            # 5. 발행 (강제 연타 모드)
+            print("📤 발행 버튼 정밀 타격...")
+            publish_btn = await frame.wait_for_selector(".se-publish-button")
             await publish_btn.click()
             await asyncio.sleep(2)
 
-            confirm_btn = await target.wait_for_selector(".se-confirm-button", timeout=10000)
+            confirm_btn = await frame.wait_for_selector(".se-confirm-button")
             await confirm_btn.click()
             
-            print("🏁🏁🏁🏁🏁 [미션 클리어] 사령관님, 성공입니다!")
+            print("🏁🏁🏁🏁🏁 [대성공] 이제 진짜 블로그 맨 위를 확인하세요!")
             await asyncio.sleep(5)
 
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
-            # 실패 시 무조건 사진을 찍습니다.
-            await page.screenshot(path="error_screenshot.png", full_page=True)
-            print("📸 [보고] 오류 화면을 스크린샷으로 저장했습니다.")
+            await page.screenshot(path="error_screenshot.png")
         finally:
             await browser.close()
 
