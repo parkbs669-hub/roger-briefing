@@ -1,0 +1,32 @@
+name: BUM Sports Blog Automation
+
+on:
+  schedule:
+    # 매일 아침 9시(한국 시간)에 자동으로 실행 (UTC 기준 00:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 수동으로 'Run' 버튼 눌러서 실행하고 싶을 때 사용
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Run BUM Sports Bot
+        env:
+          # 아까 깃허브 Secret에 저장한 이름들과 똑같이 맞춰야 합니다!
+          NL_API_KEY: ${{ secrets.NL_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        run: python bum_sports.py
