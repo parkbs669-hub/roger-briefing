@@ -1,33 +1,33 @@
-name: BUM Sports Blog Automation (Selenium)
+name: BUM Sports Auto Blog
 
 on:
-  workflow_dispatch: # 수동 실행 버튼
+  schedule:
+    - cron: '0 23 * * *'  # 한국 오전 8시
+  workflow_dispatch:
 
 jobs:
-  build:
+  run:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    - name: Install Chrome and Dependencies
+    - name: Install Chrome
       run: |
         sudo apt-get update
-        # 최신 안정 크롬 브라우저 설치
-        sudo apt-get install -y google-chrome-stable
-        python -m pip install --upgrade pip
-        # 셀레늄과 드라이버 관리자 패키지 설치
-        pip install requests selenium webdriver-manager
+        sudo apt-get install -y wget unzip
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
-    - name: Run BUM Sports Bot
+    - name: Install Python packages
+      run: pip install selenium requests
+
+    - name: Run Bot
       env:
-        # 사령관님의 Secret 이름을 정확히 맞춰줍니다!
         NL_API_KEY: ${{ secrets.NL_API_KEY }}
         NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
       run: python bum_sports.py
