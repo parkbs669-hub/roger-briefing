@@ -24,49 +24,51 @@ async def run():
         page = await context.new_page()
 
         try:
-            print("🚀 [최종 작전] 도움말 창 제거 및 정밀 타격 개시...")
-            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
+            print("🚀 [전략] 프레임리스 직접 침투 개시...")
+            # 에디터 접속
+            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="domcontentloaded")
             
-            # 1. 프레임 진입 대기
-            await page.wait_for_selector("#mainFrame", timeout=30000)
-            frame = page.frame(name="mainFrame")
-            print("✅ 에디터 프레임 접속")
+            print("🔍 화면 안정화 대기 (10초)...")
+            await asyncio.sleep(10) 
 
-            # 2. [중요] 도움말 창 닫기 (사진 우측 상단의 X 버튼 타격)
+            # 1. 도움말 X 버튼 제거 (프레임 없이 바로 찾기)
             try:
                 print("🛡️ 도움말 창 제거 시도...")
-                # 여러 방식의 X 버튼 셀렉터를 시도합니다.
-                close_btn = await frame.wait_for_selector("button.help_close, .se-help-close-button", timeout=5000)
+                # 사진 우측 상단 X 버튼의 실제 경로 타겟팅
+                close_btn = await page.wait_for_selector(".se-help-panel-close-button, .help_close, button[class*='close']", timeout=5000)
                 await close_btn.click()
                 print("✅ 도움말 창 제거 완료")
             except:
-                print("⚠️ 도움말 창이 없거나 이미 닫혀 있습니다. 계속 진행합니다.")
+                print("⚠️ 도움말 창이 없거나 클릭할 수 없습니다. 계속 진행.")
 
-            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 완벽 성공 리포트"
-            content = "사령관님, 도움말 장벽을 뚫고 마침내 자동 포스팅에 성공했습니다!"
+            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 최종 승전보"
+            content = "사령관님, 프레임 장벽과 도움말 팝업을 모두 뚫고 마침내 미션을 완수했습니다!"
 
-            # 3. 제목 입력 (강제 클릭 후 입력)
+            # 2. 제목 입력 (사진 속 '제목' 위치 직접 타격)
             print("✍️ 제목 작성 중...")
-            await frame.click(".se-title-input")
+            title_input = await page.wait_for_selector(".se-title-input", timeout=15000)
+            await title_input.click()
             await page.keyboard.type(title)
             await asyncio.sleep(1)
 
-            # 4. 본문 입력
+            # 3. 본문 입력
             print("✍️ 본문 작성 중...")
             await page.keyboard.press("Tab")
             await asyncio.sleep(1)
             await page.keyboard.type(content, delay=50)
 
-            # 5. 발행 (강제 연타 모드)
-            print("📤 발행 버튼 정밀 타격...")
-            publish_btn = await frame.wait_for_selector(".se-publish-button")
-            await publish_btn.click()
+            # 4. 발행 및 최종 확정
+            print("📤 발행 버튼 타격...")
+            # 발행 메뉴 버튼
+            publish_menu = await page.wait_for_selector(".se-publish-button", timeout=10000)
+            await publish_menu.click()
             await asyncio.sleep(2)
 
-            confirm_btn = await frame.wait_for_selector(".se-confirm-button")
+            # 진짜 발행 버튼
+            confirm_btn = await page.wait_for_selector(".se-confirm-button", timeout=10000)
             await confirm_btn.click()
             
-            print("🏁🏁🏁🏁🏁 [대성공] 이제 진짜 블로그 맨 위를 확인하세요!")
+            print("🏁🏁🏁🏁🏁 [대성공] 사령관님, 이제 진짜 블로그를 확인하십시오!")
             await asyncio.sleep(5)
 
         except Exception as e:
