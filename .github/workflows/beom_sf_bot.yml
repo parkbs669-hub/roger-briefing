@@ -2,8 +2,8 @@ name: 🚀 Daily Beom SF Checker
 
 on:
   schedule:
-    - cron: '15 0 * * *'   # 매일 한국 시간(KST) 오전 9:15 자동 실행
-  workflow_dispatch:      # 사령관님께서 수동으로 즉시 실행 가능
+    - cron: '15 0 * * *'   # 매일 오전 9:15 (KST) 자동 실행
+  workflow_dispatch:      # 수동 실행 가능
 
 jobs:
   run_bot:
@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 필수 도구(Playwright) 설치
-        # 이 단계가 실행되어야 ModuleNotFoundError가 해결됩니다.
+        # 이 단계가 ModuleNotFoundError를 해결하는 핵심입니다.
         run: |
           python -m pip install --upgrade pip
           pip install playwright
@@ -33,9 +33,9 @@ jobs:
         run: python beom_sf_bot.py
 
       - name: 📸 결과 보고서(PNG) 업로드
-        if: always()
+        if: always() # 실패하더라도 스크린샷은 찍어서 보고함
         uses: actions/upload-artifact@v4
         with:
           name: beom-sf-report
-          path: final_report.png  # beom_sf_bot.py에서 생성하는 파일명
+          path: final_report.png
           retention-days: 1
