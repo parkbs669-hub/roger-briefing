@@ -23,61 +23,55 @@ async def post_blog():
         page = await context.new_page()
 
         try:
-            print("🚀 [최종 정밀 타격] 작전 개시...")
+            print("🚀 [진격] 도움말 장벽 제거 및 최종 발행 작전...")
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             await asyncio.sleep(15)
 
-            # 도움말 제거
+            # 1. [필살] 도움말 창 제거 (사진상의 X 버튼 위치 타격)
+            print("🛡️ 도움말 제거 시도 중...")
             try:
-                close_btn = await page.wait_for_selector(".se-help-panel-close-button, .help_close", timeout=5000)
-                await close_btn.click()
-                print("🛡️ 도움말 제거 완료")
-            except: pass
+                # 클래스로 찾기 시도
+                help_close = await page.wait_for_selector(".se-help-panel-close-button, .help_close", timeout=5000)
+                await help_close.click()
+                print("✅ 도움말 클래스로 제거 성공")
+            except:
+                # 안되면 사진상 X버튼 위치(우측 상단 끝) 강제 클릭
+                print("⚠️ 클래스 실패, 좌표(1885, 35)로 도움말 강제 종료")
+                await page.mouse.click(1885, 35)
+            
+            await asyncio.sleep(2)
 
-            # 제목/본문 작성
-            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 리포트"
-            content = "사령관님, 수많은 시행착오 끝에 마침내 자동화 미션을 완수했습니다!\n테니스 스트링 텐션의 정밀함이 승리를 만듭니다."
+            # 2. 내용 작성 (도움말이 사라졌으니 이제 Tab이 제대로 먹힙니다)
+            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 정밀 리포트"
+            content = "사령관님, 도움말 장벽을 허물고 마침내 자동 포스팅에 성공했습니다!\n테니스 스트링 텐션의 정밀함이 승리를 만듭니다."
 
-            await page.mouse.click(960, 300)
+            print("✍️ 제목 및 본문 작성 중...")
+            # 에디터 본체 클릭하여 포커스 잡기
+            await page.mouse.click(960, 300) 
             await asyncio.sleep(1)
-            await page.keyboard.press("Tab")
+            await page.keyboard.press("Tab") # 제목 칸 진입
             await page.keyboard.type(title, delay=50)
-            await page.keyboard.press("Tab")
+            await page.keyboard.press("Tab") # 본문 칸 진입
             await page.keyboard.type(content, delay=30)
             print("✅ 내용 작성 완료")
 
-            # 발행 시도 (좌표 정밀 수정: 1850)
-            print("📤 발행 버튼 정밀 조준...")
-            try:
-                btn = await page.wait_for_selector(".se-publish-button", timeout=10000)
-                await btn.click()
-            except:
-                print("⚠️ 버튼 못 찾음 -> 좌표(1850, 45) 강제 클릭")
-                await page.mouse.click(1850, 45) 
-
+            # 3. 발행 버튼 클릭 (이제 가려진 게 없으니 잘 보입니다)
+            print("📤 발행 버튼 조준...")
+            publish_btn = await page.wait_for_selector(".se-publish-button", state="visible", timeout=10000)
+            await publish_btn.click()
             await asyncio.sleep(3)
 
-            # 최종 확인 버튼 (엔터 대신 클릭 위주)
-            print("📤 최종 발행 확정 시도...")
-            try:
-                confirm = await page.wait_for_selector(".se-confirm-button", timeout=10000)
-                await confirm.click(force=True)
-                print("✅ 최종 확인 완료")
-            except:
-                print("⚠️ 확인 버튼 못 찾음 -> 엔터 키 연타")
-                await page.keyboard.press("Enter")
-                await asyncio.sleep(1)
-                await page.keyboard.press("Enter")
-
-            await asyncio.sleep(5)
-            print("🏁🏁🏁 작전 종료! (사진을 확인하세요)")
+            # 4. 최종 확인 버튼
+            print("📤 최종 발행 확정...")
+            confirm_btn = await page.wait_for_selector(".se-confirm-button", state="visible", timeout=10000)
+            await confirm_btn.click()
+            
+            print("🏁🏁🏁 [임무 완수] 이제 진짜 블로그를 확인하세요!")
 
         except Exception as e:
-            print(f"❌ 오류: {e}")
+            print(f"❌ 오류 발생: {e}")
         finally:
-            # 📸 [핵심 수정] 성공/실패 여부 상관없이 무조건 스크린샷 저장
             await page.screenshot(path="error_screenshot.png", full_page=True)
-            print("📸 최종 화면 스크린샷 저장 완료 (error_screenshot.png)")
             await browser.close()
 
 if __name__ == "__main__":
