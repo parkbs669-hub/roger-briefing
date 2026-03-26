@@ -24,49 +24,59 @@ async def main():
         page = await context.new_page()
 
         try:
-            print("🚀 [전략] 아이프레임 침투 및 전문 리포트 작성 개시...")
+            print("🚀 [전략] 프레임리스 직격 침투 개시...")
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             
-            # 1. 아이프레임(mainFrame)이 나타날 때까지 대기
-            print("🔍 mainFrame 수색 중...")
-            await page.wait_for_selector("#mainFrame", timeout=30000)
-            frame = page.frame(name="mainFrame")
-            print("✅ mainFrame 침투 성공!")
+            # 1. 화면 안정화 대기
+            print("⏳ 에디터 로딩 대기 중 (15초)...")
+            await asyncio.sleep(15)
 
-            # 2. 도움말 닫기 (프레임 안에서 찾기)
+            # 2. 도움말 제거 (프레임 없이 본체에서 수색)
             try:
-                await frame.click(".se-help-panel-close-button, .help_close", timeout=5000)
-                print("🛡️ 도움말 제거 완료")
-            except: pass
+                print("🛡️ 방해물(도움말) 제거 시도...")
+                close_btn = await page.wait_for_selector(".se-help-panel-close-button, .help_close, button[class*='close']", timeout=5000)
+                await close_btn.click()
+                print("✅ 도움말 제거 성공")
+            except:
+                print("⚠️ 도움말 창이 없거나 이미 닫혀 있습니다.")
 
-            # 3. 제목 및 본문 작성 (프레임 내부 요소를 직접 타격)
-            print("✍️ 스트링 머신 리포트 작성 중...")
-            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 스트링 머신 유지보수"
-            content = "사령관님, 아이프레임 장벽을 뚫고 마침내 정밀 포스팅에 성공했습니다!\n스트링 클램프와 텐션 헤드를 꼭 점검하세요."
-
-            # 제목 칸 클릭 후 입력
-            await frame.click(".se-title-input")
-            await page.keyboard.type(title, delay=50)
+            # 3. 제목 작성 (좌표 클릭 + 클래스 클릭 병행)
+            print("✍️ 제목 작성 중...")
+            try:
+                # 제목 입력 칸(.se-title-input)을 직접 찾거나 안되면 좌표(중앙 상단) 클릭
+                title_area = await page.wait_for_selector(".se-title-input", timeout=5000)
+                await title_area.click()
+            except:
+                print("⚠️ 요소를 못 찾아 좌표로 강제 클릭합니다.")
+                await page.mouse.click(960, 280) # 제목 칸 예상 위치
             
-            # 본문 칸으로 이동 후 입력
+            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 스트링 머신 정밀 리포트"
+            await page.keyboard.type(title, delay=50)
+
+            # 4. 본문 작성 (Tab 키로 안전하게 이동)
+            print("✍️ 본문 작성 중...")
             await page.keyboard.press("Tab")
             await asyncio.sleep(1)
+            content = "사령관님, 프레임 장벽을 우회하여 마침내 자동 포스팅 미션을 완수했습니다!\n스트링 텐션의 일관성이 승패를 좌우합니다."
             await page.keyboard.type(content, delay=30)
-            print("✅ 작성 완료")
+            print("✅ 내용 작성 완료")
 
-            # 4. 발행 버튼 클릭 (상단 메뉴는 page에서, 발행 팝업은 frame에서 처리)
-            print("📤 발행 프로세스 시작...")
-            await frame.click(".se-publish-button") # 발행 메뉴 열기
+            # 5. 발행 버튼 클릭 (본체에서 직접 수색)
+            print("📤 발행 버튼 탐색 중...")
+            publish_btn = await page.wait_for_selector(".se-publish-button, button[class*='publish']", timeout=10000)
+            await publish_btn.click()
             await asyncio.sleep(2)
             
-            # 최종 '발행' 버튼 클릭
-            await frame.click(".se-confirm-button")
+            # 최종 확인 버튼
+            confirm_btn = await page.wait_for_selector(".se-confirm-button, button[class*='confirm']", timeout=10000)
+            await confirm_btn.click()
             
             print("🏁🏁🏁🏁🏁 [작전 성공] 이제 블로그 목록 맨 위를 확인하세요!")
 
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
             await page.screenshot(path="error_screenshot.png", full_page=True)
+            print("📸 실패 화면을 error_screenshot.png로 저장했습니다.")
         finally:
             await browser.close()
 
