@@ -1,29 +1,18 @@
 import os
 import asyncio
-import json
 from datetime import datetime
 from playwright.async_api import async_playwright
 
 NAVER_ID = "parkbs669"
 
 async def get_tennis_trends(page):
-    """네이버에서 테니스 스트링 최신 정보를 수집합니다."""
-    print("🔍 외부 정보 수집 및 분석 중...")
+    print("🔍 테니스 최신 이슈 수집 중...")
     search_url = "https://search.naver.com/search.naver?query=테니스+스트링+추천+후기+교체&nso=so:dd"
     await page.goto(search_url, wait_until="networkidle")
     await asyncio.sleep(3)
-    
     items = await page.locator(".news_tit, .api_txt_lines.total_tit").all_inner_texts()
-    seen = set()
-    unique_items = []
-    for item in items:
-        clean_item = item.strip()
-        if clean_item and clean_item not in seen:
-            unique_items.append(f"📍 {clean_item}")
-            seen.add(clean_item)
-            if len(unique_items) >= 5: break
-            
-    return "\n".join(unique_items) if unique_items else "📍 최신 장비 소식을 정밀 분석 중입니다."
+    unique_items = list(dict.fromkeys([item.strip() for item in items if len(item.strip()) > 5]))
+    return "\n".join([f"📍 {i}" for i in unique_items[:5]])
 
 async def post_blog():
     async with async_playwright() as p:
@@ -44,65 +33,49 @@ async def post_blog():
         page = await context.new_page()
 
         try:
-            # 1. 정보 수집
-            trends_report = await get_tennis_trends(page)
-
-            # 2. 블로그 에디터 접속
-            print(f"🚀 [범 스포츠] 통합 리포트 작성 시작 (ID: {NAVER_ID})...")
+            trends = await get_tennis_trends(page)
+            print(f"🚀 [범 스포츠] 리포트 작성 시작 (ID: {NAVER_ID})...")
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             await asyncio.sleep(15)
 
-            # 🛡️ 도움말 제거 (이전 성공 로직 유지)
-            print("🛡️ 도움말 장벽 강제 제거 중...")
-            await page.evaluate("() => { const panel = document.querySelector('.se-help-panel'); if(panel) panel.remove(); }")
-            await page.mouse.click(1885, 35) 
-            await asyncio.sleep(2)
+            # 🛡️ 방해물(도움말/팝업) 제거
+            await page.evaluate("() => { document.querySelectorAll('.se-help-panel, .se-popup-guide').forEach(el => el.remove()); }")
             
-            # 3. 리포트 내용 작성
-            today_str = datetime.now().strftime("%Y년 %m월 %d일")
-            title = f"🎾 [범 스포츠] {today_str} 테니스 스트링 정밀 분석 리포트"
-            content = (
-                f"사령관님, 오늘 네이버에서 수집된 최신 테니스 장비 이슈입니다!\n\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🔍 실시간 테니스 스트링 트렌드\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"{trends_report}\n\n"
-                f"사령관님의 정밀 타격 좌표(1840, 30)를 적용하여 발행된 자동 리포트입니다.\n"
-                f"오늘도 범 스포츠와 함께 승리하는 테니스 되시기 바랍니다."
-            )
+            # 내용 입력
+            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 테니스 정밀 리포트"
+            content = f"사령관님, 오늘 수집된 테니스 이슈입니다!\n\n{trends}\n\n텍스트 추적 시스템에 의한 자동 포스팅입니다."
 
-            # 데이터 입력 (Tab 전략)
             await page.mouse.click(960, 300)
             await page.keyboard.press("Tab")
             await page.keyboard.type(title, delay=50)
             await page.keyboard.press("Tab")
             await page.keyboard.type(content, delay=30)
-            print("✅ 리포트 내용 입력 완료")
+            print("✅ 데이터 입력 완료")
 
-            # 4. [정밀 타격] 발행 버튼 (사령관님 좌표: 1847, 25)
-            print(f"📤 사령관님 지정 좌표(1847, 25) 정밀 타격 중...")
-            await page.mouse.click(1847, 25) 
-            await asyncio.sleep(3)
+            # 🎯 [1단계] 첫 번째 '발행' 단어 찾아서 클릭
+            print("📤 1단계: '발행' 버튼 탐색 및 클릭...")
+            # '발행' 텍스트를 포함한 버튼이나 링크를 찾아 클릭합니다.
+            publish_first = page.get_by_role("button", name="발행").first
+            await publish_first.wait_for(state="visible", timeout=10000)
+            await publish_first.click()
+            print("🎯 1단계 '발행' 클릭 성공")
             
-            # 5. 최종 발행 확정
-            print("📤 최종 발행 확정 시도...")
-            try:
-                # 확인 버튼 클래스 탐색
-                confirm_btn = await page.wait_for_selector(".se-confirm-button", timeout=5000)
-                await confirm_btn.click()
-                print("✅ 최종 확인 버튼 클릭 성공")
-            except:
-                # 안되면 엔터 연타
-                print("⚠️ 확인 버튼 미포착 -> 엔터 키 연타로 강제 돌파")
-                for _ in range(3):
-                    await page.keyboard.press("Enter")
-                    await asyncio.sleep(1)
+            await asyncio.sleep(5) # 팝업창 대기
 
-            # 6. 서버 전송 및 PNG 생성
-            print("⏳ 서버 전송 완료 대기 (15초)...")
-            await asyncio.sleep(15)
+            # 🎯 [2단계] 팝업창에서 다시 '발행' 단어 찾아서 클릭
+            print("📤 2단계: 팝업창 내 '발행' 버튼 탐색 및 클릭...")
+            # 팝업 내의 발행 버튼은 보통 '발행하기' 또는 '발행'입니다. 
+            # 정규표현식을 써서 '발행'이 들어간 모든 버튼 중 가시적인 것을 타격합니다.
+            publish_final = page.locator("button").filter(has_text="발행").last
+            await publish_final.wait_for(state="visible", timeout=10000)
+            await publish_final.click()
+            print("🏁 최종 '발행' 클릭 성공! 작전 완수.")
+
+            # 서버 전송 대기 및 결과 보고
+            print("⏳ 서버 응답 대기 중 (20초)...")
+            await asyncio.sleep(20)
             await page.screenshot(path="final_report.png", full_page=True)
-            print("🏁🏁🏁 미션 완수! final_report.png를 확인하십시오.")
+            print("🏁🏁🏁 모든 과정 종료! 블로그를 확인하십시오.")
 
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
