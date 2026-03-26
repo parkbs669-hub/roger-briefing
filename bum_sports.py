@@ -6,7 +6,7 @@ from playwright.async_api import async_playwright
 NAVER_ID = "parkbs669"
 
 async def get_tennis_news(page):
-    """네이버에서 최신 테니스 소식을 수집합니다."""
+    """네이버 통합검색에서 최신 테니스 소식을 수집합니다."""
     print("🔍 외부 정보 수집 중...")
     search_url = "https://search.naver.com/search.naver?query=테니스+스트링+리뷰&nso=so:dd"
     await page.goto(search_url, wait_until="networkidle")
@@ -16,12 +16,12 @@ async def get_tennis_news(page):
 
 async def post_blog():
     async with async_playwright() as p:
-        # 모바일 환경 시뮬레이션
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            viewport={'width': 375, 'height': 812}, # 아이폰 크기
-            user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
+        browser = await p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-blink-features=AutomationControlled"]
         )
+        # PC 버전 해상도 고정
+        context = await browser.new_context(viewport={'width': 1920, 'height': 1080})
         
         # 쿠키 주입
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
@@ -38,31 +38,52 @@ async def post_blog():
             news = await get_tennis_news(page)
             news_section = "\n".join([f"📍 {n}" for n in news]) if news else "📍 최신 장비 소식을 분석 중입니다."
 
-            # 2. 모바일 글쓰기 페이지 접속
-            print("🚀 [모바일 작전] 리포트 작성 시작...")
-            await page.goto(f"https://m.blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
-            await asyncio.sleep(5)
+            # 2. PC 에디터 접속
+            print("🚀 [최종 작전] PC 에디터 정밀 타격 시작...")
+            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
+            await asyncio.sleep(15)
 
-            # 3. 내용 작성 (모바일은 구조가 매우 단순함)
-            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 정밀 리포트"
-            content = f"오늘의 최신 테니스 소식입니다!\n\n{news_section}\n\n범 스포츠에서 전해드렸습니다."
-
-            # 제목 입력
-            await page.fill("input#subject", title)
-            await asyncio.sleep(1)
+            # 3. 도움말 강제 진압 (사진 분석 결과 반영)
+            print("🛡️ 도움말 제거 시도...")
+            try:
+                # 클래스로 찾거나 안되면 우측 상단 X버튼 좌표(1885, 35) 타격
+                help_close = await page.wait_for_selector(".se-help-panel-close-button, .help_close", timeout=5000)
+                await help_close.click()
+            except:
+                await page.mouse.click(1885, 35) 
+            await asyncio.sleep(2)
             
-            # 본문 입력
-            await page.click("#content_common") # 본문 영역 클릭
+            # 4. 내용 작성
+            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 테니스 장비 & 이슈 브리핑"
+            content = (
+                f"사령관님, 오늘 수집된 최신 테니스 소식입니다!\n\n"
+                f"[실시간 테니스 이슈 브리핑]\n"
+                f"{news_section}\n\n"
+                f"범 스포츠에서 전해드리는 정밀 리포트를 참고하여 최상의 경기력을 유지하시기 바랍니다."
+            )
+
+            # 제목/본문 입력 (Tab 전략)
+            await page.mouse.click(960, 300) # 본문 중앙 클릭으로 포커스 확보
+            await page.keyboard.press("Tab")
+            await page.keyboard.type(title, delay=50)
+            await page.keyboard.press("Tab")
             await page.keyboard.type(content, delay=30)
             print("✅ 내용 작성 완료")
 
-            # 4. 등록 버튼 클릭
-            await page.click(".btn_ok") # 모바일 등록 버튼
-            print("📤 등록 버튼 클릭 완료")
+            # 5. 발행 및 최종 확정 (좌표 타격: 1850, 45)
+            print("📤 발행 버튼 타격 중...")
+            await page.mouse.click(1850, 45) 
+            await asyncio.sleep(3)
             
-            await asyncio.sleep(10) # 전송 대기
-            
-            # 결과물 PNG 생성
+            try:
+                confirm_btn = await page.wait_for_selector(".se-confirm-button", timeout=5000)
+                await confirm_btn.click()
+            except:
+                await page.keyboard.press("Enter")
+
+            # 6. 전송 대기 및 결과물 PNG 저장
+            print("⏳ 서버 전송 완료 대기 중 (10초)...")
+            await asyncio.sleep(10)
             await page.screenshot(path="final_report.png", full_page=True)
             print("🏁🏁🏁 작전 성공! final_report.png 생성 완료")
 
