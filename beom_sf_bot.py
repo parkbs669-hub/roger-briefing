@@ -38,7 +38,7 @@ async def post_blog():
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             await asyncio.sleep(15)
 
-            # 도움말 제거 및 내용 입력
+            # 도움말 제거 및 내용 입력 (좌표 타격)
             await page.mouse.click(1885, 35) 
             await asyncio.sleep(2)
             
@@ -58,6 +58,8 @@ async def post_blog():
 
             print("⏳ 서버 전송 완료 대기 중...")
             await asyncio.sleep(10)
+            
+            # 📸 PNG 파일 생성
             await page.screenshot(path="final_report.png", full_page=True)
             print("🏁🏁🏁 final_report.png 생성 완료")
 
