@@ -1,32 +1,39 @@
 name: 🎾 Bum Sports Auto Posting
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '15 0 * * *'   # 매일 오전 9:15 (KST) 자동 실행
+  workflow_dispatch:      # 수동 실행 버튼 활성화
 
 jobs:
-  run_script:
+  run_bum_sports:
     runs-on: ubuntu-latest
+
     steps:
       - name: 📥 코드 체크아웃
         uses: actions/checkout@v4
+
       - name: 🐍 Python 설정
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: 📦 패키지 설치
+
+      - name: 📦 필수 패키지 설치
         run: |
           pip install playwright
           playwright install chromium
           playwright install-deps
-      - name: 🚀 스크립트 실행
+
+      - name: 🚀 bum_sports.py 실행
         env:
           NID_AUT: ${{ secrets.NID_AUT }}
           NID_SES: ${{ secrets.NID_SES }}
         run: python bum_sports.py
-      - name: 📸 PNG 결과물 업로드
-        if: always()
+
+      - name: 📸 결과물 PNG 업로드
+        if: always() # 성공/실패 여부 상관없이 사진 보고서 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: bum-sports-report
+          name: bum-sports-final-report
           path: final_report.png
           retention-days: 1
