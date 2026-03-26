@@ -1,14 +1,14 @@
-name: 🚀 Bum Sports Final Mission
+name: 🚀 Bum Sports Automation
 
 on:
   schedule:
-    - cron: '15 0 * * *'
+    - cron: '15 0 * * *'   # 매일 오전 9:15 (KST)
   workflow_dispatch:
 
 jobs:
   run_script:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 코드 체크아웃
         uses: actions/checkout@v3
@@ -32,15 +32,19 @@ jobs:
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
         run: python bum_sports.py
 
-      # 📸 실패하든 성공하든 결과 화면을 저장하여 사령관님께 보고합니다.
-      - name: 📸 증거 사진 업로드 (Artifacts)
-        if: always() 
+      - name: 📸 스크린샷 업로드
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: naver-result-screen
-          path: error_screenshot.png
-          retention-days: 1 # 사진은 하루만 보관합니다.
+          path: error_screenshot.png      # ← 이 부분이 py 파일과 일치해야 함
+          retention-days: 1
+          if-no-files-found: warn
 
       - name: ✅ 성공 보고
         if: success()
-        run: echo "🎉 미션 완료!"
+        run: echo "🎉 완료! $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')"
+
+      - name: ❌ 실패 보고
+        if: failure()
+        run: echo "⚠️ 실패! 로그를 확인하세요."
