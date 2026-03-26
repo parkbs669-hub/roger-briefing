@@ -1,40 +1,28 @@
 import os
 import asyncio
-import json
 from datetime import datetime
 from playwright.async_api import async_playwright
 
 NAVER_ID = "parkbs669"
 
 async def get_tennis_trends(page):
-    """네이버에서 최신 테니스 정보를 수집합니다."""
-    print("🔍 외부 정보 수집 및 분석 중...")
+    print("🔍 테니스 최신 이슈 수집 중...")
     search_url = "https://search.naver.com/search.naver?query=테니스+스트링+추천+후기+교체&nso=so:dd"
     await page.goto(search_url, wait_until="networkidle")
     await asyncio.sleep(3)
-    
     items = await page.locator(".news_tit, .api_txt_lines.total_tit").all_inner_texts()
-    seen = set()
-    unique_items = []
-    for item in items:
-        clean_item = item.strip()
-        if clean_item and clean_item not in seen:
-            unique_items.append(f"📍 {clean_item}")
-            seen.add(clean_item)
-            if len(unique_items) >= 5: break
-            
-    return "\n".join(unique_items) if unique_items else "📍 최신 소식 분석 중"
+    unique_items = list(dict.fromkeys([item.strip() for item in items if len(item.strip()) > 5]))
+    return "\n".join([f"📍 {i}" for i in unique_items[:5]])
 
 async def post_blog():
     async with async_playwright() as p:
-        # 가상 환경에서도 안정적인 브라우저 구동 설정
         browser = await p.chromium.launch(
             headless=True,
             args=["--no-sandbox", "--disable-blink-features=AutomationControlled"]
         )
         context = await browser.new_context(viewport={'width': 1920, 'height': 1080})
         
-        # 쿠키 주입 (Secrets 설정 확인 필수)
+        # 쿠키 주입
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
         ses_val = str(os.environ.get('NID_SES') or "").strip()
         await context.add_cookies([
@@ -45,72 +33,70 @@ async def post_blog():
         page = await context.new_page()
 
         try:
-            # 1. 정보 수집
-            trends_report = await get_tennis_trends(page)
-
-            # 2. 에디터 접속
+            trends = await get_tennis_trends(page)
             print(f"🚀 [범 스포츠] 통합 리포트 작성 시작 (ID: {NAVER_ID})...")
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
+            
+            # 에디터 로딩 대기 (충분히 15초)
             await asyncio.sleep(15)
 
-            # 3. 도움말 및 방해 요소 강제 제거 (JS 방식)
-            print("🛡️ 방해 요소(도움말/팝업) 제거 중...")
-            await page.evaluate("() => { document.querySelectorAll('.se-help-panel, .se-popup-guide, .se-viewer-help').forEach(el => el.remove()); }")
-            await asyncio.sleep(2)
+            # 🛡️ [강력한 방해물 제거] 사령관님이 보신 '예약 발행 글' 팝업 등을 코드로 직접 삭제
+            print("🛡️ 방해물(예약 발행/도움말/팝업) 소거 중...")
+            await page.evaluate("""() => {
+                // 예약 발행 글, 도움말, 각종 가이드 팝업을 모두 찾아 삭제합니다.
+                const popups = document.querySelectorAll('.se-help-panel, .se-popup-guide, .se-viewer-help, [class*="popup"], [class*="layer"]');
+                popups.forEach(el => el.remove());
+                
+                // 만약 '취소'나 '닫기' 버튼이 있다면 강제 클릭
+                const closeBtns = Array.from(document.querySelectorAll('button')).filter(b => b.innerText.includes('취소') || b.innerText.includes('닫기'));
+                closeBtns.forEach(b => b.click());
+            }""")
+            await asyncio.sleep(3)
             
-            # 4. 리포트 내용 입력
+            # 📝 본문 작성
             today_str = datetime.now().strftime("%Y년 %m월 %d일")
             title = f"🎾 [범 스포츠] {today_str} 테니스 트렌드 리포트"
-            content = (
-                f"사령관님, 오늘 수집된 최신 테니스 이슈입니다!\n\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"{trends_report}\n\n"
-                f"본 포스팅은 좌표 방식의 한계를 극복한 JS 강제 실행 시스템으로 발행되었습니다."
-            )
+            content = f"사령관님, 오늘 수집된 테니스 이슈입니다!\n\n{trends}\n\n시스템 자동 포스팅 미션 수행 중입니다."
 
-            # 데이터 입력 (Tab 전략)
+            # 본문 영역을 확실히 클릭하여 포커스를 잡습니다.
+            await page.mouse.click(960, 500) 
+            await page.keyboard.press("Control+A") # 혹시 모를 기존 내용 삭제
+            await page.keyboard.press("Backspace")
+            
+            # 제목/본문 입력
             await page.mouse.click(960, 300)
             await page.keyboard.press("Tab")
             await page.keyboard.type(title, delay=50)
             await page.keyboard.press("Tab")
             await page.keyboard.type(content, delay=30)
-            print("✅ 데이터 입력 완료 및 버튼 활성화 대기...")
+            print("✅ 리포트 내용 입력 완료")
+
+            # 📤 1단계: 상단 '발행' 버튼 JS 강제 클릭
+            print("📤 1단계: 상단 '발행' 버튼 타격 중...")
+            await page.evaluate("""() => {
+                // '발행' 글자가 정확히 일치하는 상단 버튼만 골라 클릭
+                const btns = Array.from(document.querySelectorAll('button'));
+                const publishBtn = btns.find(b => b.innerText.trim() === '발행' && b.classList.contains('se-publish-button'));
+                if (publishBtn) publishBtn.click();
+                else { // 백업: '발행' 포함된 버튼 강제 클릭
+                    const backup = btns.find(b => b.innerText.includes('발행') && b.offsetWidth > 0);
+                    if (backup) backup.click();
+                }
+            }""")
             await asyncio.sleep(5)
 
-            # 5. [핵심] 1단계 발행 버튼 - 사령관님의 JS 유도탄 투하
-            print("📤 1단계: 발행 메뉴 JS 강제 클릭...")
-            result1 = await page.evaluate("""
-                () => {
-                    const selectors = ['.se-publish-button', 'button[class*="publish"]', 'button:has-text("발행")'];
-                    for (const sel of selectors) {
-                        const btn = document.querySelector(sel) || Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('발행'));
-                        if (btn) { btn.click(); return '클릭 성공: ' + sel; }
-                    }
-                    return '버튼 미포착';
-                }
-            """)
-            print(f"📢 1단계 결과: {result1}")
-            await asyncio.sleep(5) # 팝업창 로딩 대기
+            # 📤 2단계: 최종 '발행하기' 확인 버튼 JS 강제 클릭
+            print("📤 2단계: 최종 발행 확정 명령 전송...")
+            await page.evaluate("""() => {
+                const confirmBtns = Array.from(document.querySelectorAll('.se-confirm-button, button'));
+                const finalBtn = confirmBtns.find(b => b.innerText.includes('발행'));
+                if (finalBtn) finalBtn.click();
+            }""")
 
-            # 6. 2단계 최종 발행 확정 - JS 강제 클릭
-            print("📤 2단계: 최종 발행 확정 JS 강제 클릭...")
-            result2 = await page.evaluate("""
-                () => {
-                    const confirmSelectors = ['.se-confirm-button', 'button:has-text("발행하기")', '.btn_ok'];
-                    for (const sel of confirmSelectors) {
-                        const btn = document.querySelector(sel) || Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('발행'));
-                        if (btn) { btn.click(); return '최종 발행 클릭 성공'; }
-                    }
-                    return '최종 버튼 미포착';
-                }
-            """)
-            print(f"📢 2단계 결과: {result2}")
-
-            # 7. 서버 전송 대기 및 결과 보고
-            print("⏳ 서버 응답 대기 (20초)...")
+            print("⏳ 서버 응답 대기 및 최종 확인 중 (20초)...")
             await asyncio.sleep(20)
             await page.screenshot(path="final_report.png", full_page=True)
-            print("🏁🏁🏁 작전 종료! 블로그를 확인하십시오.")
+            print("🏁🏁🏁 작전 종료! 이제 블로그를 확인해 보세요.")
 
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
