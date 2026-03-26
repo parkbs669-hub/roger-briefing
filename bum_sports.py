@@ -13,7 +13,7 @@ async def post_blog():
         )
         context = await browser.new_context(viewport={'width': 1920, 'height': 1080})
 
-        # 쿠키 주입
+        # 쿠키 주입 (Secrets 설정 확인 필요)
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
         ses_val = str(os.environ.get('NID_SES') or "").strip()
         await context.add_cookies([
@@ -24,51 +24,57 @@ async def post_blog():
         page = await context.new_page()
 
         try:
-            print("🚀 [최후의 일격] 발행 확정 작전 개시...")
+            print("🚀 [범 스포츠] 1안 정식 리포트 발행 작전 개시...")
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             await asyncio.sleep(15)
 
-            # 1. 도움말 제거 (이미 사진에서 사라진 것을 확인했으나 안전용)
+            # 1. 도움말 제거 (검증된 로직)
             try:
                 close_btn = await page.wait_for_selector(".se-help-panel-close-button, .help_close, button[class*='close']", timeout=5000)
                 await close_btn.click()
                 print("🛡️ 도움말 제거 완료")
-            except: pass
+            except: 
+                await page.mouse.click(1885, 35) # 좌표로 강제 클릭
+            
+            await asyncio.sleep(2)
 
-            # 2. 제목 및 본문 작성 (검증 완료된 로직)
-            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 정밀 리포트"
-            content = "사령관님, 도움말 장벽을 완전히 허물고 마침내 자동 포스팅 미션을 완수했습니다!\n테니스 스트링의 정밀함이 승리를 만듭니다."
+            # 2. [1안] 내용 작성
+            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 스트링 교체 주기의 '골든 타임'은?"
+            content = (
+                "사령관님, 테니스 승리의 핵심은 장비의 일관성입니다!\n\n"
+                "많은 분이 스트링이 끊어질 때까지 사용하시지만, 실제 스트링의 탄성은 "
+                "작업 직후부터 서서히 감소하기 시작합니다.\n\n"
+                "탄성을 잃은 스트링은 컨트롤력을 떨어뜨리고 팔꿈치 부상(엘보)의 원인이 되기도 합니다. "
+                "끊어지지 않더라도 3개월이 지났다면, 승리를 위해 새로운 텐션으로 교체하는 '골든 타임'을 놓치지 마세요!\n\n"
+                "오늘도 범 스포츠와 함께 활기찬 테니스 생활 되시길 바랍니다."
+            )
 
             print("✍️ 리포트 작성 중...")
             await page.mouse.click(960, 300) 
             await asyncio.sleep(1)
-            await page.keyboard.press("Tab")
+            await page.keyboard.press("Tab") # 제목 칸 진입
             await page.keyboard.type(title, delay=50)
-            await page.keyboard.press("Tab")
+            await page.keyboard.press("Tab") # 본문 칸 진입
             await page.keyboard.type(content, delay=30)
             print("✅ 내용 작성 완료")
 
-            # 3. [보강] 발행 버튼 정밀 추적 (30초 대기)
-            print("📤 발행 버튼 포착 중 (30초 대기)...")
+            # 3. 발행 버튼 클릭
+            print("📤 발행 메뉴 진입...")
             try:
-                # 사진 우측 상단의 초록색 버튼을 찾습니다.
-                publish_btn = await page.wait_for_selector(".se-publish-button, button[class*='publish']", state="visible", timeout=30000)
+                publish_btn = await page.wait_for_selector(".se-publish-button", state="visible", timeout=15000)
                 await publish_btn.click(force=True)
-                print("🔥 발행 메뉴 클릭 성공")
             except:
-                print("⚠️ 버튼 탐색 지연 -> 좌표(1850, 45) 강제 정밀 타격")
-                await page.mouse.click(1850, 45) 
+                await page.mouse.click(1850, 45) # 좌표 정밀 타격
 
             await asyncio.sleep(3)
 
-            # 4. 최종 확인 버튼 (팝업 내 '발행' 버튼)
+            # 4. 최종 발행 확정
             print("📤 최종 발행 확정 시도...")
             try:
-                confirm_btn = await page.wait_for_selector(".se-confirm-button, button[class*='confirm']", state="visible", timeout=15000)
+                confirm_btn = await page.wait_for_selector(".se-confirm-button", state="visible", timeout=10000)
                 await confirm_btn.click(force=True)
-                print("🏁🏁🏁 [미션 성공] 포스팅 완료!")
+                print("🏁🏁🏁 [미션 성공] 1안 리포트 포스팅 완료!")
             except:
-                print("⚠️ 확인 버튼 실패 -> 엔터 키 연타로 마무리")
                 for _ in range(3):
                     await page.keyboard.press("Enter")
                     await asyncio.sleep(1)
@@ -78,7 +84,7 @@ async def post_blog():
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
         finally:
-            # 성공 여부 확인을 위해 마지막 화면은 무조건 저장
+            # 결과 확인용 스크린샷 저장
             await page.screenshot(path="error_screenshot.png", full_page=True)
             await browser.close()
 
