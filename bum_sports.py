@@ -79,9 +79,9 @@ async def post_blog():
             await page.keyboard.type(content, delay=30)
             print("✅ 리포트 내용 입력 완료")
 
-            # 4. [정밀 타격] 발행 버튼 (사령관님 좌표: 1840, 30)
-            print(f"📤 사령관님 지정 좌표(1840, 30) 정밀 타격 중...")
-            await page.mouse.click(1840, 30) 
+            # 4. [정밀 타격] 발행 버튼 (사령관님 좌표: 1847, 25)
+            print(f"📤 사령관님 지정 좌표(1847, 25) 정밀 타격 중...")
+            await page.mouse.click(1847, 25) 
             await asyncio.sleep(3)
             
             # 5. 최종 발행 확정
