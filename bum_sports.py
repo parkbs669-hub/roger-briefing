@@ -7,22 +7,13 @@ NAVER_ID = "parkbs669"
 
 async def post_blog():
     async with async_playwright() as p:
-        # GPT 추천 옵션 적용 (자동화 탐지 방지)
         browser = await p.chromium.launch(
             headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled"
-            ]
+            args=["--no-sandbox", "--disable-blink-features=AutomationControlled"]
         )
+        context = await browser.new_context(viewport={'width': 1920, 'height': 1080})
 
-        context = await browser.new_context(
-            viewport={'width': 1920, 'height': 1080},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-        )
-
-        # ✅ 우리의 필살기: 깃허브 시크릿 쿠키 주입
+        # 쿠키 주입
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
         ses_val = str(os.environ.get('NID_SES') or "").strip()
         await context.add_cookies([
@@ -33,67 +24,56 @@ async def post_blog():
         page = await context.new_page()
 
         try:
-            print("🚀 [작전 개시] 융합 코드로 블로그 침투...")
-            await page.goto(
-                f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}",
-                wait_until="networkidle"
-            )
+            print("🚀 [최후 작전] 융합 침투 및 증거 확보 개시...")
+            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
+            
+            # 1. 에디터 로딩 대기 (충분히 20초)
+            print("⏳ 에디터 로딩 대기 중...")
+            await asyncio.sleep(20)
 
-            # 🔥 GPT의 핵심 비책: iframe(mainFrame)이 나타날 때까지 20번 수색
-            frame = None
-            for i in range(20):
-                frame = page.frame(name="mainFrame")
-                if frame:
-                    print(f"✅ {i+1}초 만에 mainFrame 진입 성공!")
-                    break
-                await asyncio.sleep(1)
-
-            if not frame:
-                # 프레임이 없는 최신 에디터일 경우를 대비해 page 자체를 타겟으로 설정
-                print("⚠️ mainFrame을 찾지 못해 본체 페이지(Page)에서 진행합니다.")
-                target = page
-            else:
-                target = frame
-
-            # 🛡️ 도움말 창 제거 (이게 있으면 클릭이 씹힙니다)
+            # 2. 도움말 제거 (이름이 달라도 다 찾아냄)
             try:
-                close_btn = await target.wait_for_selector(".se-help-panel-close-button, .help_close", timeout=5000)
+                close_btn = await page.wait_for_selector(".se-help-panel-close-button, .help_close, button[class*='close']", timeout=5000)
                 await close_btn.click()
                 print("🛡️ 도움말 제거 완료")
             except: pass
 
-            # ✍️ 제목 입력 (GPT 방식: textarea.se-title-input)
-            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d %H:%M')} 리포트"
-            print(f"✍️ 제목 작성 중: {title}")
-            title_box = await target.wait_for_selector("textarea.se-title-input", timeout=15000)
-            await title_box.click()
-            await title_box.fill(title)
+            # 3. [핵심] Tab 키 전략으로 제목/본문 타격 (태그 이름 무시)
+            print("✍️ 제목 및 본문 작성 중...")
+            # 에디터 중앙을 찍어 포커스를 잡습니다.
+            await page.mouse.click(960, 300) 
+            await asyncio.sleep(1)
+            
+            title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 정밀 리포트"
+            content = "사령관님, 수많은 시행착오 끝에 마침내 자동화 미션을 완수했습니다!\n테니스 스트링 텐션의 정밀함이 승리를 만듭니다."
 
-            # ✍️ 본문 입력 (GPT 방식: div.se-main-container)
-            print("✍️ 본문 작성 중...")
-            content = "사령관님, GPT의 프레임 수색 로직과 우리의 쿠키 기술을 합쳐 성공했습니다!\n테니스 스트링 머신 관리는 정밀함이 생명입니다."
-            body = await target.wait_for_selector("div.se-main-container", timeout=15000)
-            await body.click()
-            await page.keyboard.type(content)
+            # 제목 입력
+            await page.keyboard.press("Tab")
+            await asyncio.sleep(1)
+            await page.keyboard.type(title, delay=50)
+            
+            # 본문 입력
+            await page.keyboard.press("Tab")
+            await asyncio.sleep(1)
+            await page.keyboard.type(content, delay=30)
+            print("✅ 내용 작성 완료")
 
-            # 📤 발행 버튼 (GPT 방식)
-            print("📤 발행 버튼 탐색...")
-            publish_btn = await target.wait_for_selector("button.se-publish-button", timeout=15000)
+            # 4. 발행 버튼 (여러 후보군 수색)
+            print("📤 발행 및 확정 시도...")
+            publish_btn = await page.wait_for_selector(".se-publish-button, button[class*='publish'], text='발행'", timeout=15000)
             await publish_btn.click()
             await asyncio.sleep(2)
 
-            # 최종 확인 버튼
-            confirm_btn = await target.wait_for_selector("button.se-confirm-button", timeout=15000)
+            confirm_btn = await page.wait_for_selector(".se-confirm-button, button[class*='confirm']", timeout=10000)
             await confirm_btn.click()
-
-            print("🏁🏁🏁🏁🏁 [최종 성공] 포스팅 완료!")
-            await asyncio.sleep(5)
+            
+            print("🏁🏁🏁🏁🏁 [대성공] 미션 완료!")
 
         except Exception as e:
             print(f"❌ 오류: {e}")
-            await page.screenshot(path="error.png", full_page=True)
-            print("📸 error.png 저장됨 - 깃허브 Artifacts에서 확인하세요.")
-
+            # 💥 중요: 파일명을 깃허브 설정과 맞춤
+            await page.screenshot(path="error_screenshot.png", full_page=True)
+            print("📸 스크린샷 저장됨: error_screenshot.png")
         finally:
             await browser.close()
 
