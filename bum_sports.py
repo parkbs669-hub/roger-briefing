@@ -5,17 +5,6 @@ from playwright.async_api import async_playwright
 
 NAVER_ID = "parkbs669"
 
-async def debug_elements(target):
-    """[디버깅] 현재 화면의 구성 요소 수색"""
-    print("\n" + "="*60)
-    print("🔍 [데이터 판독] 에디터 내부 수색 시작")
-    print("="*60)
-    textareas = await target.query_selector_all("textarea")
-    print(f"📝 Textarea 개수: {len(textareas)}")
-    editables = await target.query_selector_all("[contenteditable='true']")
-    print(f"✏️ 입력 가능 영역(Editable) 개수: {len(editables)}")
-    print("="*60 + "\n")
-
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -24,13 +13,9 @@ async def main():
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
 
-        # ✅ [핵심] 로그인 대신 쿠키 주입 (CAPTCHA 회피)
+        # 쿠키 주입 (통행증)
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
         ses_val = str(os.environ.get('NID_SES') or "").strip()
-
-        if not aut_val or not ses_val:
-            print("❌ Secrets에 NID_AUT/NID_SES가 없습니다.")
-            return
 
         await context.add_cookies([
             {'name': 'NID_AUT', 'value': aut_val, 'domain': '.naver.com', 'path': '/'},
@@ -40,55 +25,55 @@ async def main():
         page = await context.new_page()
 
         try:
-            print("🚀 Step 1: 에디터 직접 침투 (쿠키 모드)")
-            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="domcontentloaded")
-            await asyncio.sleep(10)
+            print("🚀 [최종 병기] 블라인드 침투 개시...")
+            await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
+            
+            # 1. 에디터 로딩 대기
+            print("⏳ 에디터 로딩 대기 중 (12초)...")
+            await asyncio.sleep(12)
 
-            # 로그인 튕김 확인
-            if "nidlogin" in page.url:
-                print("❌ 쿠키 만료: 브라우저에서 NID_AUT, NID_SES를 새로 복사하세요.")
-                await page.screenshot(path="error_screenshot.png")
-                return
-
-            # 프레임 확인
-            main_frame = page.frame(name="mainFrame")
-            target = main_frame if main_frame else page
-            print(f"✅ 에디터 접속 성공 ({'iframe 모드' if main_frame else '직접 모드'})")
-
-            # 도움말 팝업 제거
+            # 2. 도움말 팝업 강제 제거 (보이든 안 보이든 시도)
             try:
-                close_btn = await target.query_selector(".se-help-panel-close-button, .help_close, button[class*='close']")
-                if close_btn:
-                    await close_btn.click()
-                    print("🛡️ 도움말 창 제거 완료")
-                    await asyncio.sleep(2)
+                await page.click(".se-help-panel-close-button, .help_close", timeout=3000)
+                print("🛡️ 도움말 창 제거 완료")
             except: pass
 
-            await debug_elements(target)
+            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 자동 브리핑"
+            content = "사령관님, 수많은 장벽을 뚫고 마침내 자동 포스팅 시스템 구축에 성공했습니다!"
 
-            # 제목/본문 작성
-            title = f"🎾 [BUM Sports] {datetime.now().strftime('%Y-%m-%d')} 통합 리포트"
-            content = "사령관님, 보안 문자를 회피하고 정밀 디버깅 로직으로 미션을 완수했습니다!"
+            # 3. [핵심] Tab 키를 이용한 제목/본문 강제 점유
+            print("✍️ 제목/본문 무차별 작성 중...")
+            
+            # 에디터 아무 데나 한 번 클릭해서 포커스 잡기
+            await page.mouse.click(500, 500) 
+            await asyncio.sleep(1)
 
-            print("✍️ 제목/본문 작성 중...")
-            title_input = await target.wait_for_selector(".se-title-input", timeout=15000)
-            await title_input.click()
-            await page.keyboard.type(title)
+            # 제목 칸으로 이동 (대부분 첫 번째 Tab은 제목입니다)
             await page.keyboard.press("Tab")
             await asyncio.sleep(1)
-            await page.keyboard.type(content, delay=30)
+            await page.keyboard.type(title, delay=50)
+            print("✅ 제목 입력 시도 완료")
 
-            # 발행
-            print("📤 최종 발행 중...")
-            await target.click(".se-publish-button")
+            # 본문 칸으로 이동
+            await page.keyboard.press("Tab")
+            await asyncio.sleep(1)
+            await page.keyboard.type(content, delay=50)
+            print("✅ 본문 입력 시도 완료")
+
+            # 4. 발행 버튼 직접 타격 (이름 대신 위치와 클래스 혼합)
+            print("📤 발행 및 확정 시도...")
+            publish_btn = await page.wait_for_selector(".se-publish-button, button[class*='publish']", timeout=10000)
+            await publish_btn.click()
             await asyncio.sleep(2)
-            await target.click(".se-confirm-button")
+
+            confirm_btn = await page.wait_for_selector(".se-confirm-button, button[class*='confirm']", timeout=10000)
+            await confirm_btn.click()
             
-            print("🏁🏁🏁 [미션 클리어] 성공했습니다!")
+            print("🏁🏁🏁🏁🏁 [대성공] 사령관님, 이제 진짜 샴페인을 터뜨리십시오!")
 
         except Exception as e:
-            print(f"❌ 오류: {e}")
-            await page.screenshot(path="error_screenshot.png")
+            print(f"❌ 오류 발생: {e}")
+            await page.screenshot(path="error_screenshot.png", full_page=True)
         finally:
             await browser.close()
 
