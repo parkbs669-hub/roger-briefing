@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 필수 도구(Playwright) 설치
-        # 이 단계가 빠져있어서 오류가 발생했던 것입니다.
+        # 이 단계가 실행되어야 ModuleNotFoundError가 해결됩니다.
         run: |
           python -m pip install --upgrade pip
           pip install playwright
@@ -37,5 +37,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: beom-sf-report
-          path: final_report.png
+          path: final_report.png  # beom_sf_bot.py에서 생성하는 파일명
           retention-days: 1
