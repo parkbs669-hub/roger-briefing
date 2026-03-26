@@ -22,7 +22,6 @@ async def post_blog():
         )
         context = await browser.new_context(viewport={'width': 1920, 'height': 1080})
         
-        # 쿠키 주입
         aut_val = str(os.environ.get('NID_AUT') or "").strip()
         ses_val = str(os.environ.get('NID_SES') or "").strip()
         await context.add_cookies([
@@ -38,44 +37,61 @@ async def post_blog():
             await page.goto(f"https://blog.naver.com/PostWriteForm.naver?blogId={NAVER_ID}", wait_until="networkidle")
             await asyncio.sleep(15)
 
-            # 🛡️ 방해물(도움말/팝업) 제거
-            await page.evaluate("() => { document.querySelectorAll('.se-help-panel, .se-popup-guide').forEach(el => el.remove()); }")
+            # 🛡️ 1. 방해 요소(도움말/팝업)를 아예 뿌리째 뽑아버립니다.
+            await page.evaluate("() => { document.querySelectorAll('.se-help-panel, .se-popup-guide, .se-viewer-help').forEach(el => el.remove()); }")
             
-            # 내용 입력
+            # 2. 내용 입력
             title = f"🎾 [범 스포츠] {datetime.now().strftime('%Y-%m-%d')} 테니스 정밀 리포트"
-            content = f"사령관님, 오늘 수집된 테니스 이슈입니다!\n\n{trends}\n\n텍스트 추적 시스템에 의한 자동 포스팅입니다."
+            content = f"사령관님, 오늘 수집된 테니스 이슈입니다!\n\n{trends}\n\n정밀 유도 시스템에 의한 자동 포스팅입니다."
 
             await page.mouse.click(960, 300)
             await page.keyboard.press("Tab")
             await page.keyboard.type(title, delay=50)
             await page.keyboard.press("Tab")
             await page.keyboard.type(content, delay=30)
-            print("✅ 데이터 입력 완료")
+            print("✅ 데이터 입력 및 버튼 활성화 대기...")
+            await asyncio.sleep(5) # 버튼이 활성화될 시간을 충분히 줍니다.
 
-            # 🎯 [1단계] 첫 번째 '발행' 단어 찾아서 클릭
-            print("📤 1단계: '발행' 버튼 탐색 및 클릭...")
-            # '발행' 텍스트를 포함한 버튼이나 링크를 찾아 클릭합니다.
-            publish_first = page.get_by_role("button", name="발행").first
-            await publish_first.wait_for(state="visible", timeout=10000)
-            await publish_first.click()
-            print("🎯 1단계 '발행' 클릭 성공")
-            
-            await asyncio.sleep(5) # 팝업창 대기
+            # 🎯 [1단계] 상단 오른쪽 '발행' 버튼 강제 타격
+            print("📤 1단계: 상단 '발행' 버튼 강제 실행 중...")
+            # '발행'이라는 텍스트를 가진 버튼 중 '클릭 가능한 것'을 찾아 강제로 클릭 명령을 내립니다.
+            try:
+                await page.evaluate("""() => {
+                    const btns = Array.from(document.querySelectorAll('button'));
+                    const publishBtn = btns.find(b => b.innerText.includes('발행') && b.offsetWidth > 0);
+                    if (publishBtn) publishBtn.click();
+                }""")
+                print("🎯 1단계 강제 클릭 명령 전달 완료")
+            except Exception as e:
+                print(f"⚠️ 1단계 실패, 좌표(1847, 25)로 보조 타격: {e}")
+                await page.mouse.click(1847, 25)
 
-            # 🎯 [2단계] 팝업창에서 다시 '발행' 단어 찾아서 클릭
-            print("📤 2단계: 팝업창 내 '발행' 버튼 탐색 및 클릭...")
-            # 팝업 내의 발행 버튼은 보통 '발행하기' 또는 '발행'입니다. 
-            # 정규표현식을 써서 '발행'이 들어간 모든 버튼 중 가시적인 것을 타격합니다.
-            publish_final = page.locator("button").filter(has_text="발행").last
-            await publish_final.wait_for(state="visible", timeout=10000)
-            await publish_final.click()
-            print("🏁 최종 '발행' 클릭 성공! 작전 완수.")
+            await asyncio.sleep(5) # 팝업창이 뜨길 기다립니다.
 
-            # 서버 전송 대기 및 결과 보고
-            print("⏳ 서버 응답 대기 중 (20초)...")
+            # 🎯 [2단계] 팝업창 내 '발행' 버튼 강제 타격
+            print("📤 2단계: 최종 '발행' 확정 명령 전송 중...")
+            try:
+                await page.evaluate("""() => {
+                    const confirmBtns = Array.from(document.querySelectorAll('.se-confirm-button, button'));
+                    const finalBtn = confirmBtns.find(b => b.innerText.includes('발행') && b.classList.contains('se-confirm-button'));
+                    if (finalBtn) finalBtn.click();
+                    else { // 클래스로 못 찾으면 글자로 다시 시도
+                        const backupBtn = confirmBtns.reverse().find(b => b.innerText.includes('발행'));
+                        if (backupBtn) backupBtn.click();
+                    }
+                }""")
+                print("🏁 최종 발행 명령 성공!")
+            except Exception as e:
+                print(f"⚠️ 2단계 실패, 엔터 키로 강제 돌파 시도: {e}")
+                for _ in range(3):
+                    await page.keyboard.press("Enter")
+                    await asyncio.sleep(1)
+
+            # 3. 서버 전송 대기 및 결과 보고
+            print("⏳ 서버 응답 대기 및 최종 확인 중 (20초)...")
             await asyncio.sleep(20)
             await page.screenshot(path="final_report.png", full_page=True)
-            print("🏁🏁🏁 모든 과정 종료! 블로그를 확인하십시오.")
+            print("🏁🏁🏁 모든 작전 종료! 블로그를 확인하십시오.")
 
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
