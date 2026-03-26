@@ -1,14 +1,41 @@
-- name: 🚀 bum_sports.py 실행
+name: 🎾 Bum Sports Auto Posting
+
+on:
+  schedule:
+    - cron: '15 0 * * *'   # 매일 한국 시간(KST) 오전 9:15 자동 실행
+  workflow_dispatch:      # 사령관님께서 수동으로 즉시 실행 가능
+
+jobs:
+  build_and_run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 🐍 Python 설정 (3.11)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 필수 패키지 및 Playwright 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install chromium
+          playwright install-deps
+
+      - name: 🚀 bum_sports.py 실행 (정보 수집 및 포스팅)
         env:
           NID_AUT: ${{ secrets.NID_AUT }}
           NID_SES: ${{ secrets.NID_SES }}
         run: python bum_sports.py
 
-      - name: 📸 결과물 PNG 업로드
-        if: always()
+      - name: 📸 결과물 PNG 직접 업로드
+        if: always() # 성공/실패 여부와 상관없이 무조건 보고함
         uses: actions/upload-artifact@v4
         with:
-          name: bum-sports-result-image
-          path: final_report.png          # ← zip 없이 png 파일만 직접 지정
-          retention-days: 1
-          if-no-files-found: error
+          name: bum-sports-final-report  # 결과물 폴더 이름
+          path: final_report.png         # 파이썬 코드에서 생성할 이미지 파일명
+          retention-days: 1              # 저장 기간 1일
+          if-no-files-found: warn
