@@ -1,31 +1,28 @@
-name: folate_Daily Data Briefing (Free)
+name: Folate Integrated Briefing
 on:
   schedule:
-    - cron: '0 23 * * *'  # 매일 오전 8시 KST
-  workflow_dispatch:       # 수동 실행 가능
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
+    - cron: '0 23 * * *' # 매일 오전 8시 KST (UTC 23:00)
+  workflow_dispatch:     # GitHub 웹에서 수동 버튼 클릭 가능
 jobs:
-  run-data-briefing:
+  run-daily-briefing:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python environment
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install packages
-        run: |
-          pip install requests
-      - name: Run folate_Daily Data Briefing
+          
+      - name: Install dependencies
+        run: pip install requests
+        
+      - name: Execute Briefing Script
         env:
-          G2B_API_KEY: ${{ secrets.G2B_API_KEY }}
           PUBLIC_DATA_API_KEY: ${{ secrets.PUBLIC_DATA_API_KEY }}
-          HIRA_SERVICE_KEY: ${{ secrets.HIRA_SERVICE_KEY }}
-          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
-          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
         run: python folate_daily_data_briefing.py
