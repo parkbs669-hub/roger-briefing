@@ -33,7 +33,7 @@ def collect_kdca():
     url = BASE_URL + "/Disease"
 
     try:
-        resp = requests.get(url, params=params, timeout=15)
+        resp = requests.get(url, params=params, timeout=30)
         print(f"  KDCA /Disease HTTP: {resp.status_code}")
         text = resp.text.strip()
         print(f"  KDCA 응답: {text[:150]}")
@@ -73,7 +73,7 @@ def collect_kdca():
     prev_year = str(int(year) - 1)
     params["searchYear"] = prev_year
     try:
-        resp = requests.get(url, params=params, timeout=15)
+        resp = requests.get(url, params=params, timeout=30)
         print(f"  KDCA /Disease ({prev_year}) HTTP: {resp.status_code}")
         text = resp.text.strip()
         if text:
