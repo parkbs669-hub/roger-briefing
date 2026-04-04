@@ -37,6 +37,7 @@ def collect_pneumo_papers():
                     "year": art.findtext(".//PubDate/Year", ""),
                     "authors": ", ".join(authors),
                     "pmid": pmid,
+                    "link": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" # ✅ 링크 데이터 추가
                 })
         except Exception as e:
             print(f"PubMed 오류: {e}")
