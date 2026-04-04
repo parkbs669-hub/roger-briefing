@@ -6,7 +6,7 @@ API_KEY = os.environ.get("PUBLIC_DATA_API_KEY", "")
 URL = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatnShipmntAprvInfoInq"
 
 def collect_mfds():
-    targets = {"백신": ["폐렴구균", "프리베나"], "영양제": ["엽산", "철분"]}
+    targets = {"백신": ["폐렴구균", "프리베나20프리필드시린지", "캡박시브프리필드시린지", "박스뉴반스프리필드시린지", "프로디악스"], "영양제": ["엽산", "철분"]}
     all_items, seen = [], set()
     for cat, kws in targets.items():
         for kw in kws:
