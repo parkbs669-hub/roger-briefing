@@ -8,6 +8,7 @@ URL = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatn
 def collect_mfds():
     targets = {"백신": ["폐렴구균", "프리베나20프리필드시린지", "캡박시브프리필드시린지", "박스뉴반스프리필드시린지", "프로디악스"], "영양제": ["엽산", "철분"]}
     all_items, seen = [], set()
+    
     for cat, kws in targets.items():
         for kw in kws:
             params = {"serviceKey": API_KEY, "pageNo": 1, "numOfRows": 20, "goods_name": kw}
@@ -21,5 +22,10 @@ def collect_mfds():
                         d['category'] = cat
                         seen.add(receipt_no)
                         all_items.append(d)
-            except: continue
-    return all_items
+            except Exception as e: 
+                print(f"MFDS '{kw}' 수집 오류: {e}")
+                continue
+                
+    # 최신 날짜순 정렬 (내림차순)
+    all_items.sort(key=lambda x: str(x.get("RESULT_TIME", "")), reverse=True)
+    return all_items[:20]
