@@ -56,8 +56,10 @@ def build_kdca_section(title, all_data, icon, color):
     v_data = [i for i in all_data if i.get('category') == '백신']
     n_data = [i for i in all_data if i.get('category') == '영양제']
     
+    current_year = datetime.date.today().strftime("%Y")
+    
     def calc_total(items):
-        return sum(int(i.get("resultVal", i.get("patntCnt", "0"))) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+        return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
 
     v_total = calc_total(v_data)
     n_total = calc_total(n_data)
@@ -71,12 +73,18 @@ def build_kdca_section(title, all_data, icon, color):
             group = i.get("icdGroupNm", "")
             count = i.get("resultVal", i.get("patntCnt", ""))
             url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+            
+            # 🔥 원본 디자인(카드형, 배경색, 테두리, 링크 색상 등) 100% 복원
             cards += f"""
-            <div style='display:inline-block; background:#fff5f5; border:1px solid #ffcccc; border-left:4px solid #e74c3c; border-radius:6px; padding:12px 16px; margin:4px; min-width:200px; vertical-align:top;'>
-                <div style='font-size:15px; font-weight:bold; color:#c0392b;'>{disease}</div>
-                <div style='font-size:12px; color:#888; margin:4px 0;'>{group} | 2026년 누계</div>
-                <div style='font-size:22px; font-weight:bold; color:#e74c3c;'>{count}<span style='font-size:13px; color:#888;'>건</span></div>
-                <div style='margin-top:6px;'><a href='{url}' style='font-size:11px; color:#1a73e8; text-decoration:none;'>질병관리청 상세보기 -></a></div>
+            <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
+                        border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
+                        margin:4px 8px 8px 0;min-width:200px;vertical-align:top;'>
+              <div style='font-size:15px;font-weight:bold;color:#c0392b;'>{disease}</div>
+              <div style='font-size:12px;color:#888;margin:4px 0;'>{group} &nbsp;|&nbsp; {current_year}년 누계</div>
+              <div style='font-size:22px;font-weight:bold;color:#e74c3c;'>{count}<span style='font-size:13px;color:#888;'>건</span></div>
+              <div style='margin-top:6px;'>
+                <a href='{url}' style='font-size:11px;color:#1a73e8;text-decoration:none;'>질병관리청 상세보기 -&gt;</a>
+              </div>
             </div>"""
         return f"<div style='padding:4px;'>{cards}</div>"
 
@@ -92,7 +100,10 @@ def build_kdca_section(title, all_data, icon, color):
             
             <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>🤰 임산부 영양제 섹션 (총 {n_total}건)</h4>
             {make_cards(n_data)}
-            <p style='color:#aaa; font-size:11px; margin-top:12px;'>※ 출처: 질병관리청 감염병포털 (방역통합정보시스템 전수신고 기준)</p>
+            
+            <p style='color:#aaa;font-size:11px;margin-top:12px;border-top:1px solid #eee;padding-top:8px;'>
+              ※ 출처: 질병관리청 감염병포털 (방역통합정보시스템 전수신고 기준)
+            </p>
         </div>
     </div>"""
     return html
