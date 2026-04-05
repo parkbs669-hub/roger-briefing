@@ -122,34 +122,64 @@ def collect_g2b():
 # ==========================================
 # 4️⃣ 질병관리청 (KDCA) 감염병 통계 - 대상포진 매핑 강화
 # ==========================================
-def collect_kdca():
-    url = "https://apis.data.go.kr/1790387/EIDAPIService/Disease"
-    def fetch_by_year(year):
-        params = {"serviceKey": PUBLIC_DATA_API_KEY, "resType": "2", "searchType": "1", 
-                  "searchYear": year, "patntType": "1", "pageNo": 1, "numOfRows": 100}
-        try:
-            resp = requests.get(url, params=params, timeout=30)
-            data = resp.json()
-            items = (data.get("body", {}).get("items", {}) or 
-                     data.get("response", {}).get("body", {}).get("items", {}) or 
-                     data.get("items", {}) or {})
-            if isinstance(items, dict): items = items.get("item", []) or []
-            if isinstance(items, dict): items = [items]
-            return items or []
-        except: return []
+def build_kdca_section(title, all_data, icon, color):
+    v_data = [i for i in all_data if i.get('category') == '백신']
+    z_data = [i for i in all_data if i.get('category') == '대상포진']
+    m_data = [i for i in all_data if i.get('category') == '임산부감염병']
+    
+    def calc_total(items):
+        return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
 
-    current_year = datetime.date.today().strftime("%Y")
-    items = fetch_by_year(current_year)
-    if not items: items = fetch_by_year(str(int(current_year) - 1))
+    v_total = calc_total(v_data)
+    z_total = calc_total(z_data)
+    m_total = calc_total(m_data)
+    total_sum = v_total + z_total + m_total
 
-    res = []
-    maternal_kws = ["백일해", "풍진", "매독", "지카"]
-    for i in items:
-        nm = i.get("icdNm", i.get("diseaseNm", ""))
-        if "폐렴구균" in nm: i['category'] = "백신"; res.append(i)
-        elif any(kw in nm for kw in maternal_kws): i['category'] = "임산부감염병"; res.append(i)
-        elif "대상포진" in nm or "수두" in nm: i['category'] = "대상포진"; res.append(i)
-    return res
+    def make_cards(items):
+        if not items: return "<p style='color:#7f8c8d; font-size:13px;'>집계된 데이터가 없습니다.</p>"
+        cards = ""
+        for i in items:
+            disease = i.get("icdNm", i.get("diseaseNm", ""))
+            group = i.get("icdGroupNm", "") # ✅ 급수(제2급 등) 복구
+            count = i.get("resultVal", i.get("patntCnt", ""))
+            url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do" # ✅ 링크 URL 복구
+            
+            # ✅ 사진과 100% 동일한 상세 카드 디자인 복구
+            cards += f"""
+            <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
+                        border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
+                        margin:4px 8px 8px 0;min-width:200px;vertical-align:top;'>
+              <div style='font-size:15px;font-weight:bold;color:#c0392b;'>{disease}</div>
+              <div style='font-size:12px;color:#888;margin:4px 0;'>{group} &nbsp;|&nbsp; 누계</div>
+              <div style='font-size:22px;font-weight:bold;color:#e74c3c;'>{count}<span style='font-size:13px;color:#888;'>건</span></div>
+              <div style='margin-top:6px;'>
+                <a href='{url}' style='font-size:11px;color:#1a73e8;text-decoration:none;'>질병관리청 상세보기 -&gt;</a>
+              </div>
+            </div>"""
+        return f"<div style='padding:4px;'>{cards}</div>"
+
+    html = f"""
+    <div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>
+        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>
+            {icon} {title}
+            <span style='float:right; background:rgba(255,255,255,0.3); padding:2px 10px; border-radius:12px; font-size:13px;'>{total_sum}건</span>
+        </div>
+        <div style='padding:15px;'>
+            <h4 style='margin:0 0 10px 0; color:#2c3e50; border-left:4px solid {color}; padding-left:8px;'>🦠 폐렴구균 통계 (총 {v_total}건)</h4>
+            {make_cards(v_data)}
+            
+            <h4 style='margin:25px 0 10px 0; color:#8e44ad; border-left:4px solid #8e44ad; padding-left:8px;'>🦠 대상포진 관련 통계 (총 {z_total}건)</h4>
+            {make_cards(z_data)}
+            
+            <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>🤰 임산부 주의 감염병 통계 (총 {m_total}건)</h4>
+            {make_cards(m_data)}
+            
+            <p style='color:#aaa;font-size:11px;margin-top:12px;border-top:1px solid #eee;padding-top:8px;'>
+              ※ 출처: 질병관리청 감염병포털
+            </p>
+        </div>
+    </div>"""
+    return html
 
 # ==========================================
 # 5️⃣ 식약처 (MFDS) 및 6️⃣ 심평원 (HIRA)
