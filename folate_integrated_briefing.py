@@ -8,23 +8,14 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 # ==========================================
-# 🔑 환경 변수 및 설정 로드
+# 🔑 공통 API 키 설정
 # ==========================================
 PUBLIC_DATA_API_KEY = os.environ.get("PUBLIC_DATA_API_KEY", "")
 NAVER_CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "")
 NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "")
-NAVER_ADDRESS = os.environ.get("NAVER_ADDRESS", "")
-NAVER_PASSWORD = os.environ.get("NAVER_PASSWORD", "")
-
-# 다중 수신자 설정 (쉼표로 구분된 문자열을 리스트로 변환)
-RECIPIENTS_STR = os.environ.get("REPORT_RECIPIENTS", NAVER_ADDRESS)
-RECIPIENTS = [r.strip() for r in RECIPIENTS_STR.split(",") if r.strip()]
 
 # ==========================================
-# 1️⃣ PubMed (글로벌 학술 논문) 수집기
-# ==========================================
-# ==========================================
-# 1️⃣ PubMed (글로벌 학술 논문) 수집기
+# 1️⃣ PubMed (글로벌 학술 논문) 수집기 - 강력 방어벽 적용
 # ==========================================
 def collect_pubmed():
     base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
@@ -47,14 +38,14 @@ def collect_pubmed():
                 params={"db": "pubmed", "id": ",".join(ids), "retmode": "xml"}, timeout=15)
             time.sleep(0.5)
             
-            # ✅ XML 검증 로직 적용 완료
             xml_text = fr.content.decode("utf-8-sig").strip()
             if not xml_text or not xml_text.startswith("<"):
-                print(f"  [경고] PubMed {cat}: 유효하지 않은 응답 형식 건너뜀")
                 continue
 
-            # ✅ 검증된 텍스트로만 파싱 (기존 중복 코드는 삭제됨)
-            root = ET.fromstring(xml_text)
+            try:
+                root = ET.fromstring(xml_text)
+            except ET.ParseError:
+                continue
 
             for art in root.findall(".//PubmedArticle"):
                 pmid = art.findtext(".//PMID", "")
@@ -74,7 +65,6 @@ def collect_pubmed():
         except Exception as e:
             print(f"  PubMed {cat} 수집 오류: {e}")
             continue
-            
     return all_papers[:15]
 
 # ==========================================
@@ -105,8 +95,7 @@ def collect_naver_news():
                             "pubDate": i.get("pubDate","")[:16],
                             "category": cat
                         })
-            except Exception as e:
-                print(f"  뉴스 {kw} 수집 오류: {e}")
+            except: continue
     return all_news[:15]
 
 # ==========================================
@@ -134,11 +123,8 @@ def collect_g2b():
                     d = {c.tag: (c.text or "") for c in item}
                     bid_no = d.get("bidNtceNo", "")
                     if bid_no and bid_no not in seen:
-                        d['category'] = cat
-                        seen.add(bid_no)
-                        all_items.append(d)
-            except Exception as e:
-                print(f"  나라장터 {kw} 수집 오류: {e}")
+                        d['category'] = cat; seen.add(bid_no); all_items.append(d)
+            except: continue
     return all_items
 
 # ==========================================
@@ -146,28 +132,23 @@ def collect_g2b():
 # ==========================================
 def collect_kdca():
     url = "https://apis.data.go.kr/1790387/EIDAPIService/Disease"
-    
     def fetch_by_year(year):
         params = {"serviceKey": PUBLIC_DATA_API_KEY, "resType": "2", "searchType": "1", 
                   "searchYear": year, "patntType": "1", "pageNo": 1, "numOfRows": 100}
         try:
             resp = requests.get(url, params=params, timeout=30)
             data = resp.json()
-            # 다중 get 구조로 안정적 파싱
             items = (data.get("body", {}).get("items", {}) or 
                      data.get("response", {}).get("body", {}).get("items", {}) or 
                      data.get("items", {}) or {})
             if isinstance(items, dict): items = items.get("item", []) or []
             if isinstance(items, dict): items = [items]
             return items or []
-        except Exception as e:
-            print(f"  KDCA {year} 조회 오류: {e}")
-            return []
+        except: return []
 
     current_year = datetime.date.today().strftime("%Y")
     items = fetch_by_year(current_year)
-    if not items: # 올해 데이터 없으면 작년 데이터로 폴백
-        items = fetch_by_year(str(int(current_year) - 1))
+    if not items: items = fetch_by_year(str(int(current_year) - 1))
 
     res = []
     maternal_infections = ["백일해", "풍진", "매독", "지카"]
@@ -197,14 +178,12 @@ def collect_mfds():
     for cat, kws in targets.items():
         for kw in kws:
             try:
-                # 전체 건수 확인
                 resp = requests.get(url, params={"serviceKey": PUBLIC_DATA_API_KEY, "pageNo": 1, "numOfRows": 1, "goods_name": kw}, timeout=15)
                 root = ET.fromstring(resp.text.strip())
                 total_count = int(root.findtext(".//totalCount", "0") or 0)
                 if total_count == 0: continue
                 total_pages = (total_count + NUM_OF_ROWS - 1) // NUM_OF_ROWS
                 
-                # 마지막 페이지부터 역순 탐색
                 for page in range(total_pages, 0, -1):
                     resp_page = requests.get(url, params={"serviceKey": PUBLIC_DATA_API_KEY, "pageNo": page, "numOfRows": NUM_OF_ROWS, "goods_name": kw}, timeout=15)
                     root_page = ET.fromstring(resp_page.text.strip())
@@ -220,9 +199,7 @@ def collect_mfds():
                         if d.get("RECEIPT_NO") not in seen:
                             d['category'] = cat; seen.add(d.get("RECEIPT_NO")); all_items.append(d)
                     if not page_has_recent and page < total_pages: break
-            except Exception as e:
-                print(f"  식약처 {kw} 수집 오류: {e}")
-                continue
+            except: continue
     all_items.sort(key=lambda x: str(x.get("RESULT_TIME", "")), reverse=True)
     return all_items[:20]
 
@@ -247,25 +224,26 @@ def collect_hira():
                     d = {c.tag: (c.text or "") for c in item}
                     if d.get("itmCd") not in seen:
                         d['category'] = cat; seen.add(d.get("itmCd")); all_items.append(d)
-            except Exception as e:
-                print(f"  심평원 {kw} 수집 오류: {e}")
+            except: continue
     return all_items[:15]
+
 
 # ==========================================
 # 🎨 HTML UI 구성 및 메일 발송
 # ==========================================
 def make_table(items, columns, col_keys):
-    if not items: return "<p style='color:#7f8c8d; font-size:13px;'>관련 데이터 없음</p>"
+    if not items: return "<p style='color:#7f8c8d; font-size:13px;'>관련 데이터가 없습니다.</p>"
     th_html = "".join([f"<th style='padding:8px; text-align:left; background:#f4f6f7; border-bottom:2px solid #bdc3c7;'>{col}</th>" for col in columns])
     tr_html = ""
     for i in items:
         tds = []
         for key in col_keys:
             val = str(i.get(key, ''))
-            if key == 'bidNtceUrl' and val: val = f"<a href='{val}' style='color:#3498db;'>공고보기</a>"
+            if key == 'bidNtceUrl' and val:
+                val = f"<a href='{val}' style='color:#3498db; text-decoration:none;'>공고보기</a>"
             elif key == 'link' and val:
-                lt = "기사" if "naver.com" in val else "PubMed" if "pubmed" in val else "링크"
-                val = f"<a href='{val}' style='color:#3498db;'>{lt}</a>"
+                link_text = "기사보기" if "naver.com" in val else "PubMed" if "pubmed" in val else "확인하기"
+                val = f"<a href='{val}' style='color:#3498db; text-decoration:none;'>{link_text}</a>"
             tds.append(f"<td style='padding:8px; border-bottom:1px solid #ecf0f1; font-size:13px;'>{val}</td>")
         tr_html += f"<tr>{''.join(tds)}</tr>"
     return f"<table width='100%' style='border-collapse:collapse;'><thead><tr>{th_html}</tr></thead><tbody>{tr_html}</tbody></table>"
@@ -277,74 +255,141 @@ def build_section(title, all_data, columns, col_keys, icon, color):
     
     n_title = "🤰 임산부 백신 섹션" if "식약처" in title else "🤰 임산부 영양제 및 관련 섹션"
     
-    return f"""
+    html = f"""
     <div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>
-        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>{icon} {title}</div>
+        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>
+            {icon} {title}
+        </div>
         <div style='padding:15px;'>
-            <h4 style='margin:0 0 10px 0; color:#2c3e50; border-left:4px solid {color}; padding-left:8px;'>💉 폐렴구균 백신 섹션</h4>
+            <h4 style='margin:0 0 10px 0; color:#2c3e50; border-left:4px solid {color}; padding-left:8px;'>💉 백신 섹션</h4>
             {make_table(v_data, columns, col_keys)}
-            <h4 style='margin:25px 0 10px 0; color:#8e44ad; border-left:4px solid #8e44ad; padding-left:8px;'>🦠 대상포진 섹션</h4>
+            
+            <h4 style='margin:25px 0 10px 0; color:#8e44ad; border-left:4px solid #8e44ad; padding-left:8px;'>🦠 대상포진 (싱그릭스 등) 섹션</h4>
             {make_table(z_data, columns, col_keys)}
+            
             <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>{n_title}</h4>
             {make_table(n_data, columns, col_keys)}
         </div>
     </div>"""
+    return html
 
 def build_kdca_section(title, all_data, icon, color):
-    kdca_data = [i for i in all_data if i.get('category') in ['백신', '임산부감염병', '대상포진']]
-    ts = sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in kdca_data if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
-    cards = ""
-    for i in kdca_data:
-        disease, count = i.get("icdNm", i.get("diseaseNm", "")), i.get("resultVal", i.get("patntCnt", ""))
-        cards += f"""<div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;border-left:4px solid #e74c3c;border-radius:6px;padding:12px;margin:0 8px 8px 0;min-width:180px;'>
-          <div style='font-size:14px;font-weight:bold;color:#c0392b;'>{disease}</div>
-          <div style='font-size:20px;font-weight:bold;color:#e74c3c;'>{count}<span style='font-size:12px;color:#888;'>건</span></div>
-        </div>"""
-    return f"<div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>" + \
-           f"<div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>{icon} {title} <span style='float:right;background:rgba(255,255,255,0.3);padding:2px 10px;border-radius:12px;'>{ts}건</span></div>" + \
-           f"<div style='padding:15px;'>{cards if cards else '데이터 없음'}</div></div>"
+    v_data = [i for i in all_data if i.get('category') == '백신']
+    z_data = [i for i in all_data if i.get('category') == '대상포진']
+    m_data = [i for i in all_data if i.get('category') == '임산부감염병']
+    
+    current_year = datetime.date.today().strftime("%Y")
+    
+    def calc_total(items):
+        return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+
+    v_total = calc_total(v_data)
+    z_total = calc_total(z_data)
+    m_total = calc_total(m_data)
+    total_sum = v_total + z_total + m_total
+
+    def make_cards(items):
+        if not items: return "<p style='color:#7f8c8d; font-size:13px;'>관련 데이터가 아직 집계되지 않았습니다.</p>"
+        cards = ""
+        for i in items:
+            disease = i.get("icdNm", i.get("diseaseNm", ""))
+            group = i.get("icdGroupNm", "")
+            count = i.get("resultVal", i.get("patntCnt", ""))
+            url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+            cards += f"""
+            <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
+                        border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
+                        margin:4px 8px 8px 0;min-width:200px;vertical-align:top;'>
+              <div style='font-size:15px;font-weight:bold;color:#c0392b;'>{disease}</div>
+              <div style='font-size:12px;color:#888;margin:4px 0;'>{group} &nbsp;|&nbsp; 누계</div>
+              <div style='font-size:22px;font-weight:bold;color:#e74c3c;'>{count}<span style='font-size:13px;color:#888;'>건</span></div>
+              <div style='margin-top:6px;'>
+                <a href='{url}' style='font-size:11px;color:#1a73e8;text-decoration:none;'>질병관리청 상세보기 -&gt;</a>
+              </div>
+            </div>"""
+        return f"<div style='padding:4px;'>{cards}</div>"
+
+    html = f"""
+    <div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>
+        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>
+            {icon} {title}
+            <span style='float:right; background:rgba(255,255,255,0.3); padding:2px 10px; border-radius:12px; font-size:13px;'>{total_sum}건</span>
+        </div>
+        <div style='padding:15px;'>
+            <h4 style='margin:0 0 10px 0; color:#2c3e50; border-left:4px solid {color}; padding-left:8px;'>🦠 폐렴구균 감염증 발생 통계 (총 {v_total}건)</h4>
+            {make_cards(v_data)}
+            
+            <h4 style='margin:25px 0 10px 0; color:#8e44ad; border-left:4px solid #8e44ad; padding-left:8px;'>🦠 대상포진 발생 통계 (총 {z_total}건)</h4>
+            {make_cards(z_data)}
+            
+            <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>🤰 임산부 주의 감염병 (백일해, 풍진 등) 발생 통계 (총 {m_total}건)</h4>
+            {make_cards(m_data)}
+            
+            <p style='color:#aaa;font-size:11px;margin-top:12px;border-top:1px solid #eee;padding-top:8px;'>
+              ※ 출처: 질병관리청 감염병포털 (방역통합정보시스템 전수신고 기준)
+            </p>
+        </div>
+    </div>"""
+    return html
 
 # ==========================================
-# 🚀 메인 실행부 (데이터 수집 및 메일 발송)
+# 🚀 메인 실행부 (단일 수신자 버전)
 # ==========================================
 def main():
     today = datetime.date.today().strftime("%Y년 %m월 %d일")
-    print(f"🚀 {today} 데이터 통합 브리핑 시작")
+    print(f"🚀 {today} 데이터 수집 시작")
     
-    # ✅ 수정 1: 이메일 주소 공백 제거 및 유효성 검사 (빈 값 방지)
-    raw_recipients = os.environ.get("REPORT_RECIPIENTS", NAVER_ADDRESS)
-    RECIPIENTS = [r.strip() for r in raw_recipients.split(",") if r.strip() and "@" in r]
-    if not RECIPIENTS:
-        RECIPIENTS = [NAVER_ADDRESS] # 잘못 입력됐을 경우 무조건 본인에게 발송
+    data = {
+        "G2B": collect_g2b(),
+        "NEWS": collect_naver_news(),
+        "PUBMED": collect_pubmed(),
+        "KDCA": collect_kdca(),
+        "MFDS": collect_mfds(),
+        "HIRA": collect_hira()
+    }
     
-    data = {"G2B": collect_g2b(), "NEWS": collect_naver_news(), "PUBMED": collect_pubmed(), 
-            "KDCA": collect_kdca(), "MFDS": collect_mfds(), "HIRA": collect_hira()}
-    
-    html = f"""<html><body style='font-family:sans-serif; padding:20px; background:#f0f2f5;'>
+    html_body = f"""
+    <html><body style='font-family:"Malgun Gothic", sans-serif; padding:20px; background:#f0f2f5; color:#333;'>
         <div style='max-width:800px; margin:0 auto;'>
-            <h1 style='text-align:center; color:#2c3e50;'>📊 통합 인텔리전스 브리핑</h1>
+            <div style='text-align:center; margin-bottom:30px;'>
+                <h1 style='color:#2c3e50; margin-bottom:5px;'>📊 통합 인텔리전스 브리핑</h1>
+                <p style='color:#7f8c8d; font-size:14px;'>{today} 기준 자동화 리포트</p>
+            </div>
+            
             {build_section("네이버 최신 뉴스", data['NEWS'], ['제목', '날짜', '링크'], ['title', 'pubDate', 'link'], "📰", "#3498db")}
-            {build_section("나라장터 입찰공고", data['G2B'], ['공고명', '기관명', '날짜', '링크'], ['bidNtceNm', 'ntceInsttNm', 'bidNtceDt', 'bidNtceUrl'], "🏛️", "#e67e22")}
-            {build_section("학술 논문 (PubMed)", data['PUBMED'], ['제목', '저널', '연도', '링크'], ['title', 'journal', 'year', 'link'], "🔬", "#9b59b6")}
+            {build_section("나라장터 입찰공고", data['G2B'], ['공고명', '기관명', '공고일', '링크'], ['bidNtceNm', 'ntceInsttNm', 'bidNtceDt', 'bidNtceUrl'], "🏛️", "#e67e22")}
+            {build_section("학술 논문 (PubMed)", data['PUBMED'], ['논문 제목', '저널', '발행년도', '링크'], ['title', 'journal', 'year', 'link'], "🔬", "#9b59b6")}
             {build_kdca_section("질병관리청 감염병 현황", data['KDCA'], "🏥", "#e74c3c")}
             {build_section("식약처 국가출하승인", data['MFDS'], ['제품명', '제조사', '승인일'], ['SAMPLE_TYPE', 'MANUF_ENTP_NAME', 'RESULT_TIME'], "💊", "#1abc9c")}
-            {build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰", "#f1c40f")}
-        </div></body></html>"""
+            {build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액(원)'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰", "#f1c40f")}
+            
+            <div style='text-align:center; padding:20px; color:#95a5a6; font-size:12px; border-top:1px solid #bdc3c7;'>
+                본 메일은 GitHub Actions를 통해 자동 발송되었습니다.
+            </div>
+        </div>
+    </body></html>
+    """
+
+    addr = os.environ.get("NAVER_ADDRESS")
+    pw = os.environ.get("NAVER_PASSWORD")
+    
+    if not addr or not pw: 
+        print("❌ 중단: 이메일 계정 정보가 없습니다.")
+        return
 
     msg = MIMEMultipart()
     msg["Subject"] = f"📊 [통합 브리핑] 백신 및 영양제 데일리 리포트 - {today}"
-    msg["From"] = NAVER_ADDRESS
-    msg["To"] = ", ".join(RECIPIENTS)
-    msg.attach(MIMEText(html, "html"))
+    msg["From"] = addr
+    msg["To"] = addr  # 👈 완벽하고 깔끔한 본인 발송 로직!
+    msg.attach(MIMEText(html_body, "html"))
     
     try:
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
-            s.login(NAVER_ADDRESS, NAVER_PASSWORD)
-            # ✅ 수정 2: send_message 대신 sendmail 사용 (다중 발송 에러 원천 차단)
-            s.sendmail(NAVER_ADDRESS, RECIPIENTS, msg.as_string())
-        print(f"✅ 발송 완료 (수신: {len(RECIPIENTS)}명)")
-    except Exception as e: 
-        print(f"❌ 발송 실패: {e}")
+            s.login(addr, pw)
+            s.send_message(msg)
+        print("✅ 브리핑 이메일 발송 완료!")
+    except Exception as e:
+        print(f"❌ 이메일 발송 오류: {e}")
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()
