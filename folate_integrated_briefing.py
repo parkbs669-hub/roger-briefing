@@ -23,6 +23,9 @@ RECIPIENTS = [r.strip() for r in RECIPIENTS_STR.split(",") if r.strip()]
 # ==========================================
 # 1️⃣ PubMed (글로벌 학술 논문) 수집기
 # ==========================================
+# ==========================================
+# 1️⃣ PubMed (글로벌 학술 논문) 수집기
+# ==========================================
 def collect_pubmed():
     base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
     queries = {
@@ -43,22 +46,35 @@ def collect_pubmed():
             fr = requests.get(f"{base_url}/efetch.fcgi",
                 params={"db": "pubmed", "id": ",".join(ids), "retmode": "xml"}, timeout=15)
             time.sleep(0.5)
-            root = ET.fromstring(fr.content.decode("utf-8-sig").strip())
+            
+            # ✅ XML 검증 로직 적용 완료
+            xml_text = fr.content.decode("utf-8-sig").strip()
+            if not xml_text or not xml_text.startswith("<"):
+                print(f"  [경고] PubMed {cat}: 유효하지 않은 응답 형식 건너뜀")
+                continue
+
+            # ✅ 검증된 텍스트로만 파싱 (기존 중복 코드는 삭제됨)
+            root = ET.fromstring(xml_text)
 
             for art in root.findall(".//PubmedArticle"):
                 pmid = art.findtext(".//PMID", "")
                 if pmid in seen: continue
                 seen.add(pmid)
+                authors = [f"{a.findtext('LastName', '')} {a.findtext('ForeName', '')}".strip()
+                           for a in art.findall(".//Author")[:3]]
                 all_papers.append({
                     "category": cat,
                     "title": art.findtext(".//ArticleTitle", ""),
                     "journal": art.findtext(".//Title", ""),
                     "year": art.findtext(".//PubDate/Year", ""),
+                    "authors": ", ".join(authors),
                     "pmid": pmid,
                     "link": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
                 })
         except Exception as e:
             print(f"  PubMed {cat} 수집 오류: {e}")
+            continue
+            
     return all_papers[:15]
 
 # ==========================================
