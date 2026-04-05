@@ -1,0 +1,23 @@
+name: Integrated Data Briefing
+on:
+  schedule:
+    - cron: '0 23 * * *' # 한국 시간 오전 8시
+  workflow_dispatch:
+jobs:
+  run-daily-briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - env:
+          PUBLIC_DATA_API_KEY: ${{ secrets.PUBLIC_DATA_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+          # 쉼표로 구분하여 여러 이메일 등록 가능
+          REPORT_RECIPIENTS: ${{ secrets.REPORT_RECIPIENTS }}
+        run: python folate_integrated_briefing.py
