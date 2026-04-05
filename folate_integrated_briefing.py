@@ -304,8 +304,19 @@ def build_kdca_section(title, all_data, icon, color):
            f"<div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>{icon} {title} <span style='float:right;background:rgba(255,255,255,0.3);padding:2px 10px;border-radius:12px;'>{ts}건</span></div>" + \
            f"<div style='padding:15px;'>{cards if cards else '데이터 없음'}</div></div>"
 
+# ==========================================
+# 🚀 메인 실행부 (데이터 수집 및 메일 발송)
+# ==========================================
 def main():
     today = datetime.date.today().strftime("%Y년 %m월 %d일")
+    print(f"🚀 {today} 데이터 통합 브리핑 시작")
+    
+    # ✅ 수정 1: 이메일 주소 공백 제거 및 유효성 검사 (빈 값 방지)
+    raw_recipients = os.environ.get("REPORT_RECIPIENTS", NAVER_ADDRESS)
+    RECIPIENTS = [r.strip() for r in raw_recipients.split(",") if r.strip() and "@" in r]
+    if not RECIPIENTS:
+        RECIPIENTS = [NAVER_ADDRESS] # 잘못 입력됐을 경우 무조건 본인에게 발송
+    
     data = {"G2B": collect_g2b(), "NEWS": collect_naver_news(), "PUBMED": collect_pubmed(), 
             "KDCA": collect_kdca(), "MFDS": collect_mfds(), "HIRA": collect_hira()}
     
@@ -320,14 +331,20 @@ def main():
             {build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰", "#f1c40f")}
         </div></body></html>"""
 
-    msg = MIMEMultipart(); msg["Subject"] = f"📊 [통합 브리핑] 백신 및 영양제 데일리 리포트 - {today}"
-    msg["From"] = NAVER_ADDRESS; msg["To"] = ", ".join(RECIPIENTS)
+    msg = MIMEMultipart()
+    msg["Subject"] = f"📊 [통합 브리핑] 백신 및 영양제 데일리 리포트 - {today}"
+    msg["From"] = NAVER_ADDRESS
+    msg["To"] = ", ".join(RECIPIENTS)
     msg.attach(MIMEText(html, "html"))
     
     try:
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
-            s.login(NAVER_ADDRESS, NAVER_PASSWORD); s.send_message(msg)
+            s.login(NAVER_ADDRESS, NAVER_PASSWORD)
+            # ✅ 수정 2: send_message 대신 sendmail 사용 (다중 발송 에러 원천 차단)
+            s.sendmail(NAVER_ADDRESS, RECIPIENTS, msg.as_string())
         print(f"✅ 발송 완료 (수신: {len(RECIPIENTS)}명)")
-    except Exception as e: print(f"❌ 발송 실패: {e}")
+    except Exception as e: 
+        print(f"❌ 발송 실패: {e}")
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": 
+    main()
