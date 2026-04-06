@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎾 Tennis Image Gallery</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --card: #222538;
+    --accent: #7cfc00;
+    --accent2: #00e5ff;
+    --text: #e8eaf6;
+    --muted: #7986cb;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+  header { background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 100%); padding: 32px 24px 20px; border-bottom: 2px solid var(--accent); }
+  header h1 { font-size: 1.8rem; color: var(--accent); letter-spacing: 2px; }
+  header p { color: var(--muted); margin-top: 4px; font-size: 0.9rem; }
+  .tab-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 20px 24px; background: var(--surface); border-bottom: 1px solid #2a2d3e; }
+  .tab-btn { background: var(--card); color: var(--muted); border: 1px solid #2a2d3e; border-radius: 20px; padding: 6px 16px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .tab-btn:hover, .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .card { background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid #2a2d3e; transition: transform 0.2s, box-shadow 0.2s; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(124,252,0,0.15); }
+  .card-img-wrap { position: relative; aspect-ratio: 1; overflow: hidden; }
+  .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: var(--accent); font-size: 0.72rem; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--accent); backdrop-filter: blur(4px); }
+  .badge-err { background: rgba(255,50,50,0.2); color: #ff6b6b; border-color: #ff6b6b; position: static; display: inline-block; margin-bottom: 8px; }
+  .card-body { padding: 14px; }
+  .prompt-text { font-size: 0.78rem; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .dl-btn { display: inline-block; background: var(--accent); color: #000; font-size: 0.8rem; font-weight: 700; padding: 6px 14px; border-radius: 8px; text-decoration: none; transition: background 0.2s; }
+  .dl-btn:hover { background: var(--accent2); }
+  .error-card { padding: 20px; color: #ff6b6b; }
+  footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid #2a2d3e; margin-top: 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎾 Tennis Image Gallery</h1>
+  <p>DALL-E 3 자동 생성 | 매일 10장 | BUM Sports</p>
+</header>
+<div class="tab-bar">
+<button class="tab-btn active" onclick="showDate('2026-04-06')" id="tab-2026-04-06">2026-04-06</button>
+
+</div>
+<div class="content">
+
+        <div class="date-section" id="section-2026-04-06" style="display:block;">
+            <div class="grid">
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/01_string_closeup.png" alt="스트링 클로즈업" loading="lazy">
+                        <span class="badge">스트링 클로즈업</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Close-up of tennis string pattern, black polyester strings, geometric grid, high contrast, minimalist product photo...</p>
+                        <a href="images/2026-04-06/01_string_closeup.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/02_string_closeup.png" alt="스트링 클로즈업" loading="lazy">
+                        <span class="badge">스트링 클로즈업</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Detailed shot of tennis strings being woven into racket frame, cross strings intersecting, vibrant colors, overhead view...</p>
+                        <a href="images/2026-04-06/02_string_closeup.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/03_player_action.png" alt="선수 액션" loading="lazy">
+                        <span class="badge">선수 액션</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Female tennis player mid-serve at peak toss, Wimbledon grass court, white outfit, sunlight, dynamic action shot...</p>
+                        <a href="images/2026-04-06/03_player_action.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/04_player_action.png" alt="선수 액션" loading="lazy">
+                        <span class="badge">선수 액션</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Tennis player sliding on clay court for a backhand, red clay dust, intense expression, wide angle perspective...</p>
+                        <a href="images/2026-04-06/04_player_action.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/05_court_scenery.png" alt="코트 풍경" loading="lazy">
+                        <span class="badge">코트 풍경</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Roland Garros clay court panorama, terracotta red surface, ochre tones, French Open atmosphere...</p>
+                        <a href="images/2026-04-06/05_court_scenery.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/06_court_scenery.png" alt="코트 풍경" loading="lazy">
+                        <span class="badge">코트 풍경</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Indoor tennis court with skylight, warm natural light streaming in, pristine surface, minimalist architecture...</p>
+                        <a href="images/2026-04-06/06_court_scenery.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/07_stringing_machine.png" alt="스트링 머신" loading="lazy">
+                        <span class="badge">스트링 머신</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Stringer hands working on racket, pulling polyester string through grommets, workbench setting, focused detail shot...</p>
+                        <a href="images/2026-04-06/07_stringing_machine.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/08_racket_detail.png" alt="라켓 디테일" loading="lazy">
+                        <span class="badge">라켓 디테일</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Tennis racket head close-up on clay court surface, string grid reflection, red clay dust, dramatic angle...</p>
+                        <a href="images/2026-04-06/08_racket_detail.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/09_equipment_lifestyle.png" alt="장비 라이프스타일" loading="lazy">
+                        <span class="badge">장비 라이프스타일</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Tennis bag open showing rackets, strings, grips, and accessories organized inside, flat lay, clean aesthetic...</p>
+                        <a href="images/2026-04-06/09_equipment_lifestyle.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-img-wrap">
+                        <img src="images/2026-04-06/10_aesthetic_mood.png" alt="감성 테니스" loading="lazy">
+                        <span class="badge">감성 테니스</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="prompt-text">Aerial view of tennis complex with multiple courts, green and blue surfaces, geometric pattern...</p>
+                        <a href="images/2026-04-06/10_aesthetic_mood.png" download class="dl-btn">⬇ 다운로드</a>
+                    </div>
+                </div></div>
+        </div>
+</div>
+<footer>Generated by DALL-E 3 · roger-briefing pipeline · beomsports.tistory.com</footer>
+<script>
+  function showDate(d) {
+    document.querySelectorAll('.date-section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + d).style.display = 'block';
+    document.getElementById('tab-' + d).classList.add('active');
+  }
+</script>
+</body>
+</html>
