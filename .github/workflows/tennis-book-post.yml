@@ -43,6 +43,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 1. data 디렉토리가 없으면 생성
+          mkdir -p data
+          
+          # 2. 파일이 없으면 빈 JSON 파일([]) 생성 (git add 에러 방지용)
+          if [ ! -f data/tennis_books_seen.json ]; then
+            echo "[]" > data/tennis_books_seen.json
+          fi
+
+          # 3. 파일 스테이징
           git add data/tennis_books_seen.json
-          git diff --staged --quiet || git commit -m "chore: update tennis books seen list"
-          git push
+          
+          # 4. 변경사항이 있는 경우에만 커밋 및 푸시
+          git diff --staged --quiet || (git commit -m "chore: update tennis books seen list" && git push)
