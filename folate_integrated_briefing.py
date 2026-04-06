@@ -38,11 +38,14 @@ def collect_pubmed():
                 params={"db": "pubmed", "id": ",".join(ids), "retmode": "xml"}, timeout=15)
             time.sleep(0.5)
             xml_text = fr.content.decode("utf-8-sig").strip()
-            if not xml_text or not xml_text.startswith("<"): continue
+            
+            if not xml_text or not xml_text.startswith("<"): 
+                continue
 
             try:
                 root = ET.fromstring(xml_text)
-            except: continue
+            except: 
+                continue
 
             for art in root.findall(".//PubmedArticle"):
                 pmid = art.findtext(".//PMID", "")
@@ -63,7 +66,7 @@ def collect_pubmed():
     return all_papers
 
 # ==========================================
-# 2️⃣ 네이버 뉴스 수집기 - 대상포진 누락 방지 (Slice 제거)
+# 2️⃣ 네이버 뉴스 수집기
 # ==========================================
 def collect_naver_news():
     url = "https://openapi.naver.com/v1/search/news.json"
@@ -89,7 +92,7 @@ def collect_naver_news():
                             "pubDate": i.get("pubDate","")[:16], "category": cat
                         })
             except: continue
-    return all_news # 👈 수집된 모든 뉴스 반환 (나중에 표에서 개수 제한)
+    return all_news
 
 # ==========================================
 # 3️⃣ 나라장터 (G2B) 입찰공고 수집기
@@ -120,69 +123,39 @@ def collect_g2b():
     return all_items
 
 # ==========================================
-# 4️⃣ 질병관리청 (KDCA) 감염병 통계 - 대상포진 매핑 강화
+# 4️⃣ 질병관리청 (KDCA) 감염병 통계 수집기
 # ==========================================
-def build_kdca_section(title, all_data, icon, color):
-    v_data = [i for i in all_data if i.get('category') == '백신']
-    z_data = [i for i in all_data if i.get('category') == '대상포진']
-    m_data = [i for i in all_data if i.get('category') == '임산부감염병']
-    
-    def calc_total(items):
-        return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+def collect_kdca():
+    url = "https://apis.data.go.kr/1790387/EIDAPIService/Disease"
+    def fetch_by_year(year):
+        params = {"serviceKey": PUBLIC_DATA_API_KEY, "resType": "2", "searchType": "1", 
+                  "searchYear": year, "patntType": "1", "pageNo": 1, "numOfRows": 100}
+        try:
+            resp = requests.get(url, params=params, timeout=30)
+            data = resp.json()
+            items = (data.get("body", {}).get("items", {}) or 
+                     data.get("response", {}).get("body", {}).get("items", {}) or 
+                     data.get("items", {}) or {})
+            if isinstance(items, dict): items = items.get("item", []) or []
+            if isinstance(items, dict): items = [items]
+            return items or []
+        except: return []
 
-    v_total = calc_total(v_data)
-    z_total = calc_total(z_data)
-    m_total = calc_total(m_data)
-    total_sum = v_total + z_total + m_total
+    current_year = datetime.date.today().strftime("%Y")
+    items = fetch_by_year(current_year)
+    if not items: items = fetch_by_year(str(int(current_year) - 1))
 
-    def make_cards(items):
-        if not items: return "<p style='color:#7f8c8d; font-size:13px;'>집계된 데이터가 없습니다.</p>"
-        cards = ""
-        for i in items:
-            disease = i.get("icdNm", i.get("diseaseNm", ""))
-            group = i.get("icdGroupNm", "") # ✅ 급수(제2급 등) 복구
-            count = i.get("resultVal", i.get("patntCnt", ""))
-            url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do" # ✅ 링크 URL 복구
-            
-            # ✅ 사진과 100% 동일한 상세 카드 디자인 복구
-            cards += f"""
-            <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
-                        border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
-                        margin:4px 8px 8px 0;min-width:200px;vertical-align:top;'>
-              <div style='font-size:15px;font-weight:bold;color:#c0392b;'>{disease}</div>
-              <div style='font-size:12px;color:#888;margin:4px 0;'>{group} &nbsp;|&nbsp; 누계</div>
-              <div style='font-size:22px;font-weight:bold;color:#e74c3c;'>{count}<span style='font-size:13px;color:#888;'>건</span></div>
-              <div style='margin-top:6px;'>
-                <a href='{url}' style='font-size:11px;color:#1a73e8;text-decoration:none;'>질병관리청 상세보기 -&gt;</a>
-              </div>
-            </div>"""
-        return f"<div style='padding:4px;'>{cards}</div>"
-
-    html = f"""
-    <div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>
-        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>
-            {icon} {title}
-            <span style='float:right; background:rgba(255,255,255,0.3); padding:2px 10px; border-radius:12px; font-size:13px;'>{total_sum}건</span>
-        </div>
-        <div style='padding:15px;'>
-            <h4 style='margin:0 0 10px 0; color:#2c3e50; border-left:4px solid {color}; padding-left:8px;'>🦠 폐렴구균 통계 (총 {v_total}건)</h4>
-            {make_cards(v_data)}
-            
-            <h4 style='margin:25px 0 10px 0; color:#8e44ad; border-left:4px solid #8e44ad; padding-left:8px;'>🦠 대상포진 관련 통계 (총 {z_total}건)</h4>
-            {make_cards(z_data)}
-            
-            <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>🤰 임산부 주의 감염병 통계 (총 {m_total}건)</h4>
-            {make_cards(m_data)}
-            
-            <p style='color:#aaa;font-size:11px;margin-top:12px;border-top:1px solid #eee;padding-top:8px;'>
-              ※ 출처: 질병관리청 감염병포털
-            </p>
-        </div>
-    </div>"""
-    return html
+    res = []
+    maternal_kws = ["백일해", "풍진", "매독", "지카"]
+    for i in items:
+        nm = i.get("icdNm", i.get("diseaseNm", ""))
+        if "폐렴구균" in nm: i['category'] = "백신"; res.append(i)
+        elif any(kw in nm for kw in maternal_kws): i['category'] = "임산부감염병"; res.append(i)
+        elif "대상포진" in nm or "수두" in nm: i['category'] = "대상포진"; res.append(i)
+    return res
 
 # ==========================================
-# 5️⃣ 식약처 (MFDS) 및 6️⃣ 심평원 (HIRA)
+# 5️⃣ 식약처 (MFDS) 국가출하승인 수집기
 # ==========================================
 def collect_mfds():
     url = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatnShipmntAprvInfoInq"
@@ -195,7 +168,6 @@ def collect_mfds():
     for cat, kws in targets.items():
         for kw in kws:
             try:
-                # 역순 탐색 로직 적용
                 r = requests.get(url, params={"serviceKey": PUBLIC_DATA_API_KEY, "pageNo": 1, "numOfRows": 1, "goods_name": kw}, timeout=15)
                 root = ET.fromstring(r.text.strip()); tc = int(root.findtext(".//totalCount", "0") or 0)
                 if tc == 0: continue
@@ -215,6 +187,9 @@ def collect_mfds():
     all_items.sort(key=lambda x: str(x.get("RESULT_TIME", "")), reverse=True)
     return all_items
 
+# ==========================================
+# 6️⃣ 심평원 (HIRA) 약가 정보 수집기
+# ==========================================
 def collect_hira():
     url = "https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2/getDgamtList"
     kws = {"백신": ["프리베나", "캡박시브"], "영양제": ["폴산", "철분"], "대상포진": ["싱그릭스", "스카이조스터"]}
@@ -232,11 +207,10 @@ def collect_hira():
     return all_items
 
 # ==========================================
-# 🎨 UI 생성 (이전 형식 복구 및 대상포진 추가)
+# 🎨 UI 생성 도구
 # ==========================================
 def make_table(items, columns, col_keys):
-    # 표시 개수 제한 (뉴스 등 너무 길어짐 방지)
-    display_items = items[:10]
+    display_items = items[:10] # 화면에 보여줄 최대 개수 제한
     if not display_items: return "<p style='color:#7f8c8d; font-size:13px;'>관련 데이터가 없습니다.</p>"
     th_html = "".join([f"<th style='padding:8px; text-align:left; background:#f4f6f7; border-bottom:2px solid #bdc3c7;'>{col}</th>" for col in columns])
     tr_html = ""
@@ -285,10 +259,20 @@ def build_kdca_section(title, all_data, icon, color):
         if not items: return "<p style='color:#7f8c8d; font-size:13px;'>집계된 데이터가 없습니다.</p>"
         cards = ""
         for i in items:
-            ds, cnt = i.get("icdNm", i.get("diseaseNm", "")), i.get("resultVal", i.get("patntCnt", ""))
-            cards += f"""<div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;border-left:4px solid #e74c3c;border-radius:6px;padding:12px;margin:4px 8px 8px 0;min-width:180px;'>
-                <div style='font-size:14px;font-weight:bold;color:#c0392b;'>{ds}</div>
-                <div style='font-size:20px;font-weight:bold;color:#e74c3c;'>{cnt}<span style='font-size:12px;color:#888;'>건</span></div>
+            ds = i.get("icdNm", i.get("diseaseNm", ""))
+            group = i.get("icdGroupNm", "")
+            cnt = i.get("resultVal", i.get("patntCnt", ""))
+            url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+            cards += f"""
+            <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
+                        border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
+                        margin:4px 8px 8px 0;min-width:200px;vertical-align:top;'>
+              <div style='font-size:15px;font-weight:bold;color:#c0392b;'>{ds}</div>
+              <div style='font-size:12px;color:#888;margin:4px 0;'>{group} &nbsp;|&nbsp; 누계</div>
+              <div style='font-size:22px;font-weight:bold;color:#e74c3c;'>{cnt}<span style='font-size:13px;color:#888;'>건</span></div>
+              <div style='margin-top:6px;'>
+                <a href='{url}' style='font-size:11px;color:#1a73e8;text-decoration:none;'>질병관리청 상세보기 -&gt;</a>
+              </div>
             </div>"""
         return f"<div style='padding:4px;'>{cards}</div>"
 
@@ -311,10 +295,18 @@ def main():
     print(f"🚀 {today} 데이터 수집 시작")
     
     addr, pw = os.environ.get("NAVER_ADDRESS"), os.environ.get("NAVER_PASSWORD")
-    if not addr or not pw: return
+    if not addr or not pw: 
+        print("❌ 중단: 이메일 계정 정보가 없습니다.")
+        return
 
-    data = {"G2B": collect_g2b(), "NEWS": collect_naver_news(), "PUBMED": collect_pubmed(), 
-            "KDCA": collect_kdca(), "MFDS": collect_mfds(), "HIRA": collect_hira()}
+    data = {
+        "G2B": collect_g2b(), 
+        "NEWS": collect_naver_news(), 
+        "PUBMED": collect_pubmed(), 
+        "KDCA": collect_kdca(), 
+        "MFDS": collect_mfds(), 
+        "HIRA": collect_hira()
+    }
     
     html_body = f"""<html><body style='font-family:"Malgun Gothic", sans-serif; padding:20px; background:#f0f2f5;'>
         <div style='max-width:800px; margin:0 auto;'>
@@ -327,14 +319,19 @@ def main():
             {build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰", "#f1c40f")}
         </div></body></html>"""
 
-    msg = MIMEMultipart(); msg["Subject"] = f"📊 [통합 브리핑] 백신 및 영양제 데일리 리포트 - {today}"
-    msg["From"] = addr; msg["To"] = addr
+    msg = MIMEMultipart()
+    msg["Subject"] = f"📊 [통합 브리핑] 백신 및 영양제 데일리 리포트 - {today}"
+    msg["From"] = addr
+    msg["To"] = addr
     msg.attach(MIMEText(html_body, "html"))
     
     try:
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
-            s.login(addr, pw); s.send_message(msg)
+            s.login(addr, pw)
+            s.send_message(msg)
         print("✅ 브리핑 이메일 발송 완료!")
-    except Exception as e: print(f"❌ 이메일 발송 오류: {e}")
+    except Exception as e: 
+        print(f"❌ 이메일 발송 오류: {e}")
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": 
+    main()
