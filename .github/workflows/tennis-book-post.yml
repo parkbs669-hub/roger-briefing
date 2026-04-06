@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install openai requests selenium
+          pip install openai requests selenium feedparser
 
       - name: Set up Chrome
         uses: browser-actions/setup-chrome@v1
