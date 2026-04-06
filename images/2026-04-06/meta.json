@@ -2,81 +2,101 @@
   {
     "index": 1,
     "category": "string_closeup",
-    "category_label": "스트링 클로즈업",
-    "filename": "01_string_closeup.png",
-    "prompt": "Close-up of tennis string pattern, black polyester strings, geometric grid, high contrast, minimalist product photo",
-    "revised_prompt": "A close-up image focused on the unique pattern formed by black polyester strings of a tennis racket is desired. The strings cross each other forming a geometric grid design. The image concept desires a high contrast between the black strings and its background, aiming to convey a minimalist aesthetic that exudes an underlying simplicity. This resembles a meticulous and professional product photo, strongly emphasizing on the details and texture of the strings with a minimalist approach to its presentation."
+    "label": "스트링 클로즈업",
+    "filename": "01_string_closeup.jpg",
+    "description": "a close up of a tennis racket on a surface",
+    "photographer": "Dithira Hettiarachchi",
+    "unsplash_url": "https://unsplash.com/photos/a-close-up-of-a-tennis-racket-on-a-surface-ELijhDannmg",
+    "query": "tennis string racket closeup"
   },
   {
     "index": 2,
-    "category": "string_closeup",
-    "category_label": "스트링 클로즈업",
-    "filename": "02_string_closeup.png",
-    "prompt": "Detailed shot of tennis strings being woven into racket frame, cross strings intersecting, vibrant colors, overhead view",
-    "revised_prompt": "An intricate scene presenting tennis strings being carefully woven into the frame of a racket. The vibrant colored strings crisscross elegantly, empowering the overall aesthetics of the scene. The strings intersect at perfect angles, creating a captivating maze-like pattern. The entire scene is captured from an overhead angle, herein enhancing the dimensions of the tennis racket and its intricate weaving. The theme primarily resonates with the meticulous craftsmanship that goes into the making of every tennis racket."
+    "category": "string_detail",
+    "label": "스트링 디테일",
+    "filename": "02_string_detail.jpg",
+    "description": "Pedestrian suspension bridge catching the early morning sun",
+    "photographer": "Ian",
+    "unsplash_url": "https://unsplash.com/photos/a-tall-building-with-a-red-and-white-design-on-it-lRxHUukEKgc",
+    "query": "tennis racket strings detail"
   },
   {
     "index": 3,
-    "category": "player_action",
-    "category_label": "선수 액션",
-    "filename": "03_player_action.png",
-    "prompt": "Female tennis player mid-serve at peak toss, Wimbledon grass court, white outfit, sunlight, dynamic action shot",
-    "revised_prompt": "A dynamic action shot of a Hispanic female tennis player during the mid-service at peak toss on a grass court, styled like the ones at Wimbledon. She's wearing a white tennis outfit, the typical color for Wimbledon. The court is bathed in bright, warm sunlight which brilliantly highlights the intense concentration on her face and the tension in her muscle as she prepares to strike. The image is a freeze frame of peak athletic performance mixed with the lush green of the grass court."
+    "category": "player_forehand",
+    "label": "선수 포핸드",
+    "filename": "03_player_forehand.jpg",
+    "description": "a man standing on a tennis court holding a racquet",
+    "photographer": "Gabriel Martin",
+    "unsplash_url": "https://unsplash.com/photos/a-man-standing-on-a-tennis-court-holding-a-racquet-kc3_if80fT0",
+    "query": "tennis player forehand action"
   },
   {
     "index": 4,
-    "category": "player_action",
-    "category_label": "선수 액션",
-    "filename": "04_player_action.png",
-    "prompt": "Tennis player sliding on clay court for a backhand, red clay dust, intense expression, wide angle perspective",
-    "revised_prompt": "A vigorous tennis match is taking place on a red clay court. A Middle-Eastern male tennis player exhibits an intense expression and an all-consuming focus as he slides across the court to hit a backhand shot. He deftly maneuvers his body, demonstrating the strong physique required in the sport. Clay dust expands in the air around him as his feet skid swiftly across the surface. The observer's vantage point offers a wide-angle perspective of the scene, accentuating the immense size of the court compared to the athlete. The scene is filled with tension and anticipation, capturing the sheer passion and dedication that encompasses the sport."
+    "category": "player_serve",
+    "label": "선수 서브",
+    "filename": "04_player_serve.jpg",
+    "description": "a man standing on a tennis court holding a racquet",
+    "photographer": "Gabriel Martin",
+    "unsplash_url": "https://unsplash.com/photos/a-man-standing-on-a-tennis-court-holding-a-racquet-kc3_if80fT0",
+    "query": "tennis player serve action"
   },
   {
     "index": 5,
-    "category": "court_scenery",
-    "category_label": "코트 풍경",
-    "filename": "05_court_scenery.png",
-    "prompt": "Roland Garros clay court panorama, terracotta red surface, ochre tones, French Open atmosphere",
-    "revised_prompt": "Panorama view of a clay tennis court, with its surface showing a rich terracotta red hue and overall tones of ochre creating a warm ambiance. Signs of ongoing match, filled stands and judges seated around the court provide the atmosphere of a world renowned open tournament."
+    "category": "player_backhand",
+    "label": "선수 백핸드",
+    "filename": "05_player_backhand.jpg",
+    "description": "Man Playing Tennis",
+    "photographer": "The Drink Break",
+    "unsplash_url": "https://unsplash.com/photos/a-man-hitting-a-tennis-ball-with-a-racket-JkOZofUa4z8",
+    "query": "tennis player backhand"
   },
   {
     "index": 6,
-    "category": "court_scenery",
-    "category_label": "코트 풍경",
-    "filename": "06_court_scenery.png",
-    "prompt": "Indoor tennis court with skylight, warm natural light streaming in, pristine surface, minimalist architecture",
-    "revised_prompt": "An indoor tennis court bathed in soft, warm natural sunlight from a large overhead skylight. The surface of the court is smooth and pristine, the lines crisp and clearly marked. The architecture is simple and minimalist, with clean lines and an open layout. The walls are lightly colored, complementing the brightness of the environment, and devoid of decorations. The net is perfectly strung and stands taut in the middle of the court, ready for a match. The overall atmosphere is calm and inviting, inspiring players to engage in a friendly match."
+    "category": "clay_court",
+    "label": "클레이 코트",
+    "filename": "06_clay_court.jpg",
+    "description": "Aerial view shows two tennis courts amidst trees.",
+    "photographer": "Denny Müller",
+    "unsplash_url": "https://unsplash.com/photos/aerial-view-shows-two-tennis-courts-amidst-trees-Bx3DPnaSNvU",
+    "query": "clay court tennis"
   },
   {
     "index": 7,
-    "category": "stringing_machine",
-    "category_label": "스트링 머신",
-    "filename": "07_stringing_machine.png",
-    "prompt": "Stringer hands working on racket, pulling polyester string through grommets, workbench setting, focused detail shot",
-    "revised_prompt": "Detailed close-up illustration of a stringer, who can be Caucasian, Hispanic, Black, Middle-Eastern, or South Asian, working meticulously on a tennis racket. The hands should be weaving a polyester string into the racket's grommets, pulling and adjusting for optimal tightness. The setting is a professional workbench, scattered with more tennis rackets waiting their turn, a spool of string, and various racket stringing tools. It should feel like we have zoomed in on the handiwork, showcasing the precision and detail of the stringer's occupation."
+    "category": "court_aerial",
+    "label": "코트 전경",
+    "filename": "07_court_aerial.jpg",
+    "description": "High school tennis courts.",
+    "photographer": "Matt Benson",
+    "unsplash_url": "https://unsplash.com/photos/a-building-with-windows-x7cu1TCGMI0",
+    "query": "tennis court aerial view"
   },
   {
     "index": 8,
-    "category": "racket_detail",
-    "category_label": "라켓 디테일",
-    "filename": "08_racket_detail.png",
-    "prompt": "Tennis racket head close-up on clay court surface, string grid reflection, red clay dust, dramatic angle",
-    "revised_prompt": "Zoomed-in view of the head of a tennis racket with finely woven strings, lying on the granulated texture of a red clay court. The strings create an intricate grid reflection that intersects with the orange-red granules of the clay dust. The image is seen from a dramatic angle, highlighting the contrast between the racket's lines and the irregularity of the court's surface in a powerful composition."
+    "category": "stringing_machine",
+    "label": "스트링 머신",
+    "filename": "08_stringing_machine.jpg",
+    "description": "What a hard but important job for the hockeyteam!",
+    "photographer": "Astrid Schaffner",
+    "unsplash_url": "https://unsplash.com/photos/a-man-is-working-on-a-machine-with-a-flame-2X1gNI71opU",
+    "query": "tennis stringing machine"
   },
   {
     "index": 9,
-    "category": "equipment_lifestyle",
-    "category_label": "장비 라이프스타일",
-    "filename": "09_equipment_lifestyle.png",
-    "prompt": "Tennis bag open showing rackets, strings, grips, and accessories organized inside, flat lay, clean aesthetic",
-    "revised_prompt": "A neatly arranged tennis bag with its zipper open revealing neatly arranged rackets, strings, grips, and various accessories inside. The items are laid flat and organized in a way that maximizes space and maintains a clean aesthetic. The image should emphasize the neatness and organization of the items inside the bag. The bag itself should be of a neutral color to enhance the aesthetic appeal. The perspective is from directly above, like a flat lay. The accessories can include wristbands, towels, and bottles of water. Colors should be harmonious and pleasing to the eye."
+    "category": "tennis_net",
+    "label": "네트 & 공",
+    "filename": "09_tennis_net.jpg",
+    "description": "a tennis court with a net and two people playing tennis",
+    "photographer": "Paxton Todd",
+    "unsplash_url": "https://unsplash.com/photos/a-tennis-court-with-a-net-and-two-people-playing-tennis-KO_Y05IPbE4",
+    "query": "tennis ball court net"
   },
   {
     "index": 10,
-    "category": "aesthetic_mood",
-    "category_label": "감성 테니스",
-    "filename": "10_aesthetic_mood.png",
-    "prompt": "Aerial view of tennis complex with multiple courts, green and blue surfaces, geometric pattern",
-    "revised_prompt": "A detailed aerial perspective of a large and bustling tennis complex filled with multiple courts. The courts should vary in color, displaying alternating surfaces in lush shades of green and vibrant blue. These courts should be arranged in a distinct geometric pattern, showcasing symmetry and precision. The scene should highlight the well-manicured grass around the courts, the surrounding walkways, and the viewing areas, accentuating the atmosphere of active sportsmanship and competition."
+    "category": "equipment",
+    "label": "테니스 장비",
+    "filename": "10_equipment.jpg",
+    "description": "a duffle bag sitting on top of a tennis court",
+    "photographer": "SideSpin Padel",
+    "unsplash_url": "https://unsplash.com/photos/a-duffle-bag-sitting-on-top-of-a-tennis-court-FWuRa-0X6G8",
+    "query": "tennis equipment bag racket"
   }
 ]
