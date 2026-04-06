@@ -39,6 +39,8 @@ jobs:
           NL_API_KEY: ${{ secrets.NL_API_KEY }}
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+          KAKAO_ID: ${{ secrets.KAKAO_ID }}
+          KAKAO_PW: ${{ secrets.KAKAO_PW }}
         run: |
           python tennis_book_poster.py
 
