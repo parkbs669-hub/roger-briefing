@@ -1,4 +1,4 @@
-name: 🎾 Daily Tennis Image Generator
+name: 🎾 Daily Tennis Image Collector
 
 on:
   schedule:
@@ -6,17 +6,15 @@ on:
   workflow_dispatch:         # 수동 실행 버튼
 
 jobs:
-  generate-images:
+  collect-images:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write        # 이미지 커밋을 위해 필요
+      contents: write
 
     steps:
       - name: 📥 체크아웃
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: 🐍 Python 설치
         uses: actions/setup-python@v5
@@ -24,16 +22,14 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 패키지 설치
-        run: |
-          pip install openai requests
+        run: pip install requests
 
-      - name: 🎾 이미지 생성
+      - name: 🎾 이미지 수집
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          python generate_tennis_images.py
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+        run: python generate_tennis_images.py
 
-      - name: 📤 GitHub에 커밋 & 푸시
+      - name: 📤 커밋 & 푸시
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
