@@ -1,62 +1,61 @@
-import os
-import json
-import time
-import requests
-from datetime import datetime
-from openai import OpenAI
-from selenium import webdriver
-# ... (필요한 라이브러리 import 생략 없이 유지)
+name: Weekly Tennis Book Post
 
-# [설정 및 환경변수 부분 기존과 동일]
-SEEN_FILE = "data/tennis_books_seen.json"
+on:
+  schedule:
+    - cron: '0 23 * * 0'   # 매주 일요일 23:00 UTC = 월요일 08:00 KST
+  workflow_dispatch:         # 수동 실행 가능 (테스트용)
 
-def load_seen():
-    os.makedirs("data", exist_ok=True)
-    if os.path.exists(SEEN_FILE):
-        try:
-            with open(SEEN_FILE, "r", encoding="utf-8") as f:
-                return set(json.load(f))
-        except: return set()
-    return set()
+jobs:
+  post-tennis-books:
+    runs-on: ubuntu-latest
 
-def save_seen(seen: set):
-    os.makedirs("data", exist_ok=True)
-    with open(SEEN_FILE, "w", encoding="utf-8") as f:
-        json.dump(list(seen), f, ensure_ascii=False, indent=2)
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-# ... [fetch_aladin_books, fetch_nl_books 등 수집 함수 기존과 동일] ...
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-def main():
-    print(f"[시작] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    seen = load_seen()
+      - name: Install dependencies
+        run: |
+          pip install openai requests selenium
 
-    # 데이터 수집 실행
-    domestic = fetch_aladin_books(seen)
-    overseas = fetch_google_books(seen)
-    # (국립중앙도서관 보완 로직 포함)
-    
-    # ---------------------------------------------------------
-    # 사고 모델 1단계: 수집 결과와 무관하게 파일 존재 보장
-    # ---------------------------------------------------------
-    save_seen(seen) 
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
 
-    if not domestic and not overseas:
-        print("[종료] 새로운 도서 없음")
-        return # 여기서 종료되어도 위에서 save_seen을 했으므로 파일은 존재함
-    # ---------------------------------------------------------
+      - name: Set up ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
 
-    # 블로그 포스팅 로직
-    try:
-        title, html = build_post_html(domestic, overseas)
-        post_to_tistory(title, html)
-        
-        # 포스팅 성공 시 ISBN 업데이트 후 최종 저장
-        for b in domestic + overseas:
-            seen.add(b["isbn"])
-        save_seen(seen)
-        print("[완료] 포스팅 및 기록 업데이트 성공")
-    except Exception as e:
-        print(f"[오류] 과정 중 문제 발생: {e}")
+      - name: Run tennis book poster
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ALADIN_API_KEY: ${{ secrets.ALADIN_API_KEY }}
+          GOOGLE_BOOKS_API_KEY: ${{ secrets.GOOGLE_BOOKS_API_KEY }}
+          NL_API_KEY: ${{ secrets.NL_API_KEY }}
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+          NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+        run: |
+          python tennis_book_poster.py
 
-if __name__ == "__main__":
-    main()
+      - name: Commit and Push seen file
+        run: |
+          # 1. Git 사용자 설정
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 2. 방어 로직: data 폴더와 json 파일이 없을 경우 강제 생성
+          # 파이썬 코드에서 생성을 실패하더라도 여기서 git add 에러를 막아줍니다.
+          mkdir -p data
+          if [ ! -f data/tennis_books_seen.json ]; then
+            echo "[]" > data/tennis_books_seen.json
+          fi
+
+          # 3. 변경사항 스테이징
+          git add data/tennis_books_seen.json
+          
+          # 4. 조건부 커밋 및 푸시
+          # 변경된 내용(새로운 ISBN 등)이 있을 때만 커밋을 실행합니다.
+          # 변경사항이 없으면 'git diff'가 참이 되어 뒤의 커밋 명령어를 실행하지 않고 조용히 종료됩니다.
+          git diff --staged --quiet || (git commit -m "chore: update tennis books seen list" && git push)
