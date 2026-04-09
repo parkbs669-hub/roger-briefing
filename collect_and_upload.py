@@ -9,7 +9,7 @@ from googleapiclient.http import MediaFileUpload
 
 # --- 설정 (GitHub Secrets) ---
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
-PIXABAY_API_KEY = os.environ.get("PIXABAY_API_KEY") # Pixabay 키 추가
+PIXABAY_API_KEY = os.environ.get("55375885-da820c83376f1c54dd4c4e666") # Pixabay 키 추가
 GDRIVE_CREDENTIALS = os.environ.get("GDRIVE_CREDENTIALS")
 GDRIVE_FOLDER_ID = os.environ.get("GDRIVE_FOLDER_ID")
 
