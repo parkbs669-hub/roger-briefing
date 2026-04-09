@@ -19,6 +19,7 @@ PIXABAY_URL = "https://pixabay.com/api/"
 
 # --- 검색 키워드 설정 ---
 SEARCH_QUERIES = [
+    {"query": "tennis woman", "category": "tennis_woman", "label": "테니스 여성"},
     {"query": "tennis string racket closeup", "category": "string_closeup", "label": "스트링 클로즈업"},
     {"query": "tennis racket strings detail", "category": "string_detail", "label": "스트링 디테일"},
     {"query": "tennis player forehand action", "category": "player_forehand", "label": "선수 포핸드"},
