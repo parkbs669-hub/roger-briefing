@@ -1,4 +1,4 @@
-name: 🎾 Daily Tennis Sync (Unsplash to G-Drive)
+name: 🎾 테니시 이미지 수집기 Daily Tennis Sync (Unsplash to G-Drive)
 
 on:
   schedule:
