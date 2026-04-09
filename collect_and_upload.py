@@ -22,7 +22,15 @@ SEARCH_QUERIES = [
     {"query": "tennis player forehand action", "category": "player_forehand", "label": "선수 포핸드"},
     {"query": "tennis player serve action", "category": "player_serve", "label": "선수 서브"},
     {"query": "tennis stringing machine", "category": "stringing_machine", "label": "스트링 머신"},
-    # 필요한 만큼 추가하세요...
+    {"query": "tennis stringing tools awl pliers", "category": "stringing_tools", "label": "스트링 도구(송곳, 플라이어)"}
+    {"query": "tennis racket tension calibration", "category": "tension_check", "label": "텐션 측정 및 교정"}
+    {"query": "tennis grip tape wrap texture", "category": "grip_detail", "label": "그립 테이프 질감"}
+    {"query": "tennis racket stencil logo", "category": "racket_stencil", "label": "라켓 스텐실 작업"}
+    {"query": "tennis player sliding clay court", "category": "player_slide", "label": "클레이 코트 슬라이딩"}
+    {"query": "tennis ball hitting racket strings slow motion", "category": "impact_moment", "label": "임팩트 순간"}
+    {"query": "tennis player emotional celebration", "category": "player_emotion", "label": "승리 환희 순간"}
+    {"query": "professional tennis tournament stadium light", "category": "stadium_night", "label": "야간 경기장 전경"}
+필요한 만큼 추가하세요...
 ]
 
 def get_gdrive_service():
