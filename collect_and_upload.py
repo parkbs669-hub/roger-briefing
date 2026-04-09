@@ -9,13 +9,15 @@ from googleapiclient.http import MediaFileUpload
 
 # --- 설정 (GitHub Secrets) ---
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
+PIXABAY_API_KEY = os.environ.get("PIXABAY_API_KEY") # Pixabay 키 추가
 GDRIVE_CREDENTIALS = os.environ.get("GDRIVE_CREDENTIALS")
 GDRIVE_FOLDER_ID = os.environ.get("GDRIVE_FOLDER_ID")
 
 TODAY = date.today().strftime("%Y-%m-%d")
-BASE_URL = "https://api.unsplash.com/search/photos"
+UNSPLASH_URL = "https://api.unsplash.com/search/photos"
+PIXABAY_URL = "https://pixabay.com/api/"
 
-# --- 검색 키워드 설정 (문법 오류 수정 완료) ---
+# --- 검색 키워드 설정 ---
 SEARCH_QUERIES = [
     {"query": "tennis string racket closeup", "category": "string_closeup", "label": "스트링 클로즈업"},
     {"query": "tennis racket strings detail", "category": "string_detail", "label": "스트링 디테일"},
@@ -33,7 +35,6 @@ SEARCH_QUERIES = [
     {"query": "vintage tennis racket wooden", "category": "vintage_tennis", "label": "빈티지 라켓"},
     {"query": "shaking hands after tennis match", "category": "sportsmanship", "label": "경기 후 악수"}
 ]
-
 def get_gdrive_service():
     if not GDRIVE_CREDENTIALS:
         raise ValueError("GDRIVE_CREDENTIALS 환경 변수가 없습니다.")
@@ -42,10 +43,7 @@ def get_gdrive_service():
     return build('drive', 'v3', credentials=creds)
 
 def upload_to_drive(service, file_path, filename):
-    file_metadata = {
-        'name': filename,
-        'parents': [GDRIVE_FOLDER_ID]
-    }
+    file_metadata = {'name': filename, 'parents': [GDRIVE_FOLDER_ID]}
     media = MediaFileUpload(file_path, resumable=True)
     try:
         service.files().create(body=file_metadata, media_body=media, fields='id').execute()
@@ -54,8 +52,9 @@ def upload_to_drive(service, file_path, filename):
         print(f"  ❌ 드라이브 업로드 실패: {e}")
 
 def main():
-    if not all([UNSPLASH_ACCESS_KEY, GDRIVE_CREDENTIALS, GDRIVE_FOLDER_ID]):
-        print("❌ 설정 오류: GitHub Secrets를 확인하세요.")
+    # Pixabay 키 검사 추가
+    if not all([UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, GDRIVE_CREDENTIALS, GDRIVE_FOLDER_ID]):
+        print("❌ 설정 오류: GitHub Secrets에 PIXABAY_API_KEY가 있는지 확인하세요.")
         return
 
     try:
@@ -64,37 +63,50 @@ def main():
         print(f"❌ 구글 인증 실패: {e}")
         return
 
-    print(f"\n🎾 BUM Sports 이미지 수집 및 업로드 시작: {TODAY}")
+    print(f"\n🎾 BUM Sports 이미지 수집 시작 (Unsplash & Pixabay): {TODAY}")
+    day_idx = date.today().timetuple().tm_yday
     
     for i, q in enumerate(SEARCH_QUERIES):
         print(f"[{i+1}/{len(SEARCH_QUERIES)}] {q['label']} 처리 중...")
+        
+        # --- 1. Unsplash 수집 ---
         try:
-            headers = {"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"}
-            params = {"query": q["query"], "per_page": 10, "orientation": "landscape"}
+            us_params = {"query": q["query"], "per_page": 10, "orientation": "landscape"}
+            us_headers = {"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"}
+            us_res = requests.get(UNSPLASH_URL, params=us_params, headers=us_headers, timeout=15)
+            us_results = us_res.json().get("results", [])
             
-            res = requests.get(BASE_URL, params=params, headers=headers, timeout=15)
-            res.raise_for_status()
-            results = res.json().get("results", [])
-
-            if not results:
-                continue
-
-            # 날짜별 이미지 선택
-            day_idx = date.today().timetuple().tm_yday
-            pick = results[day_idx % len(results)]
-            
-            # 다운로드 실행
-            img_data = requests.get(pick["urls"]["regular"], timeout=30).content
-            filename = f"{TODAY}_{i+1:02d}_{q['category']}.jpg"
-            
-            with open(filename, "wb") as f:
-                f.write(img_data)
-
-            upload_to_drive(service, filename, filename)
-            os.remove(filename) # 임시 파일 삭제
-
+            if us_results:
+                pick = us_results[day_idx % len(us_results)]
+                img_data = requests.get(pick["urls"]["regular"], timeout=30).content
+                filename = f"{TODAY}_{i+1:02d}_{q['category']}_us.jpg"
+                with open(filename, "wb") as f: f.write(img_data)
+                upload_to_drive(service, filename, filename)
+                os.remove(filename)
         except Exception as e:
-            print(f"  ❌ 오류 발생 ({q['label']}): {e}")
+            print(f"  ❌ Unsplash 오류: {e}")
+
+        # --- 2. Pixabay 수집 (추가된 부분) ---
+        try:
+            pb_params = {
+                "key": PIXABAY_API_KEY,
+                "q": q["query"],
+                "image_type": "photo",
+                "orientation": "horizontal",
+                "per_page": 10
+            }
+            pb_res = requests.get(PIXABAY_URL, params=pb_params, timeout=15)
+            pb_results = pb_res.json().get("hits", [])
+
+            if pb_results:
+                pick = pb_results[day_idx % len(pb_results)]
+                img_data = requests.get(pick["largeImageURL"], timeout=30).content
+                filename = f"{TODAY}_{i+1:02d}_{q['category']}_pb.jpg"
+                with open(filename, "wb") as f: f.write(img_data)
+                upload_to_drive(service, filename, filename)
+                os.remove(filename)
+        except Exception as e:
+            print(f"  ❌ Pixabay 오류: {e}")
 
 if __name__ == "__main__":
     main()
