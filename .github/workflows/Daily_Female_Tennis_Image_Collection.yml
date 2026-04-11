@@ -2,10 +2,9 @@ name: Daily Female Tennis Image Collection
 
 on:
   schedule:
-    # GitHub Actions의 스케줄러는 UTC 기준입니다. 
     # 한국 시간(KST) 오전 9시는 UTC 오전 0시입니다.
     - cron: '0 0 * * *'
-  workflow_dispatch: # 필요할 때 수동으로도 실행할 수 있도록 설정
+  workflow_dispatch: # 수동 실행 버튼 활성화
 
 jobs:
   build:
@@ -25,14 +24,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
+    - name: List files in directory (파일 확인용)
+      run: ls -R
+
     - name: Run collection script
       env:
         UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
         PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
         GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
         GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
-      run: - name: List files in directory
-      run: ls -R  # 현재 폴더와 하위 폴더의 모든 파일을 나열합니다.
-
-    - name: Run collection script
       run: python Daily_Female_Tennis_Image_Collection.py
