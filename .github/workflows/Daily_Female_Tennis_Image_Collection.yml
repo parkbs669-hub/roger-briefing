@@ -31,4 +31,8 @@ jobs:
         PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
         GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
         GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+      run: - name: List files in directory
+      run: ls -R  # 현재 폴더와 하위 폴더의 모든 파일을 나열합니다.
+
+    - name: Run collection script
       run: python Daily_Female_Tennis_Image_Collection.py
