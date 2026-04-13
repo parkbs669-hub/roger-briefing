@@ -247,6 +247,7 @@ def build_section(title, all_data, columns, col_keys, icon, color):
     </div>"""
     return html
 
+# ✅ 질병청 섹션: 요청하신 이미지 스타일로 수정됨 (다른 로직은 유지)
 def build_kdca_section(title, all_data, icon, color):
     v_data = [i for i in all_data if i.get('category') == '백신']
     z_data = [i for i in all_data if i.get('category') == '대상포진']
@@ -263,6 +264,7 @@ def build_kdca_section(title, all_data, icon, color):
             group = i.get("icdGroupNm", "")
             cnt = i.get("resultVal", i.get("patntCnt", ""))
             url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+            # 첫 번째 파일(daily) 및 이미지의 붉은색 카드 UI 적용
             cards += f"""
             <div style='display:inline-block;background:#fff5f5;border:1px solid #fcc;
                         border-left:4px solid #e74c3c;border-radius:6px;padding:12px 16px;
