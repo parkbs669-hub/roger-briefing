@@ -19,7 +19,7 @@ from googleapiclient.http import MediaFileUpload
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
 PIXABAY_API_KEY     = os.environ.get("PIXABAY_API_KEY")
 GDRIVE_CREDENTIALS  = os.environ.get("GDRIVE_CREDENTIALS")
-GDRIVE_FOLDER_ID    = os.environ.get("VACCINE_GDRIVE_FOLDER_ID")  # 백신 전용 폴더 ID
+VACCINE_FOLDER_NAME = "vaccine_images"  # 드라이브에 자동 생성되는 폴더명
 
 TODAY   = date.today().strftime("%Y-%m-%d")
 DAY_IDX = date.today().timetuple().tm_yday  # 매일 다른 이미지 선택용
@@ -116,8 +116,26 @@ def get_gdrive_service():
     return build('drive', 'v3', credentials=creds)
 
 
-def upload_to_drive(service, file_path: str, filename: str):
-    file_metadata = {'name': filename, 'parents': [GDRIVE_FOLDER_ID]}
+def get_or_create_folder(service, folder_name: str) -> str:
+    query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
+    results = service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get("files", [])
+    if files:
+        folder_id = files[0]["id"]
+        print(f"📁 기존 폴더 사용: {folder_name} ({folder_id[:8]}...)")
+        return folder_id
+    folder_meta = {
+        "name": folder_name,
+        "mimeType": "application/vnd.google-apps.folder"
+    }
+    folder = service.files().create(body=folder_meta, fields="id").execute()
+    folder_id = folder["id"]
+    print(f"📁 새 폴더 생성: {folder_name} ({folder_id[:8]}...)")
+    return folder_id
+
+
+def upload_to_drive(service, file_path: str, filename: str, folder_id: str):
+    file_metadata = {'name': filename, 'parents': [folder_id]}
     media = MediaFileUpload(file_path, resumable=True)
     try:
         service.files().create(
@@ -173,15 +191,21 @@ def fetch_pixabay(query: str) -> bytes | None:
 
 
 def main():
-    if not all([UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, GDRIVE_CREDENTIALS, GDRIVE_FOLDER_ID]):
+    if not all([UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, GDRIVE_CREDENTIALS]):
         print("❌ 설정 오류: GitHub Secrets를 확인하세요.")
-        print("   필요한 Secrets: UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, GDRIVE_CREDENTIALS, VACCINE_GDRIVE_FOLDER_ID")
+        print("   필요한 Secrets: UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, GDRIVE_CREDENTIALS")
         return
 
     try:
         service = get_gdrive_service()
     except Exception as e:
         print(f"❌ 구글 인증 실패: {e}")
+        return
+
+    try:
+        folder_id = get_or_create_folder(service, VACCINE_FOLDER_NAME)
+    except Exception as e:
+        print(f"❌ 폴더 생성 실패: {e}")
         return
 
     print(f"\n💉 Vaccine Blog 이미지 수집 시작: {TODAY}")
@@ -198,7 +222,7 @@ def main():
             filename = f"{TODAY}_{i+1:02d}_{q['category']}_us.jpg"
             with open(filename, "wb") as f:
                 f.write(img_data)
-            upload_to_drive(service, filename, filename)
+            upload_to_drive(service, filename, filename, folder_id)
             os.remove(filename)
             saved += 1
 
@@ -208,7 +232,7 @@ def main():
             filename = f"{TODAY}_{i+1:02d}_{q['category']}_pb.jpg"
             with open(filename, "wb") as f:
                 f.write(img_data)
-            upload_to_drive(service, filename, filename)
+            upload_to_drive(service, filename, filename, folder_id)
             os.remove(filename)
             saved += 1
 
