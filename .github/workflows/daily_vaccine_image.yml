@@ -1,0 +1,32 @@
+name: Daily Vaccine Image Collection
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 매일 오전 10시 (KST = UTC+9, 01:00 UTC)
+  workflow_dispatch:        # 수동 실행 버튼
+
+jobs:
+  collect-vaccine-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests google-auth google-auth-oauthlib google-api-python-client
+
+      - name: Run vaccine image collector
+        env:
+          UNSPLASH_ACCESS_KEY:      ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          PIXABAY_API_KEY:          ${{ secrets.PIXABAY_API_KEY }}
+          GDRIVE_CREDENTIALS:       ${{ secrets.GDRIVE_CREDENTIALS }}
+          VACCINE_GDRIVE_FOLDER_ID: ${{ secrets.VACCINE_GDRIVE_FOLDER_ID }}
+        run: |
+          python "Daily_Vaccine_Image_Collection.py"
