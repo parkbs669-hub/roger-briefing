@@ -322,7 +322,7 @@ def main():
     
     html_body = f"""<html><body style='font-family:"Malgun Gothic", sans-serif; padding:20px; background:#f0f2f5;'>
         <div style='max-width:800px; margin:0 auto;'>
-            <div style='text-align:center; margin-bottom:30px;'><h1 style='color:#2c3e50;'>📊 통합 인텔리전스 브리핑</h1><p style='color:#7f8c8d;'>{today} 기준 자동화 리포트</p></div>
+            <div style='text-align:center; margin-bottom:30px;'><h1 style='color:#2c3e50;'>📊 [통합 브리핑] 데일리 리포트</h1><p style='color:#7f8c8d;'>{today} 기준 자동화 리포트</p></div>
             {build_section("네이버 최신 뉴스", data['NEWS'], ['제목', '날짜', '링크'], ['title', 'pubDate', 'link'], "📰", "#3498db")}
             {build_section("나라장터 입찰공고", data['G2B'], ['공고명', '기관명', '공고일', '링크'], ['bidNtceNm', 'ntceInsttNm', 'bidNtceDt', 'bidNtceUrl'], "🏛️", "#e67e22")}
             {build_section("학술 논문 (PubMed)", data['PUBMED'], ['제목', '저널', '연도', '링크'], ['title', 'journal', 'year', 'link'], "🔬", "#9b59b6")}
@@ -332,7 +332,7 @@ def main():
         </div></body></html>"""
 
     msg = MIMEMultipart()
-    msg["Subject"] = f"📊 [통합 브리핑] 백신 및 영양제 데일리 리포트 - {today}"
+    msg["Subject"] = f"📊 [통합 브리핑]  데일리 리포트 - {today}"
     msg["From"] = addr
     msg["To"] = addr
     msg.attach(MIMEText(html_body, "html"))
