@@ -22,7 +22,8 @@ def collect_pubmed():
     queries = {
         "백신": "pneumococcal vaccine PCV20 PCV21",
         "영양제": "(folic acid OR iron supplementation) AND pregnancy AND 2026[pdat]",
-        "대상포진": "(herpes zoster vaccine OR shingrix OR skyzoster) AND 2026[pdat]"
+        "대상포진": "(herpes zoster vaccine OR shingrix OR skyzoster) AND 2026[pdat]",
+        "타파미디스": "(tafamidis OR transthyretin amyloidosis OR TTR cardiomyopathy OR cardiac amyloidosis) AND 2026[pdat]"
     }
     all_papers, seen = [], set()
 
@@ -73,7 +74,8 @@ def collect_naver_news():
     kw_map = {
         "백신": ["폐렴구균 백신", "캡박시브", "프리베나"],
         "영양제": ["임산부 엽산", "임산부 철분제"],
-        "대상포진": ["대상포진 백신", "싱그릭스", "스카이조스터"]
+        "대상포진": ["대상포진 백신", "싱그릭스", "스카이조스터"],
+        "타파미디스": ["타파미디스", "심장 아밀로이드증", "빈다맥스"]
     }
     all_news, seen = [], set()
     headers = {"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET}
@@ -101,7 +103,8 @@ def collect_g2b():
     url = "http://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoThngPPSSrch"
     kw_map = {
         "백신": ["폐렴구균"], "영양제": ["임산부 영양제", "엽산", "철분"],
-        "대상포진": ["대상포진", "싱그릭스"]
+        "대상포진": ["대상포진", "싱그릭스"],
+        "타파미디스": ["타파미디스", "빈다맥스"]
     }
     all_items, seen = [], set()
     start = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y%m%d0000")
@@ -152,6 +155,7 @@ def collect_kdca():
         if "폐렴구균" in nm: i['category'] = "백신"; res.append(i)
         elif any(kw in nm for kw in maternal_kws): i['category'] = "임산부감염병"; res.append(i)
         elif "대상포진" in nm or "수두" in nm: i['category'] = "대상포진"; res.append(i)
+        elif "아밀로이드" in nm: i['category'] = "타파미디스"; res.append(i)
     return res
 
 # ==========================================
@@ -160,9 +164,10 @@ def collect_kdca():
 def collect_mfds():
     url = "http://apis.data.go.kr/1471000/DrugNatnShipmntAprvInfoService/getDrugNatnShipmntAprvInfoInq"
     targets = {
-        "백신": ["폐렴구균", "프리베나", "캡박시브"], 
+        "백신": ["폐렴구균", "프리베나", "캡박시브"],
         "임산부": ["아다셀", "부스트릭스", "아브리스보"],
-        "대상포진": ["대상포진", "싱그릭스", "스카이조스터"]
+        "대상포진": ["대상포진", "싱그릭스", "스카이조스터"],
+        "타파미디스": ["타파미디스", "빈다맥스"]
     }
     all_items, seen = [], set()
     for cat, kws in targets.items():
@@ -192,7 +197,7 @@ def collect_mfds():
 # ==========================================
 def collect_hira():
     url = "https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2/getDgamtList"
-    kws = {"백신": ["프리베나", "캡박시브"], "영양제": ["폴산", "철분"], "대상포진": ["싱그릭스", "스카이조스터"]}
+    kws = {"백신": ["프리베나", "캡박시브"], "영양제": ["폴산", "철분"], "대상포진": ["싱그릭스", "스카이조스터"], "타파미디스": ["타파미디스", "빈다맥스"]}
     all_items, seen = [], set()
     for cat, words in kws.items():
         for kw in words:
@@ -230,9 +235,10 @@ def build_section(title, all_data, columns, col_keys, icon, color):
     v_data = [i for i in all_data if i.get('category') == '백신']
     z_data = [i for i in all_data if i.get('category') == '대상포진']
     n_data = [i for i in all_data if i.get('category') in ['영양제', '임산부', '임산부감염병']]
-    
+    t_data = [i for i in all_data if i.get('category') == '타파미디스']
+
     n_title = "🤰 임산부 백신 섹션" if "식약처" in title else "🤰 임산부 영양제 및 관련 섹션"
-    
+
     html = f"""
     <div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>
         <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>{icon} {title}</div>
@@ -243,6 +249,8 @@ def build_section(title, all_data, columns, col_keys, icon, color):
             {make_table(z_data, columns, col_keys)}
             <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>{n_title}</h4>
             {make_table(n_data, columns, col_keys)}
+            <h4 style='margin:25px 0 10px 0; color:#c0392b; border-left:4px solid #c0392b; padding-left:8px;'>💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션</h4>
+            {make_table(t_data, columns, col_keys)}
         </div>
     </div>"""
     return html
@@ -252,9 +260,10 @@ def build_kdca_section(title, all_data, icon, color):
     v_data = [i for i in all_data if i.get('category') == '백신']
     z_data = [i for i in all_data if i.get('category') == '대상포진']
     m_data = [i for i in all_data if i.get('category') == '임산부감염병']
-    
+    t_data = [i for i in all_data if i.get('category') == '타파미디스']
+
     def ct(items): return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
-    v_t, z_t, m_t = ct(v_data), ct(z_data), ct(m_data)
+    v_t, z_t, m_t, t_t = ct(v_data), ct(z_data), ct(m_data), ct(t_data)
 
     def mc(items):
         if not items: return "<p style='color:#7f8c8d; font-size:13px;'>집계된 데이터가 없습니다.</p>"
@@ -280,11 +289,12 @@ def build_kdca_section(title, all_data, icon, color):
 
     return f"""
     <div style='margin-bottom:30px; border:1px solid #dcdde1; border-radius:8px; overflow:hidden; background:#ffffff;'>
-        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>{icon} {title} <span style='float:right; background:rgba(255,255,255,0.3); padding:2px 10px; border-radius:12px; font-size:13px;'>{v_t+z_t+m_t}건</span></div>
+        <div style='background:{color}; color:#ffffff; padding:12px 15px; font-size:16px; font-weight:bold;'>{icon} {title} <span style='float:right; background:rgba(255,255,255,0.3); padding:2px 10px; border-radius:12px; font-size:13px;'>{v_t+z_t+m_t+t_t}건</span></div>
         <div style='padding:15px;'>
             <h4 style='margin:0 0 10px 0; color:#2c3e50; border-left:4px solid {color}; padding-left:8px;'>🦠 폐렴구균 통계 (총 {v_t}건)</h4> {mc(v_data)}
             <h4 style='margin:25px 0 10px 0; color:#8e44ad; border-left:4px solid #8e44ad; padding-left:8px;'>🦠 대상포진 관련 통계 (총 {z_t}건)</h4> {mc(z_data)}
             <h4 style='margin:25px 0 10px 0; color:#27ae60; border-left:4px solid #27ae60; padding-left:8px;'>🤰 임산부 주의 감염병 통계 (총 {m_t}건)</h4> {mc(m_data)}
+            <h4 style='margin:25px 0 10px 0; color:#c0392b; border-left:4px solid #c0392b; padding-left:8px;'>💊 타파미디스 관련 통계 (총 {t_t}건)</h4> {mc(t_data)}
             <p style='color:#aaa;font-size:11px;margin-top:12px;border-top:1px solid #eee;padding-top:8px;'>※ 출처: 질병관리청 감염병포털</p>
         </div>
     </div>"""
