@@ -10,6 +10,7 @@ from folate_pubmed_collector import collect_pneumo_papers
 from folate_kdca_collector import collect_kdca
 from folate_mfds_collector import collect_mfds
 from folate_hira_collector import collect_hira
+from folate_tafamidis_filter import filter_tafamidis_items
 
 # 범용 표 생성기 (링크 처리 로직 복구)
 def make_table(items, columns, col_keys):
@@ -113,12 +114,12 @@ def main():
     print(f"데이터 수집 시작: {today}")
     
     data = {
-        "G2B": collect_g2b_notices(),
-        "NEWS": collect_naver_news(),
-        "PUBMED": collect_pneumo_papers(),
+        "G2B": filter_tafamidis_items(collect_g2b_notices(), ["bidNtceNm"]),
+        "NEWS": filter_tafamidis_items(collect_naver_news(), ["title"]),
+        "PUBMED": filter_tafamidis_items(collect_pneumo_papers(), ["title"]),
         "KDCA": collect_kdca(),
-        "MFDS": collect_mfds(),
-        "HIRA": collect_hira()
+        "MFDS": filter_tafamidis_items(collect_mfds(), ["SAMPLE_TYPE"]),
+        "HIRA": filter_tafamidis_items(collect_hira(), ["itmNm"])
     }
     
     html_body = f"""
@@ -149,7 +150,7 @@ def main():
     if not addr or not pw: return
 
     msg = MIMEMultipart()
-    msg["Subject"] = f"📊 [백신+영양제] 통합 인텔리전스 브리핑 - {today}"
+    msg["Subject"] = f"📊 통합 인텔리전스 브리핑 - {today}"
     msg["From"] = addr
     msg["To"] = addr
     msg.attach(MIMEText(html_body, "html"))
