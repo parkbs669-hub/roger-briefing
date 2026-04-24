@@ -23,7 +23,7 @@ def collect_pubmed():
         "백신": "pneumococcal vaccine PCV20 PCV21",
         "영양제": "(folic acid OR iron supplementation) AND pregnancy AND 2026[pdat]",
         "대상포진": "(herpes zoster vaccine OR shingrix OR skyzoster) AND 2026[pdat]",
-        "타파미디스": "(tafamidis OR transthyretin amyloidosis OR TTR cardiomyopathy OR cardiac amyloidosis) AND 2026[pdat]"
+        "타파미디스": "tafamidis OR (transthyretin AND amyloidosis)"
     }
     all_papers, seen = [], set()
 
