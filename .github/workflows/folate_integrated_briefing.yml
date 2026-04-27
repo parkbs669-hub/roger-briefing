@@ -1,4 +1,4 @@
-name: Integrated Data Briefing
+name: folate_integrated_briefing
 on:
   schedule:
     - cron: '0 23 * * *' # 한국 시간 오전 8시
