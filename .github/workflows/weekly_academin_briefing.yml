@@ -1,4 +1,4 @@
-name: 폐렴구균 주간 학술 브리핑
+name: weekly_academin_briefing
 on:
   schedule:
     - cron: "0 22 * * 0"
@@ -17,4 +17,4 @@ jobs:
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
           WEEKLY_REPORT_RECIPIENTS: ${{ secrets.WEEKLY_REPORT_RECIPIENTS }}
-        run: python weekly_briefing.py
+        run: python weekly_academin_briefing.py
