@@ -107,7 +107,7 @@ def send_email(body):
 
 if __name__ == "__main__":
     print("주간 학술 브리핑 수집 중...")
-    briefing = get_weekly_briefing()
+    briefing = get_weekly_academin_briefing()
     print("이메일 발송 중...")
     send_email(briefing)
     print("완료!")
