@@ -19,4 +19,5 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+          WEEKLY_REPORT_RECIPIENTS: ${{ secrets.WEEKLY_REPORT_RECIPIENTS }}
         run: python weekly_report.py
