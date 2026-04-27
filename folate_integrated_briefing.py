@@ -331,17 +331,23 @@ def main():
             {build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰", "#f1c40f")}
         </div></body></html>"""
 
-    msg = MIMEMultipart()
+    # 📧 수신자 리스트 설정 (GitHub Secrets에서 쉼표로 구분)
+    recipients_str = os.environ.get("REPORT_RECIPIENTS", addr)
+    recipients = [r.strip() for r in recipients_str.split(",") if r.strip()]
+    if not recipients:
+        recipients = [addr]
+    
+    msg = MIMEMultipart('alternative')
     msg["Subject"] = f"📊 [통합 브리핑]  데일리 리포트 - {today}"
     msg["From"] = addr
-    msg["To"] = addr
-    msg.attach(MIMEText(html_body, "html"))
+    msg["To"] = ", ".join(recipients)
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
     
     try:
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
             s.login(addr, pw)
             s.send_message(msg)
-        print("✅ 브리핑 이메일 발송 완료!")
+        print(f"✅ 브리핑 이메일 발송 완료! (수신자: {', '.join(recipients)})")
     except Exception as e: 
         print(f"❌ 이메일 발송 오류: {e}")
 
