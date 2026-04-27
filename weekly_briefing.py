@@ -6,7 +6,10 @@ import anthropic
 A = os.environ["ANTHROPIC_API_KEY"]
 N = os.environ["NAVER_ADDRESS"]
 P = os.environ["NAVER_PASSWORD"]
-R = "parkbs669@naver.com"
+
+# 📧 수신자 설정 (주간 브리핑 전용 - 환경변수 또는 기본값)
+RECIPIENTS_STR = os.environ.get("WEEKLY_REPORT_RECIPIENTS", "parkbs669@naver.com")
+RECIPIENTS = [r.strip() for r in RECIPIENTS_STR.split(",") if r.strip()]
 
 def get_weekly_briefing():
     client = anthropic.Anthropic(api_key=A)
@@ -94,13 +97,13 @@ def send_email(body):
     msg = MIMEMultipart()
     msg["Subject"] = f"[폐렴구균 주간 학술 브리핑] {today}"
     msg["From"] = N
-    msg["To"] = R
+    msg["To"] = ", ".join(RECIPIENTS)
     text = f"안녕하세요,\n\n{today} 폐렴구균 백신 주간 학술 브리핑입니다.\n\n{body}\n\n---\nClaude AI 자동 발송"
     msg.attach(MIMEText(text, "plain", "utf-8"))
     with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
         s.login(N, P)
-        s.sendmail(N, R, msg.as_string())
-    print("주간 브리핑 발송 완료!")
+        s.sendmail(N, ",".join(RECIPIENTS), msg.as_string())
+    print(f"✅ 주간 브리핑 발송 완료! (수신자: {', '.join(RECIPIENTS)})")
 
 if __name__ == "__main__":
     print("주간 학술 브리핑 수집 중...")
