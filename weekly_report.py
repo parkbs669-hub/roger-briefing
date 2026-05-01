@@ -6,9 +6,15 @@ import anthropic
 A = os.environ["ANTHROPIC_API_KEY"]
 N = os.environ["NAVER_ADDRESS"]
 P = os.environ["NAVER_PASSWORD"]
-# 📧 수신자 설정 (주간 보고서 전용 - 환경변수 또는 기본값)
-RECIPIENTS_STR = os.environ.get("WEEKLY_REPORT_RECIPIENTS", "parkbs669@naver.com")
-RECIPIENTS = [r.strip() for r in RECIPIENTS_STR.split(",") if r.strip()]
+RECIPIENTS = [
+    "parkbs669@naver.com",
+    "jaehwan.bae@pfizer.com",
+    "Eun-Hye.Han@pfizer.com",
+    "daeyoung.kang@pfizer.com",
+    "Jeong-Jun.Kim@Pfizer.com",
+    "In-Sun.Lee@pfizer.com",
+    "Kyoung-Soo.Moon@pfizer.com",
+]
 
 def get_weekly_report():
     client = anthropic.Anthropic(api_key=A)
@@ -119,8 +125,8 @@ def send_email(body):
     msg.attach(MIMEText(text, "plain", "utf-8"))
     with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
         s.login(N, P)
-        s.sendmail(N, ",".join(RECIPIENTS), msg.as_string())
-    print(f"✅ 주간 보고서 발송 완료! (수신자: {', '.join(RECIPIENTS)})")
+        s.sendmail(N, RECIPIENTS, msg.as_string())
+    print(f"주간 보고서 발송 완료! (수신자: {len(RECIPIENTS)}명)")
 
 if __name__ == "__main__":
     print("주간 보고서 작성 중...")
