@@ -4,6 +4,7 @@ import requests
 from datetime import date
 from pathlib import Path
 from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -40,7 +41,14 @@ def get_gdrive_service():
     if not GDRIVE_CREDENTIALS:
         raise ValueError("GDRIVE_CREDENTIALS 환경 변수가 없습니다.")
     token_dict = json.loads(GDRIVE_CREDENTIALS)
-    creds = Credentials.from_authorized_user_info(token_dict)
+    # 서비스 계정(service_account) 또는 OAuth 사용자 계정 자동 감지
+    if token_dict.get("type") == "service_account":
+        creds = service_account.Credentials.from_service_account_info(
+            token_dict,
+            scopes=["https://www.googleapis.com/auth/drive"]
+        )
+    else:
+        creds = Credentials.from_authorized_user_info(token_dict)
     return build('drive', 'v3', credentials=creds)
 
 def upload_to_drive(service, file_path, filename):
@@ -53,10 +61,11 @@ def upload_to_drive(service, file_path, filename):
         print(f"  ❌ 드라이브 업로드 실패: {e}")
 
 def main():
-    # Pixabay 키 검사 추가
-    if not all([UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, GDRIVE_CREDENTIALS, GDRIVE_FOLDER_ID]):
-        print("❌ 설정 오류: GitHub Secrets에 PIXABAY_API_KEY가 있는지 확인하세요.")
+    if not all([UNSPLASH_ACCESS_KEY, GDRIVE_CREDENTIALS, GDRIVE_FOLDER_ID]):
+        print("❌ 설정 오류: UNSPLASH_ACCESS_KEY, GDRIVE_CREDENTIALS, GDRIVE_FOLDER_ID 확인하세요.")
         return
+    if not PIXABAY_API_KEY:
+        print("⚠️ PIXABAY_API_KEY 없음 - Unsplash만 사용합니다.")
 
     try:
         service = get_gdrive_service()
