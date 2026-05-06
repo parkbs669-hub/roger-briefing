@@ -5,10 +5,12 @@ from pathlib import Path
 
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
 PIXABAY_API_KEY = os.environ.get("PIXABAY_API_KEY")
+PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY")
 
 TODAY = date.today().strftime("%Y-%m-%d")
 UNSPLASH_URL = "https://api.unsplash.com/search/photos"
 PIXABAY_URL = "https://pixabay.com/api/"
+PEXELS_URL = "https://api.pexels.com/v1/search"
 
 SEARCH_QUERIES = [
     {"query": "tennis woman", "category": "tennis_woman", "label": "테니스 여성"},
@@ -34,7 +36,9 @@ def main():
         print("❌ UNSPLASH_ACCESS_KEY 없음")
         return
     if not PIXABAY_API_KEY:
-        print("⚠️ PIXABAY_API_KEY 없음 - Unsplash만 사용합니다.")
+        print("⚠️ PIXABAY_API_KEY 없음 - 건너뜁니다.")
+    if not PEXELS_API_KEY:
+        print("⚠️ PEXELS_API_KEY 없음 - 건너뜁니다.")
 
     save_dir = Path(f"images/{TODAY}")
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -89,6 +93,26 @@ def main():
                     saved += 1
             except Exception as e:
                 print(f"  ❌ Pixabay 오류: {e}")
+
+        # 3. Pexels
+        if PEXELS_API_KEY:
+            try:
+                res = requests.get(
+                    PEXELS_URL,
+                    params={"query": q["query"], "per_page": 10, "orientation": "landscape"},
+                    headers={"Authorization": PEXELS_API_KEY},
+                    timeout=15,
+                )
+                results = res.json().get("photos", [])
+                if results:
+                    pick = results[day_idx % len(results)]
+                    img_data = requests.get(pick["src"]["large"], timeout=30).content
+                    path = save_dir / f"{i+1:02d}_{q['category']}_px.jpg"
+                    path.write_bytes(img_data)
+                    print(f"  ✅ 저장: {path}")
+                    saved += 1
+            except Exception as e:
+                print(f"  ❌ Pexels 오류: {e}")
 
     print(f"\n🎾 완료! 총 {saved}개 이미지 저장 → images/{TODAY}/")
 
