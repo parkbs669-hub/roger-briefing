@@ -13,22 +13,14 @@ PIXABAY_URL = "https://pixabay.com/api/"
 PEXELS_URL = "https://api.pexels.com/v1/search"
 
 SEARCH_QUERIES = [
-    {"query": "tennis woman", "category": "tennis_woman", "label": "테니스 여성"},
-    {"query": "tennis string racket closeup", "category": "string_closeup", "label": "스트링 클로즈업"},
-    {"query": "tennis racket strings detail", "category": "string_detail", "label": "스트링 디테일"},
-    {"query": "tennis player forehand action", "category": "player_forehand", "label": "선수 포핸드"},
-    {"query": "tennis player serve action", "category": "player_serve", "label": "선수 서브"},
-    {"query": "tennis stringing machine", "category": "stringing_machine", "label": "스트링 머신"},
-    {"query": "tennis stringing tools awl pliers", "category": "stringing_tools", "label": "스트링 도구"},
-    {"query": "tennis racket tension calibration", "category": "tension_check", "label": "텐션 측정"},
-    {"query": "tennis grip tape wrap texture", "category": "grip_detail", "label": "그립 테이프"},
-    {"query": "tennis racket stencil logo", "category": "racket_stencil", "label": "라켓 스텐실"},
-    {"query": "tennis player sliding clay court", "category": "player_slide", "label": "클레이 슬라이딩"},
-    {"query": "tennis ball hitting racket strings", "category": "impact_moment", "label": "임팩트 순간"},
-    {"query": "professional tennis stadium night", "category": "stadium_night", "label": "야간 경기장"},
-    {"query": "tennis balls in a basket hopper", "category": "ball_basket", "label": "볼 카트"},
-    {"query": "vintage tennis racket wooden", "category": "vintage_tennis", "label": "빈티지 라켓"},
-    {"query": "shaking hands after tennis match", "category": "sportsmanship", "label": "경기 후 악수"},
+    {"query": "tennis woman", "category": "tennis_woman_01", "label": "테니스 여성1"},
+    {"query": "female tennis player", "category": "tennis_woman_02", "label": "테니스 여성2"},
+    {"query": "women tennis match", "category": "tennis_woman_03", "label": "테니스 여성3"},
+    {"query": "tennis girl action", "category": "tennis_woman_04", "label": "테니스 여성4"},
+    {"query": "women tennis serve", "category": "tennis_woman_05", "label": "테니스 여성 서브"},
+    {"query": "female tennis forehand", "category": "tennis_woman_06", "label": "테니스 여성 포핸드"},
+    {"query": "women tennis fashion", "category": "tennis_woman_07", "label": "테니스 여성 패션"},
+    {"query": "female tennis court", "category": "tennis_woman_08", "label": "테니스 여성 코트"},
 ]
 
 def main():
