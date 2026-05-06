@@ -8,8 +8,6 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: 체크아웃
         uses: actions/checkout@v4
@@ -22,17 +20,22 @@ jobs:
       - name: 라이브러리 설치
         run: pip install requests
 
-      - name: 실행
+      - name: 이미지 수집
         env:
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python tennis_images_collect.py
 
-      - name: 이미지 커밋 및 푸시
+      - name: parkbs669-hub/images 저장소로 푸시
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
+          git clone https://x-access-token:${GH_PAT}@github.com/parkbs669-hub/images.git images-repo
+          cp -r images/. images-repo/
+          cd images-repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add images/
+          git add .
           git diff --cached --quiet || git commit -m "🎾 Daily tennis images - $(date +'%Y-%m-%d')"
           git push
