@@ -78,7 +78,7 @@ def main():
                 results = res.json().get("hits", [])
                 if results:
                     pick = results[day_idx % len(results)]
-                    img_data = requests.get(pick["largeImageURL"], timeout=30).content
+                    img_data = requests.get(pick["webformatURL"], timeout=30).content
                     path = save_dir / f"{i+1:02d}_{q['category']}_pb.jpg"
                     path.write_bytes(img_data)
                     print(f"  ✅ 저장: {path}")
