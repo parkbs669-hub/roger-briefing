@@ -1,13 +1,15 @@
 import os
 import requests
-from datetime import date
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+
+KST = timezone(timedelta(hours=9))
+TODAY = datetime.now(KST).strftime("%Y-%m-%d")
 
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
 PIXABAY_API_KEY = os.environ.get("PIXABAY_API_KEY")
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY")
 
-TODAY = date.today().strftime("%Y-%m-%d")
 UNSPLASH_URL = "https://api.unsplash.com/search/photos"
 PIXABAY_URL = "https://pixabay.com/api/"
 PEXELS_URL = "https://api.pexels.com/v1/search"
@@ -36,7 +38,7 @@ def main():
     save_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\n🎾 BUM Sports 이미지 수집 시작: {TODAY}")
-    day_idx = date.today().timetuple().tm_yday
+    day_idx = datetime.now(KST).timetuple().tm_yday
     saved = 0
 
     for i, q in enumerate(SEARCH_QUERIES):
