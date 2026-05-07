@@ -1,4 +1,5 @@
 import os
+import shutil
 import requests
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -40,7 +41,10 @@ def main():
     if not PEXELS_API_KEY:
         print("⚠️ PEXELS_API_KEY 없음 - 건너뜁니다.")
 
+    # 오늘 폴더 초기화 (재실행 시 중복 방지)
     save_dir = Path(f"images/{TODAY}")
+    if save_dir.exists():
+        shutil.rmtree(save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\n🎾 BUM Sports 이미지 수집 시작: {TODAY}")

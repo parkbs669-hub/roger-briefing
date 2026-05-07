@@ -31,11 +31,14 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
+          TODAY=$(TZ='Asia/Seoul' date +'%Y-%m-%d')
           git clone https://x-access-token:${GH_PAT}@github.com/parkbs669-hub/images.git images-repo
-          cp -r images/. images-repo/
+          # 오늘 날짜 폴더만 교체 (다른 날짜 폴더 유지)
+          rm -rf images-repo/${TODAY}
+          cp -r images/${TODAY} images-repo/${TODAY}
           cd images-repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git diff --cached --quiet || git commit -m "🎾 Daily tennis images - $(date +'%Y-%m-%d')"
+          git diff --cached --quiet || git commit -m "🎾 Daily tennis images - ${TODAY}"
           git push
