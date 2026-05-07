@@ -23,6 +23,12 @@ SEARCH_QUERIES = [
     {"query": "female tennis forehand", "category": "tennis_woman_06", "label": "테니스 여성 포핸드"},
     {"query": "women tennis fashion", "category": "tennis_woman_07", "label": "테니스 여성 패션"},
     {"query": "female tennis court", "category": "tennis_woman_08", "label": "테니스 여성 코트"},
+    {"query": "woman tennis backhand", "category": "tennis_woman_09", "label": "테니스 여성 백핸드"},
+    {"query": "tennis woman smile racket", "category": "tennis_woman_10", "label": "라켓을 든 미소"},
+    {"query": "woman sitting on tennis court", "category": "tennis_woman_11", "label": "코트 위 휴식"},
+    {"query": "professional female tennis match", "category": "tennis_woman_12", "label": "프로 경기 장면"},
+    {"query": "woman athlete tennis training", "category": "tennis_woman_13", "label": "훈련 장면"},
+    {"query": "woman holding tennis ball", "category": "tennis_woman_14", "label": "공 클로즈업"},
 ]
 
 def main():
