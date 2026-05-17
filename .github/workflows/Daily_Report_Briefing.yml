@@ -1,4 +1,4 @@
-name: folate_integrated_briefing
+name: Daily_Report_Briefing
 on:
   schedule:
     - cron: '0 23 * * *' # 한국 시간 오전 8시
@@ -20,4 +20,4 @@ jobs:
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
           # 쉼표로 구분하여 여러 이메일 등록 가능
           REPORT_RECIPIENTS: ${{ secrets.REPORT_RECIPIENTS }}
-        run: python folate_integrated_briefing.py
+        run: python Daily_Report_Briefing.py
