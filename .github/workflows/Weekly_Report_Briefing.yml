@@ -1,4 +1,4 @@
-name: weekly_report
+name: Weekly_Report_Briefing
 
 on:
   schedule:
@@ -20,4 +20,4 @@ jobs:
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
           WEEKLY_REPORT_RECIPIENTS: ${{ secrets.WEEKLY_REPORT_RECIPIENTS }}
-        run: python weekly_report.py
+        run: python Weekly_Report_Briefing.py
