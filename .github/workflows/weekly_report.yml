@@ -1,4 +1,4 @@
-name: 폐렴구균 주간 업무 보고서
+name: weekly_report
 
 on:
   schedule:

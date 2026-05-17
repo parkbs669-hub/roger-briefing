@@ -1,4 +1,4 @@
-name: 보건소 NIP 정책 트래커
+name: nip_tracker
 
 on:
   schedule:

@@ -1,4 +1,4 @@
-name: 테니스 스트링 블로그/카페 알림
+name: naver_tennis_alert
 
 on:
   schedule:

@@ -1,4 +1,4 @@
-name: 폐렴구균 백신 뉴스 브리핑
+name: daily_briefing
 on:
   schedule:
     - cron: "0 23 * * *"
