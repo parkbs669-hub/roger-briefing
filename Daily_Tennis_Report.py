@@ -1,5 +1,5 @@
 """
-naver_tennis_alert.py
+Daily_Tennis_Report.py
 테니스 스트링 블로그/카페 신규 글 → HTML 이메일 발송
 """
 

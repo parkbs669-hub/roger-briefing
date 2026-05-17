@@ -1,4 +1,4 @@
-name: naver_tennis_alert
+name: Daily_Tennis_Report
 
 on:
   schedule:
@@ -30,7 +30,7 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           NAVER_ADDRESS:       ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD:      ${{ secrets.NAVER_PASSWORD }}
-        run: python naver_tennis_alert.py
+        run: python Daily_Tennis_Report.py
 
       - name: seen 링크 목록 커밋
         run: |
