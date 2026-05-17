@@ -132,9 +132,7 @@ def send_email(html_body: str, blog_cnt: int, cafe_cnt: int) -> bool:
         return False
 
     total   = blog_cnt + cafe_cnt
-    subject = (f"🎾 테니스 스트링 새 글 {total}건 "
-               f"(블로그 {blog_cnt} + 카페 {cafe_cnt}) "
-               f"[{datetime.now().strftime('%m/%d')}]")
+    subject = f"Daily Tennis Report [{datetime.now().strftime('%m/%d')}]"
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
