@@ -1,0 +1,39 @@
+name: Weekly_Pattern_Analysis
+on:
+  schedule:
+    - cron: '0 9 * * 5'  # 매주 금요일 오후 6시 KST
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: parkbs669-hub/MyVault_Roger
+          path: vault
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests anthropic
+
+      - env:
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
+          VAULT_DIR:           vault
+          PROJECTS_DIR:        data/projects
+          PATTERNS_DIR:        data/patterns
+        run: python pattern_analyzer.py
+
+      # 누적 데이터를 roger-briefing에 커밋 (복리 저장)
+      - name: 누적 패턴 데이터 저장
+        run: |
+          git config user.name "roger-briefing-bot"
+          git config user.email "bot@roger-briefing"
+          git add data/projects/ data/patterns/
+          git diff --staged --quiet || git commit -m "chore: 주간 패턴 분석 누적 업데이트 $(date '+%Y-W%V')"
+          git push

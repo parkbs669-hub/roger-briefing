@@ -18,6 +18,8 @@ from sales_collector import (
     collect_sales_reports, collect_meetings, collect_marketing,
     collect_academic, collect_pending_actions, build_summary_text,
 )
+from project_tracker import update_all_projects, build_project_context
+from pattern_analyzer import build_pattern_context
 from ai_processor import generate
 
 # ── 환경 변수 ──────────────────────────────────────────────
@@ -75,7 +77,8 @@ def _g2b_bids(keywords: list[str]) -> list[dict]:
 # AI 섹션 생성
 # ═══════════════════════════════════════════════════════════
 
-def _make_ai_section(vault_summary: str, news: list[dict]) -> str:
+def _make_ai_section(vault_summary: str, news: list[dict],
+                     project_context: str, pattern_context: str) -> str:
     news_text = "\n".join([f"- {n['title']} ({n['keyword']})" for n in news[:10]])
     today = datetime.date.today().strftime("%Y-%m-%d (%A)")
 
@@ -84,24 +87,34 @@ def _make_ai_section(vault_summary: str, news: list[dict]) -> str:
 [나의 최근 영업 활동 데이터]
 {vault_summary}
 
+[프로젝트 누적 타임라인 — 쌓인 히스토리]
+{project_context}
+
+[누적 영업 패턴 — 지금까지 학습된 것]
+{pattern_context}
+
 [오늘의 주요 뉴스]
 {news_text}
 
-위 데이터를 바탕으로 다음을 한국어로 작성해주세요:
+위 데이터(특히 누적 타임라인과 패턴)를 바탕으로 다음을 한국어로 작성하세요:
 
-1. **오늘의 영업 핵심 포인트** (3줄 이내)
-   - 어제/최근 활동 중 오늘 이어서 할 것
-   - 오늘 특별히 집중할 제품/고객
+1. **오늘의 영업 브리핑** — {today}
+   오늘 날짜와 함께 한 문장 상황 요약
 
-2. **우선 처리 액션 리스트** (미완료 항목 기반, 최대 5개)
-   - 긴급도 순으로 정렬
+2. **오늘의 영업 핵심 포인트**
+   - 누적 패턴 기반으로 오늘 가장 효과적인 접근법
+   - 프로젝트 진행 상황에서 오늘 집중할 것
 
-3. **오늘 활용할 뉴스/인사이트** (1-2개)
-   - 의사 방문 시 대화에 활용할 수 있는 내용
+3. **우선 처리 액션 리스트** | 순위/항목/긴급도
+   - 미완료 항목 + 프로젝트 타임라인 기반, 최대 5개
+   - 긴급도(오늘/이번주/이번달) 표시
 
-4. **이번 주 진행 상황 한 줄 요약**
+4. **오늘 활용할 뉴스/인사이트**
+   - 의사·기관 방문 시 활용할 수 있는 내용과 활용처 명시
+
+5. **이번 주 진행 상황 한 줄 요약**
 """
-    system = "당신은 제약영업 전문가 어시스턴트입니다. 간결하고 실용적으로 답변하세요."
+    system = "당신은 제약영업 전문가 어시스턴트입니다. 누적 데이터와 패턴을 활용해 점점 더 정교한 조언을 제공하세요."
     return generate(prompt, system)
 
 
@@ -218,14 +231,20 @@ def main():
     vault_summary = build_summary_text()
     print(f"  vault: 영업보고{len(sales)}건, 회의{len(meetings)}건, 마케팅{len(marketing)}건, 미완료{len(pending)}건")
 
+    # 1-1. 복리 데이터: 프로젝트 타임라인 업데이트 + 누적 패턴 로드
+    update_all_projects()
+    project_context = build_project_context()
+    pattern_context = build_pattern_context()
+    print("  복리 데이터 로드 완료 (프로젝트 타임라인 + 누적 패턴)")
+
     # 2. 외부 데이터 수집
     news_keywords = ["폐렴구균 백신", "대상포진 백신", "싱그릭스", "타파미디스", "빈다맥스", "캡박시브"]
     news = _naver_news(news_keywords)
     bids = _g2b_bids(["폐렴구균", "대상포진", "타파미디스"])
     print(f"  외부: 뉴스{len(news)}건, 입찰{len(bids)}건")
 
-    # 3. AI 요약
-    ai_text = _make_ai_section(vault_summary, news)
+    # 3. AI 요약 (복리 컨텍스트 포함)
+    ai_text = _make_ai_section(vault_summary, news, project_context, pattern_context)
     print("  AI 요약 완료")
 
     # 4. HTML 조립
