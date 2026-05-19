@@ -1,7 +1,7 @@
 name: Sales_Daily_Briefing
 on:
   schedule:
-    - cron: '30 22 * * 1-5'  # 평일 오전 7:30 KST
+    - cron: '30 22 * * 0-4'  # KST 평일(월~금) 오전 7:30 = UTC 일~목 22:30
   workflow_dispatch:
 
 permissions:
