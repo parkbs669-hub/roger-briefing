@@ -4,11 +4,16 @@ on:
     - cron: '0 9 * * 5'  # 매주 금요일 오후 6시 KST
   workflow_dispatch:
 
+permissions:
+  contents: write  # 누적 패턴 자동 커밋을 위한 쓰기 권한
+
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v4
         with:
@@ -32,8 +37,8 @@ jobs:
       # 누적 데이터를 roger-briefing에 커밋 (복리 저장)
       - name: 누적 패턴 데이터 저장
         run: |
-          git config user.name "roger-briefing-bot"
-          git config user.email "bot@roger-briefing"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/projects/ data/patterns/
           git diff --staged --quiet || git commit -m "chore: 주간 패턴 분석 누적 업데이트 $(date '+%Y-W%V')"
           git push
