@@ -16,7 +16,8 @@ from email.mime.text import MIMEText
 
 from sales_collector import (
     collect_sales_reports, collect_meetings, collect_marketing,
-    collect_academic, collect_pending_actions, build_summary_text,
+    collect_academic, collect_emails, collect_pcv20_policy,
+    collect_local_policy, collect_pending_actions, build_summary_text,
 )
 from project_tracker import update_all_projects, build_project_context
 from pattern_analyzer import build_pattern_context
@@ -181,6 +182,29 @@ def _pending_html(pending: list[str]) -> str:
     return f"<ul style='padding-left:18px; margin:0;'>{items}</ul>"
 
 
+def _policy_html(items: list[dict]) -> str:
+    """정책 자료 목록 — 제목 + 첫 두 줄 요약."""
+    if not items:
+        return "<p style='color:#999; font-size:13px;'>자료 없음</p>"
+    cards = ""
+    for item in items:
+        title = item.get("title", "")
+        # 본문에서 의미 있는 첫 줄 추출
+        summary = ""
+        for line in item.get("body", "").splitlines():
+            line = line.strip().lstrip("#").strip()
+            if line and not line.startswith("---") and len(line) > 10:
+                summary = line[:80]
+                break
+        cards += f"""
+        <div style='padding:8px 10px; border-left:3px solid #bdc3c7;
+                    margin-bottom:8px; background:#fafafa; border-radius:0 4px 4px 0;'>
+          <div style='font-size:13px; font-weight:bold; color:#2c3e50;'>{title}</div>
+          <div style='font-size:12px; color:#7f8c8d; margin-top:2px;'>{summary}</div>
+        </div>"""
+    return cards
+
+
 def _news_html(news: list[dict]) -> str:
     if not news:
         return "<p style='color:#999; font-size:13px;'>뉴스 없음</p>"
@@ -223,13 +247,16 @@ def main():
     print(f"🚀 {today_str} ({weekday}) 영업 데일리 브리핑 시작")
 
     # 1. vault 데이터 수집
-    sales     = collect_sales_reports(days=7)
-    meetings  = collect_meetings(days=7)
-    marketing = collect_marketing(days=14)
-    academic  = collect_academic(days=14)
-    pending   = collect_pending_actions()
+    sales        = collect_sales_reports(days=7)
+    meetings     = collect_meetings(days=7)
+    marketing    = collect_marketing(days=14)
+    academic     = collect_academic(days=14)
+    emails       = collect_emails(days=14)
+    pcv20        = collect_pcv20_policy()
+    local_policy = collect_local_policy()
+    pending      = collect_pending_actions()
     vault_summary = build_summary_text()
-    print(f"  vault: 영업보고{len(sales)}건, 회의{len(meetings)}건, 마케팅{len(marketing)}건, 미완료{len(pending)}건")
+    print(f"  vault: 영업{len(sales)}, 회의{len(meetings)}, 이메일{len(emails)}, PCV20정책{len(pcv20)}, 지역정책{len(local_policy)}, 미완료{len(pending)}")
 
     # 1-1. 복리 데이터: 프로젝트 타임라인 업데이트 + 누적 패턴 로드
     update_all_projects()
@@ -280,6 +307,24 @@ def main():
   <div style='{_css_card("")}'>
     {_section_header(f"최근 회의·파트너 협의 ({len(meetings)}건)", "#8e44ad", "🤝")}
     <div style='padding:15px;'>{_docs_html(meetings)}</div>
+  </div>
+
+  <!-- 수신 이메일·보고서 -->
+  <div style='{_css_card("")}'>
+    {_section_header(f"최근 수신 이메일·보고서 ({len(emails)}건)", "#16a085", "📧")}
+    <div style='padding:15px;'>{_docs_html(emails)}</div>
+  </div>
+
+  <!-- PCV20 정책 근거 자료 -->
+  <div style='{_css_card("")}'>
+    {_section_header(f"PCV20 정책 근거 자료 ({len(pcv20)}건)", "#8e44ad", "💊")}
+    <div style='padding:15px;'>{_policy_html(pcv20)}</div>
+  </div>
+
+  <!-- 폐렴구균 지역 정책 -->
+  <div style='{_css_card("")}'>
+    {_section_header(f"폐렴구균 지역 정책 ({len(local_policy)}건)", "#c0392b", "🏛️")}
+    <div style='padding:15px;'>{_policy_html(local_policy)}</div>
   </div>
 
   <!-- 시장 뉴스 -->

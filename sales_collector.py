@@ -23,14 +23,16 @@ VAULT_DIR = os.environ.get("VAULT_DIR", "vault")
 
 # 폴더 경로 매핑
 DIRS = {
-    "sales":     "영업_협력활동",
-    "meetings":  "영업_협력활동/주간회의",
-    "partner":   "영업_협력활동/파트너협의",
-    "marketing": "영업_협력활동/마케팅미팅",
-    "summary":   "영업_협력활동/영업활동 정리",
-    "academic":  "영업_협력활동/주간학술브리핑",
-    "policy":    "PCV20_정책자료",
-    "output":    "산출물",
+    "sales":        "영업_협력활동",
+    "meetings":     "영업_협력활동/주간회의",
+    "partner":      "영업_협력활동/파트너협의",
+    "marketing":    "영업_협력활동/마케팅미팅",
+    "summary":      "영업_협력활동/영업활동 정리",
+    "academic":     "영업_협력활동/주간학술브리핑",
+    "emails":       "Emails",
+    "pcv20":        "PCV20_정책자료",
+    "local_policy": "폐렴구균_지역정책",
+    "output":       "산출물",
 }
 
 
@@ -131,6 +133,53 @@ def collect_academic(days: int = 14) -> list[dict]:
     return sorted(items, key=lambda x: x["date"], reverse=True)
 
 
+def collect_emails(days: int = 14) -> list[dict]:
+    """Emails/ 폴더의 수신 이메일·브리핑 수집."""
+    items = []
+    for path in _all_md("emails", days):
+        text = _read(path)
+        if not text:
+            continue
+        items.append({
+            "date":  _date_from_filename(path),
+            "title": os.path.basename(path).replace(".md", ""),
+            "body":  text,
+        })
+    return sorted(items, key=lambda x: x["date"], reverse=True)
+
+
+def collect_pcv20_policy(days: int = 9999) -> list[dict]:
+    """PCV20_정책자료/ 전체 수집 (고정 지식베이스 — 날짜 무관)."""
+    items = []
+    pattern = os.path.join(VAULT_DIR, DIRS["pcv20"], "*.md")
+    for path in glob.glob(pattern):
+        text = _read(path)
+        if not text:
+            continue
+        items.append({
+            "date":  _date_from_filename(path),
+            "title": os.path.basename(path).replace(".md", ""),
+            "body":  text,
+        })
+    return sorted(items, key=lambda x: x["title"])
+
+
+def collect_local_policy(days: int = 9999) -> list[dict]:
+    """폐렴구균_지역정책/ 전체 수집 (고정 지식베이스 — 날짜 무관)."""
+    items = []
+    pattern = os.path.join(VAULT_DIR, DIRS["local_policy"], "*.md")
+    for path in glob.glob(pattern):
+        text = _read(path)
+        if not text:
+            continue
+        items.append({
+            "date":  _date_from_filename(path),
+            "title": os.path.basename(path).replace(".md", ""),
+            "body":  text,
+        })
+    return sorted(items, key=lambda x: x["title"])
+
+
 def collect_pending_actions() -> list[dict]:
     """볼트 전체에서 미완료 체크박스(- [ ]) 수집."""
     pending = []
@@ -152,11 +201,14 @@ def collect_pending_actions() -> list[dict]:
 
 def build_summary_text() -> str:
     """AI 프롬프트에 넘길 볼트 데이터 요약 텍스트."""
-    sales   = collect_sales_reports(days=7)
-    meetings = collect_meetings(days=7)
-    marketing = collect_marketing(days=14)
-    academic  = collect_academic(days=14)
-    pending   = collect_pending_actions()
+    sales        = collect_sales_reports(days=7)
+    meetings     = collect_meetings(days=7)
+    marketing    = collect_marketing(days=14)
+    academic     = collect_academic(days=14)
+    emails       = collect_emails(days=14)
+    pcv20        = collect_pcv20_policy()
+    local_policy = collect_local_policy()
+    pending      = collect_pending_actions()
 
     sections = []
 
@@ -186,6 +238,27 @@ def build_summary_text() -> str:
         for ac in academic[:2]:
             sections.append(f"[{ac['date']}] {ac['title']}")
             sections.append(ac["body"][:400])
+            sections.append("")
+
+    if emails:
+        sections.append("=== 최근 수신 이메일·보고서 (14일) ===")
+        for e in emails[:5]:
+            sections.append(f"[{e['date']}] {e['title']}")
+            sections.append(e["body"][:400])
+            sections.append("")
+
+    if pcv20:
+        sections.append("=== PCV20 정책 근거 자료 (전체) ===")
+        for p in pcv20:
+            sections.append(f"• {p['title']}")
+            sections.append(p["body"][:200])
+            sections.append("")
+
+    if local_policy:
+        sections.append("=== 폐렴구균 지역 정책 자료 (전체) ===")
+        for lp in local_policy:
+            sections.append(f"• {lp['title']}")
+            sections.append(lp["body"][:200])
             sections.append("")
 
     if pending:
