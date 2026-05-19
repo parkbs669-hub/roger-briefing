@@ -37,7 +37,7 @@ jobs:
           PUBLIC_DATA_API_KEY: ${{ secrets.PUBLIC_DATA_API_KEY }}
           NAVER_ADDRESS:       ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD:      ${{ secrets.NAVER_PASSWORD }}
-          REPORT_RECIPIENTS:   ${{ secrets.REPORT_RECIPIENTS }}
+          REPORT_RECIPIENTS:   ${{ secrets.SALES_REPORT_RECIPIENTS }}
           VAULT_DIR:           vault
           PROJECTS_DIR:        data/projects
           PATTERNS_DIR:        data/patterns
