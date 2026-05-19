@@ -15,8 +15,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from sales_collector import (
-    collect_meetings, collect_marketing, collect_pending_actions,
-    collect_weekly_plans, build_summary_text,
+    collect_sales_reports, collect_meetings, collect_marketing,
+    collect_academic, collect_pending_actions, build_summary_text,
 )
 from ai_processor import generate
 
@@ -134,26 +134,30 @@ def _ai_section_html(ai_text: str) -> str:
     return "<ul style='padding-left:20px; margin:0;'>" + "".join(html_lines) + "</ul>"
 
 
-def _visits_html(meetings: list[dict]) -> str:
-    if not meetings:
-        return "<p style='color:#999; font-size:13px;'>최근 3일 내 기록 없음</p>"
+def _docs_html(items: list[dict]) -> str:
+    if not items:
+        return "<p style='color:#999; font-size:13px;'>최근 기록 없음</p>"
     rows = ""
-    for m in meetings[:8]:
-        result_color = {"긍정": "#27ae60", "처방증가": "#27ae60", "부정": "#e74c3c"}.get(m.get("result", ""), "#7f8c8d")
+    for item in items[:8]:
+        title = item.get("title", "")
+        date  = item.get("date", "")
+        # 본문 첫 줄 요약
+        first_line = ""
+        for line in item.get("body", "").splitlines():
+            line = line.strip().lstrip("#").strip()
+            if line and not line.startswith("---"):
+                first_line = line[:60]
+                break
         rows += f"""<tr>
-            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:12px;'>{m['date']}</td>
-            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:13px; font-weight:bold;'>{m['hospital']}</td>
-            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:12px;'>{m['doctor']}</td>
-            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:12px;'>{m['product']}</td>
-            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:12px; color:{result_color};'>{m.get('result','')}</td>
+            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:12px; color:#888; white-space:nowrap;'>{date}</td>
+            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:13px; font-weight:bold;'>{title}</td>
+            <td style='padding:7px 8px; border-bottom:1px solid #ecf0f1; font-size:12px; color:#555;'>{first_line}</td>
         </tr>"""
     return f"""<table width='100%' style='border-collapse:collapse;'>
         <thead><tr>
             <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>날짜</th>
-            <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>병원</th>
-            <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>의사</th>
-            <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>제품</th>
-            <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>결과</th>
+            <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>제목</th>
+            <th style='padding:7px 8px; text-align:left; background:#f4f6f7; font-size:12px; border-bottom:2px solid #bdc3c7;'>내용 요약</th>
         </tr></thead><tbody>{rows}</tbody></table>"""
 
 
@@ -206,11 +210,13 @@ def main():
     print(f"🚀 {today_str} ({weekday}) 영업 데일리 브리핑 시작")
 
     # 1. vault 데이터 수집
-    meetings  = collect_meetings(days=3)
-    marketing = collect_marketing(days=7)
+    sales     = collect_sales_reports(days=7)
+    meetings  = collect_meetings(days=7)
+    marketing = collect_marketing(days=14)
+    academic  = collect_academic(days=14)
     pending   = collect_pending_actions()
     vault_summary = build_summary_text()
-    print(f"  vault: 방문{len(meetings)}건, 마케팅{len(marketing)}건, 미완료{len(pending)}건")
+    print(f"  vault: 영업보고{len(sales)}건, 회의{len(meetings)}건, 마케팅{len(marketing)}건, 미완료{len(pending)}건")
 
     # 2. 외부 데이터 수집
     news_keywords = ["폐렴구균 백신", "대상포진 백신", "싱그릭스", "타파미디스", "빈다맥스", "캡박시브"]
@@ -245,10 +251,16 @@ def main():
     <div style='padding:15px;'>{_pending_html(pending)}</div>
   </div>
 
-  <!-- 최근 방문/회의 -->
+  <!-- 최근 영업 활동 -->
   <div style='{_css_card("")}'>
-    {_section_header(f"최근 3일 방문·회의 ({len(meetings)}건)", "#27ae60", "🏥")}
-    <div style='padding:15px;'>{_visits_html(meetings)}</div>
+    {_section_header(f"최근 영업 활동 ({len(sales)}건)", "#27ae60", "📋")}
+    <div style='padding:15px;'>{_docs_html(sales)}</div>
+  </div>
+
+  <!-- 최근 회의·파트너 협의 -->
+  <div style='{_css_card("")}'>
+    {_section_header(f"최근 회의·파트너 협의 ({len(meetings)}건)", "#8e44ad", "🤝")}
+    <div style='padding:15px;'>{_docs_html(meetings)}</div>
   </div>
 
   <!-- 시장 뉴스 -->
