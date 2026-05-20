@@ -114,6 +114,15 @@ def _make_ai_section(vault_summary: str, news: list[dict],
    - 의사·기관 방문 시 활용할 수 있는 내용과 활용처 명시
 
 5. **이번 주 진행 상황 한 줄 요약**
+
+6. **오늘의 아이스브레이킹 소재** (3개)
+   - 현장 방문·통화 시 어색함을 풀 수 있는 가벼운 대화 소재
+   - 최근 시사, 날씨, 스포츠, 건강 트렌드 등에서 선택
+   - 각 소재는 한두 문장으로 간결하게 작성
+
+7. **오늘의 짧은 이야기** (2개)
+   - 의학/건강/비즈니스 관련 흥미롭거나 유익한 짧은 이야기
+   - 현장에서 가볍게 꺼낼 수 있는 내용으로, 각 100자 내외로 작성
 """
     system = "당신은 제약영업 전문가 어시스턴트입니다. 누적 데이터와 패턴을 활용해 점점 더 정교한 조언을 제공하세요."
     return generate(prompt, system)
@@ -131,9 +140,9 @@ def _section_header(title: str, color: str, icon: str) -> str:
     return f"<div style='background:{color}; color:#fff; padding:10px 15px; font-size:15px; font-weight:bold;'>{icon} {title}</div>"
 
 
-def _ai_section_html(ai_text: str) -> str:
+def _md_to_html(text: str) -> str:
     html_lines = []
-    for line in ai_text.splitlines():
+    for line in text.splitlines():
         line = line.strip()
         if not line:
             html_lines.append("<br>")
@@ -146,6 +155,29 @@ def _ai_section_html(ai_text: str) -> str:
         else:
             html_lines.append(f"<p style='font-size:13px; margin:4px 0;'>{line}</p>")
     return "<ul style='padding-left:20px; margin:0;'>" + "".join(html_lines) + "</ul>"
+
+
+def _split_ai_sections(ai_text: str) -> tuple[str, str]:
+    """AI 응답을 메인 브리핑과 아이스브레이킹·이야기 섹션으로 분리."""
+    for marker in ["오늘의 아이스브레이킹 소재", "오늘의 짧은 이야기"]:
+        idx = ai_text.find(marker)
+        if idx != -1:
+            line_start = ai_text.rfind("\n", 0, idx)
+            split_at = line_start if line_start != -1 else idx
+            return ai_text[:split_at].strip(), ai_text[split_at:].strip()
+    return ai_text, ""
+
+
+def _ai_section_html(ai_text: str) -> str:
+    main_text, _ = _split_ai_sections(ai_text)
+    return _md_to_html(main_text)
+
+
+def _icebreaking_html(ai_text: str) -> str:
+    _, ice_text = _split_ai_sections(ai_text)
+    if not ice_text:
+        return "<p style='color:#999; font-size:13px;'>생성 없음</p>"
+    return _md_to_html(ice_text)
 
 
 def _docs_html(items: list[dict]) -> str:
@@ -289,6 +321,12 @@ def main():
   <div style='{_css_card("#e8f4fd")}'>
     {_section_header("AI 오늘의 액션 플랜", "#2980b9", "🤖")}
     <div style='padding:15px;'>{_ai_section_html(ai_text)}</div>
+  </div>
+
+  <!-- 아이스브레이킹 & 짧은 이야기 -->
+  <div style='{_css_card("#fffbf0")}'>
+    {_section_header("오늘의 아이스브레이킹 & 짧은 이야기", "#f39c12", "💬")}
+    <div style='padding:15px;'>{_icebreaking_html(ai_text)}</div>
   </div>
 
   <!-- 미완료 후속 조치 -->
