@@ -13,6 +13,9 @@ import time
 import xml.etree.ElementTree as ET
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from zoneinfo import ZoneInfo
+
+KST = ZoneInfo("Asia/Seoul")
 
 from sales_collector import (
     collect_sales_reports, collect_meetings, collect_marketing,
@@ -81,7 +84,7 @@ def _g2b_bids(keywords: list[str]) -> list[dict]:
 def _make_ai_section(vault_summary: str, news: list[dict],
                      project_context: str, pattern_context: str) -> str:
     news_text = "\n".join([f"- {n['title']} ({n['keyword']})" for n in news[:10]])
-    today = datetime.date.today().strftime("%Y-%m-%d (%A)")
+    today = datetime.datetime.now(KST).date().strftime("%Y-%m-%d (%A)")
 
     prompt = f"""오늘 날짜: {today}
 
@@ -274,8 +277,9 @@ def _bids_html(bids: list[dict]) -> str:
 # ═══════════════════════════════════════════════════════════
 
 def main():
-    today_str = datetime.date.today().strftime("%Y년 %m월 %d일")
-    weekday = ["월", "화", "수", "목", "금", "토", "일"][datetime.date.today().weekday()]
+    today_kst = datetime.datetime.now(KST).date()
+    today_str = today_kst.strftime("%Y년 %m월 %d일")
+    weekday = ["월", "화", "수", "목", "금", "토", "일"][today_kst.weekday()]
     print(f"🚀 {today_str} ({weekday}) 영업 데일리 브리핑 시작")
 
     # 1. vault 데이터 수집
