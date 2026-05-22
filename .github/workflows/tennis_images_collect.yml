@@ -27,6 +27,17 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python tennis_images_collect.py
 
+      - name: GH_PAT 유효성 확인
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_PAT" ]; then
+            echo "::error title=GH_PAT 누락::GH_PAT secret이 설정되지 않았습니다."
+            echo "해결: Settings > Secrets and variables > Actions > New repository secret"
+            echo "  이름: GH_PAT  |  값: repo 권한을 가진 Personal Access Token"
+            exit 1
+          fi
+
       - name: parkbs669-hub/images 저장소로 푸시
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
