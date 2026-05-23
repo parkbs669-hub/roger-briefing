@@ -15,6 +15,18 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # GH_PAT 사전 확인 (MyVault_Roger 체크아웃에 필요)
+      - name: GH_PAT 유효성 확인
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_PAT" ]; then
+            echo "::error title=GH_PAT 누락::GH_PAT secret이 설정되지 않았습니다."
+            echo "해결: Settings > Secrets and variables > Actions > New repository secret"
+            echo "  이름: GH_PAT  |  값: repo 권한을 가진 Personal Access Token"
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           repository: parkbs669-hub/MyVault_Roger
