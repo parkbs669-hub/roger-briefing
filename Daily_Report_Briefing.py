@@ -1,11 +1,14 @@
 import os
 import time
+import json
+import base64
 import requests
 import datetime
 import xml.etree.ElementTree as ET
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from urllib.parse import quote
 
 # ==========================================
 # 🔑 공통 API 키 설정
@@ -300,6 +303,76 @@ def build_kdca_section(title, all_data, icon, color):
     </div>"""
 
 # ==========================================
+# 📝 Vault 직접 커밋
+# ==========================================
+def build_markdown_report(data: dict, today: str) -> str:
+    lines = [f"# {today} 통합 브리핑 데일리 리포트\n"]
+
+    lines.append("## 📰 네이버 최신 뉴스")
+    for item in data["NEWS"][:20]:
+        lines.append(f"- [{item['title']}]({item['link']}) ({item['pubDate']}) [{item['category']}]")
+
+    lines.append("\n## 🏛️ 나라장터 입찰공고")
+    for item in data["G2B"][:10]:
+        lines.append(f"- {item.get('bidNtceNm','')} | {item.get('ntceInsttNm','')} | {item.get('bidNtceDt','')} [{item.get('category','')}]")
+
+    lines.append("\n## 🔬 학술 논문 (PubMed)")
+    for item in data["PUBMED"][:10]:
+        lines.append(f"- [{item['title']}]({item['link']}) — {item['journal']} {item['year']} [{item['category']}]")
+
+    lines.append("\n## 🏥 질병관리청 감염병 현황")
+    for item in data["KDCA"][:10]:
+        nm = item.get("icdNm", item.get("diseaseNm", ""))
+        cnt = item.get("resultVal", item.get("patntCnt", ""))
+        lines.append(f"- {nm}: {cnt}건 [{item.get('category','')}]")
+
+    lines.append("\n## 💊 식약처 국가출하승인")
+    for item in data["MFDS"][:10]:
+        lines.append(f"- {item.get('SAMPLE_TYPE','')} | {item.get('MANUF_ENTP_NAME','')} | {item.get('RESULT_TIME','')[:10]} [{item.get('category','')}]")
+
+    lines.append("\n## 💰 심평원 약가 정보")
+    for item in data["HIRA"][:10]:
+        lines.append(f"- {item.get('itmNm','')} | {item.get('entrpsNm','')} | {item.get('mxDpc','')}원 [{item.get('category','')}]")
+
+    return "\n".join(lines)
+
+
+def commit_to_vault(markdown: str, date_str: str, gh_pat: str):
+    owner, repo = "parkbs669-hub", "MyVault_Roger"
+    path = f"Emails/{date_str}_통합브리핑.md"
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{quote(path)}"
+    headers = {
+        "Authorization": f"token {gh_pat}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+    }
+
+    sha = None
+    try:
+        r = requests.get(api_url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+    except Exception:
+        pass
+
+    body = {
+        "message": f"chore: 통합브리핑 자동 저장 {date_str}",
+        "content": base64.b64encode(markdown.encode("utf-8")).decode("ascii"),
+    }
+    if sha:
+        body["sha"] = sha
+
+    try:
+        r = requests.put(api_url, headers=headers, data=json.dumps(body), timeout=30)
+        if r.status_code in (200, 201):
+            print(f"✅ vault 커밋 완료: {path}")
+        else:
+            print(f"⚠️  vault 커밋 실패 ({r.status_code}): {r.text[:200]}")
+    except Exception as e:
+        print(f"⚠️  vault 커밋 오류: {e}")
+
+
+# ==========================================
 # 🚀 메인 실행부
 # ==========================================
 def main():
@@ -350,8 +423,17 @@ def main():
             s.login(addr, pw)
             s.send_message(msg)
         print(f"✅ 브리핑 이메일 발송 완료! (수신자: {', '.join(recipients)})")
-    except Exception as e: 
+    except Exception as e:
         print(f"❌ 이메일 발송 오류: {e}")
 
-if __name__ == "__main__": 
+    # MyVault_Roger에 직접 커밋 (email-to-vault 의존성 제거)
+    gh_pat = os.environ.get("GH_PAT", "")
+    if gh_pat:
+        date_str = datetime.date.today().strftime("%Y-%m-%d")
+        markdown = build_markdown_report(data, today)
+        commit_to_vault(markdown, date_str, gh_pat)
+    else:
+        print("⚠️  GH_PAT 없음 — vault 직접 커밋 건너뜀")
+
+if __name__ == "__main__":
     main()

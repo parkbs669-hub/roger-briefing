@@ -18,6 +18,6 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
-          # 쉼표로 구분하여 여러 이메일 등록 가능
           REPORT_RECIPIENTS: ${{ secrets.REPORT_RECIPIENTS }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: python Daily_Report_Briefing.py
