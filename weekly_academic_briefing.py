@@ -20,7 +20,8 @@ RECIPIENTS = [
 
 def get_weekly_briefing():
     client = anthropic.Anthropic(api_key=A)
-    today = datetime.date.today().strftime("%Y년 %m월 %d일")
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    today = datetime.datetime.now(KST).date().strftime("%Y년 %m월 %d일")
     
     prompt = f"""오늘({today}) 기준 최근 7일간 폐렴구균 백신 관련 학술/정책 정보를 검색하고 한국어로 상세 브리핑을 작성해 주세요.
 
@@ -92,7 +93,7 @@ def get_weekly_briefing():
 해당 정보가 없는 카테고리는 "이번 주 해당 없음"으로 표시해주세요."""
 
     response = client.messages.create(
-        model="claude-sonnet-4-5",
+        model="claude-sonnet-4-6",
         max_tokens=6000,
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[{"role": "user", "content": prompt}]
@@ -100,7 +101,8 @@ def get_weekly_briefing():
     return "".join(b.text for b in response.content if hasattr(b, "text")).strip()
 
 def send_email(body):
-    today = datetime.date.today().strftime("%Y년 %m월 %d일")
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    today = datetime.datetime.now(KST).date().strftime("%Y년 %m월 %d일")
     msg = MIMEMultipart()
     msg["Subject"] = f"[폐렴구균 주간 학술 브리핑] {today}"
     msg["From"] = N
