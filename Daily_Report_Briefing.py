@@ -376,7 +376,9 @@ def commit_to_vault(markdown: str, date_str: str, gh_pat: str):
 # 🚀 메인 실행부
 # ==========================================
 def main():
-    today = datetime.date.today().strftime("%Y년 %m월 %d일")
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    today_kst = datetime.datetime.now(KST).date()
+    today = today_kst.strftime("%Y년 %m월 %d일")
     print(f"🚀 {today} 데이터 수집 시작")
     
     addr, pw = os.environ.get("NAVER_ADDRESS"), os.environ.get("NAVER_PASSWORD")
@@ -429,7 +431,7 @@ def main():
     # MyVault_Roger에 직접 커밋 (email-to-vault 의존성 제거)
     gh_pat = os.environ.get("GH_PAT", "")
     if gh_pat:
-        date_str = datetime.date.today().strftime("%Y-%m-%d")
+        date_str = today_kst.strftime("%Y-%m-%d")
         markdown = build_markdown_report(data, today)
         commit_to_vault(markdown, date_str, gh_pat)
     else:

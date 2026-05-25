@@ -19,7 +19,8 @@ RECIPIENTS = [
 
 def get_weekly_report():
     client = anthropic.Anthropic(api_key=A)
-    today = datetime.date.today()
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    today = datetime.datetime.now(KST).date()
     week_start = (today - datetime.timedelta(days=4)).strftime("%m월 %d일")
     week_end = today.strftime("%m월 %d일")
     year = today.strftime("%Y년")
@@ -107,7 +108,7 @@ def get_weekly_report():
 • 장기 (1년 이상):"""
 
     response = client.messages.create(
-        model="claude-sonnet-4-5",
+        model="claude-sonnet-4-6",
         max_tokens=6000,
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[{"role": "user", "content": prompt}]
@@ -115,7 +116,8 @@ def get_weekly_report():
     return "".join(b.text for b in response.content if hasattr(b, "text")).strip()
 
 def send_email(body):
-    today = datetime.date.today()
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    today = datetime.datetime.now(KST).date()
     week_num = today.isocalendar()[1]
     subject = f"[폐렴구균 백신 주간보고] {today.strftime('%Y년')} {week_num}주차"
     msg = MIMEMultipart()
