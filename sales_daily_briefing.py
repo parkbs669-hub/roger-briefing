@@ -393,12 +393,30 @@ def main():
         print(html[:500])
         return
 
+    # 옵시디언 vault용 plain text(마크다운) 버전
+    plain = f"""# 🏃 영업 데일리 브리핑 [{today_str} {weekday}]
+
+{ai_text}
+
+---
+
+## ⚠️ 미완료 후속 조치 ({len(pending)}건)
+{chr(10).join(f'- [ ] {p}' for p in pending[:15]) or '없음'}
+
+## 📋 최근 영업 활동 ({len(sales)}건)
+{chr(10).join(f'- {i["date"]} {i["title"]}' for i in sales[:8]) or '없음'}
+
+## 🤝 최근 회의·파트너 협의 ({len(meetings)}건)
+{chr(10).join(f'- {i["date"]} {i["title"]}' for i in meetings[:8]) or '없음'}
+"""
+
     recipients = [r.strip() for r in REPORT_RECIPIENTS.split(",") if r.strip()] or [NAVER_ADDRESS]
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"🏃 영업 데일리 브리핑 [{today_str} {weekday}]"
     msg["From"]    = NAVER_ADDRESS
     msg["To"]      = ", ".join(recipients)
-    msg.attach(MIMEText(html, "html", "utf-8"))
+    msg.attach(MIMEText(plain, "plain", "utf-8"))   # email-to-vault가 plain text 우선 저장
+    msg.attach(MIMEText(html,  "html",  "utf-8"))   # 일반 이메일 클라이언트용 HTML
 
     try:
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
