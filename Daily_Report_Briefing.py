@@ -2,6 +2,7 @@ import os
 import time
 import json
 import base64
+import html as html_lib
 import requests
 import datetime
 import xml.etree.ElementTree as ET
@@ -305,35 +306,89 @@ def build_kdca_section(title, all_data, icon, color):
 # ==========================================
 # 📝 Vault 직접 커밋
 # ==========================================
-def build_markdown_report(data: dict, today: str) -> str:
-    lines = [f"# {today} 통합 브리핑 데일리 리포트\n"]
+def _clean(text: str) -> str:
+    """HTML 엔티티 제거 및 특수문자 정리."""
+    return html_lib.unescape(str(text)).strip()
 
+
+def build_markdown_report(data: dict, today: str) -> str:
+    lines = [f"# {today} 통합 브리핑 데일리 리포트", ""]
+
+    # 카테고리별로 뉴스 분류
+    news_by_cat = {}
+    for item in data["NEWS"][:30]:
+        cat = item.get("category", "기타")
+        news_by_cat.setdefault(cat, []).append(item)
+
+    cat_icons = {"백신": "💉", "대상포진": "🦠", "영양제": "🤰", "타파미디스": "💊"}
     lines.append("## 📰 네이버 최신 뉴스")
-    for item in data["NEWS"][:20]:
-        lines.append(f"- [{item['title']}]({item['link']}) ({item['pubDate']}) [{item['category']}]")
+    for cat, items in news_by_cat.items():
+        icon = cat_icons.get(cat, "📌")
+        lines.append(f"\n### {icon} {cat}")
+        for item in items[:5]:
+            title = _clean(item['title'])
+            date  = item.get('pubDate', '')[:16]
+            link  = item.get('link', '')
+            lines.append(f"- [{title}]({link}) *{date}*")
 
     lines.append("\n## 🏛️ 나라장터 입찰공고")
-    for item in data["G2B"][:10]:
-        lines.append(f"- {item.get('bidNtceNm','')} | {item.get('ntceInsttNm','')} | {item.get('bidNtceDt','')} [{item.get('category','')}]")
+    if data["G2B"]:
+        for item in data["G2B"][:10]:
+            name = _clean(item.get('bidNtceNm', ''))
+            org  = _clean(item.get('ntceInsttNm', ''))
+            date = item.get('bidNtceDt', '')[:10]
+            url  = item.get('bidNtceUrl', '')
+            cat  = item.get('category', '')
+            link_part = f" → [공고보기]({url})" if url else ""
+            lines.append(f"- **{name}** | {org} | {date} `{cat}`{link_part}")
+    else:
+        lines.append("- 해당 공고 없음")
 
     lines.append("\n## 🔬 학술 논문 (PubMed)")
-    for item in data["PUBMED"][:10]:
-        lines.append(f"- [{item['title']}]({item['link']}) — {item['journal']} {item['year']} [{item['category']}]")
+    if data["PUBMED"]:
+        for item in data["PUBMED"][:8]:
+            title   = _clean(item.get('title', ''))
+            journal = _clean(item.get('journal', ''))
+            year    = item.get('year', '')
+            link    = item.get('link', '')
+            cat     = item.get('category', '')
+            lines.append(f"- [{title}]({link})\n  *{journal}, {year}* `{cat}`")
+    else:
+        lines.append("- 최근 논문 없음")
 
     lines.append("\n## 🏥 질병관리청 감염병 현황")
-    for item in data["KDCA"][:10]:
-        nm = item.get("icdNm", item.get("diseaseNm", ""))
-        cnt = item.get("resultVal", item.get("patntCnt", ""))
-        lines.append(f"- {nm}: {cnt}건 [{item.get('category','')}]")
+    if data["KDCA"]:
+        for item in data["KDCA"][:8]:
+            nm  = _clean(item.get("icdNm", item.get("diseaseNm", "")))
+            cnt = item.get("resultVal", item.get("patntCnt", ""))
+            cat = item.get('category', '')
+            lines.append(f"- **{nm}**: {cnt}건 `{cat}`")
+    else:
+        lines.append("- 데이터 없음")
 
     lines.append("\n## 💊 식약처 국가출하승인")
-    for item in data["MFDS"][:10]:
-        lines.append(f"- {item.get('SAMPLE_TYPE','')} | {item.get('MANUF_ENTP_NAME','')} | {item.get('RESULT_TIME','')[:10]} [{item.get('category','')}]")
+    if data["MFDS"]:
+        for item in data["MFDS"][:8]:
+            name = _clean(item.get('SAMPLE_TYPE', ''))
+            mfr  = _clean(item.get('MANUF_ENTP_NAME', ''))
+            date = item.get('RESULT_TIME', '')[:10]
+            cat  = item.get('category', '')
+            lines.append(f"- **{name}** | {mfr} | {date} `{cat}`")
+    else:
+        lines.append("- 최근 승인 없음")
 
     lines.append("\n## 💰 심평원 약가 정보")
-    for item in data["HIRA"][:10]:
-        lines.append(f"- {item.get('itmNm','')} | {item.get('entrpsNm','')} | {item.get('mxDpc','')}원 [{item.get('category','')}]")
+    if data["HIRA"]:
+        for item in data["HIRA"][:8]:
+            name  = _clean(item.get('itmNm', ''))
+            co    = _clean(item.get('entrpsNm', ''))
+            price = item.get('mxDpc', '')
+            cat   = item.get('category', '')
+            lines.append(f"- **{name}** | {co} | {price}원 `{cat}`")
+    else:
+        lines.append("- 데이터 없음")
 
+    lines.append(f"\n---\n*자동 생성: roger-briefing | {today}*")
     return "\n".join(lines)
 
 
