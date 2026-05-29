@@ -300,6 +300,92 @@ def build_kdca_section(title, all_data, icon, color):
     </div>"""
 
 # ==========================================
+# 📝 마크다운 생성 도구 (볼트 저장용 — HTML 표가 게이트웨이에서 납작해지는 문제 해결)
+# ==========================================
+def _md_cell(key, val):
+    val = str(val or '')
+    if key == 'bidNtceUrl' and val:
+        return f"[공고보기]({val})"
+    if key == 'link' and val:
+        lt = "기사보기" if "naver.com" in val else "PubMed" if "pubmed" in val else "확인하기"
+        return f"[{lt}]({val})"
+    if key == 'RESULT_TIME' and len(val) >= 8 and val[:8].isdigit():
+        return f"{val[:4]}-{val[4:6]}-{val[6:8]}"
+    return val.replace('|', '/').replace('\n', ' ').strip()
+
+def md_make_table(items, columns, col_keys):
+    display = items[:10]
+    if not display:
+        return "> 관련 데이터가 없습니다."
+    lines = ["| " + " | ".join(columns) + " |",
+             "| " + " | ".join([":---"] * len(columns)) + " |"]
+    for it in display:
+        lines.append("| " + " | ".join(_md_cell(k, it.get(k, '')) for k in col_keys) + " |")
+    return "\n".join(lines)
+
+def md_build_section(title, all_data, columns, col_keys, icon):
+    v = [i for i in all_data if i.get('category') == '백신']
+    z = [i for i in all_data if i.get('category') == '대상포진']
+    n = [i for i in all_data if i.get('category') in ['영양제', '임산부', '임산부감염병']]
+    t = [i for i in all_data if i.get('category') == '타파미디스']
+    n_title = "🤰 임산부 백신 섹션" if "식약처" in title else "🤰 임산부 영양제 및 관련 섹션"
+    return "\n".join([
+        f"## {icon} {title}", "",
+        "### 💉 백신 섹션", md_make_table(v, columns, col_keys), "",
+        "### 🦠 대상포진 (싱그릭스 등) 섹션", md_make_table(z, columns, col_keys), "",
+        f"### {n_title}", md_make_table(n, columns, col_keys), "",
+        "### 💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션", md_make_table(t, columns, col_keys),
+    ])
+
+def md_build_kdca_section(title, all_data, icon):
+    v = [i for i in all_data if i.get('category') == '백신']
+    z = [i for i in all_data if i.get('category') == '대상포진']
+    m = [i for i in all_data if i.get('category') == '임산부감염병']
+    t = [i for i in all_data if i.get('category') == '타파미디스']
+    def ct(items): return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+    def mt(items):
+        if not items:
+            return "> 집계된 데이터가 없습니다."
+        url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+        lines = ["| 질병명 | 등급 | 누계 | 링크 |", "| :--- | :--- | :--- | :--- |"]
+        for i in items:
+            ds = i.get("icdNm", i.get("diseaseNm", ""))
+            grp = i.get("icdGroupNm", "")
+            cnt = str(i.get("resultVal", i.get("patntCnt", "")))
+            cnt_s = f"{int(cnt):,}건" if cnt.isdigit() else f"{cnt}건"
+            lines.append(f"| {ds} | {grp} | {cnt_s} | [질병관리청 상세보기]({url}) |")
+        return "\n".join(lines)
+    v_t, z_t, m_t, t_t = ct(v), ct(z), ct(m), ct(t)
+    return "\n".join([
+        f"## {icon} {title}", "",
+        f"### 🦠 폐렴구균 통계 (총 {v_t}건)", mt(v), "",
+        f"### 🦠 대상포진 관련 통계 (총 {z_t}건)", mt(z), "",
+        f"### 🤰 임산부 주의 감염병 통계 (총 {m_t}건)", mt(m), "",
+        f"### 💊 타파미디스 관련 통계 (총 {t_t}건)", mt(t), "",
+        "*(※ 출처: 질병관리청 감염병포털)*",
+    ])
+
+def build_markdown_body(today, data):
+    """볼트 게이트웨이가 표 구조를 보존하도록 text/plain 마크다운 본문 생성."""
+    return "\n".join([
+        "# 📊 [통합 브리핑] 데일리 리포트", "",
+        "> [!NOTE] 보고서 개요",
+        f"> {today} 기준 자동화 리포트입니다. (마크다운 표 형식으로 구조화되었습니다)", "",
+        md_build_section("네이버 최신 뉴스", data['NEWS'], ['제목', '날짜', '링크'], ['title', 'pubDate', 'link'], "📰"), "",
+        "---", "",
+        md_build_section("나라장터 입찰공고", data['G2B'], ['공고명', '기관명', '공고일', '링크'], ['bidNtceNm', 'ntceInsttNm', 'bidNtceDt', 'bidNtceUrl'], "🏛️"), "",
+        "---", "",
+        md_build_section("학술 논문 (PubMed)", data['PUBMED'], ['제목', '저널', '연도', '링크'], ['title', 'journal', 'year', 'link'], "🔬"), "",
+        "---", "",
+        md_build_kdca_section("질병관리청 감염병 현황", data['KDCA'], "🏥"), "",
+        "---", "",
+        md_build_section("식약처 국가출하승인", data['MFDS'], ['제품명', '제조사', '승인일'], ['SAMPLE_TYPE', 'MANUF_ENTP_NAME', 'RESULT_TIME'], "💊"), "",
+        "---", "",
+        md_build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰"),
+        "",
+    ])
+
+# ==========================================
 # 🚀 메인 실행부
 # ==========================================
 def main():
@@ -331,18 +417,32 @@ def main():
             {build_section("심평원 약가 정보", data['HIRA'], ['제품명', '제약사', '상한금액'], ['itmNm', 'entrpsNm', 'mxDpc'], "💰", "#f1c40f")}
         </div></body></html>"""
 
-    # 📧 수신자 리스트 설정 (GitHub Secrets에서 쉼표로 구분)
-    recipients_str = os.environ.get("REPORT_RECIPIENTS", addr)
-    recipients = [r.strip() for r in recipients_str.split(",") if r.strip()]
-    if not recipients:
-        recipients = [addr]
-    if "email-to-vault-ssmyy88w0s@wshu.net" not in recipients:
-        recipients.append("email-to-vault-ssmyy88w0s@wshu.net")
-    
+    # 📝 볼트 저장용 마크다운 본문 (HTML 표가 게이트웨이에서 납작해지는 문제 해결)
+    md_body = build_markdown_body(today, data)
+
+    VAULT = "email-to-vault-ssmyy88w0s@wshu.net"
+    # 🧪 테스트 모드: 볼트로만 발송 (사람 수신자에게 안 보냄)
+    test_only = os.environ.get("TEST_VAULT_ONLY", "").strip().lower() in ("1", "true", "yes")
+
+    if test_only:
+        recipients = [VAULT]
+        subject = f"[MD테스트] 데일리 리포트 - {today}"
+    else:
+        # 📧 수신자 리스트 설정 (GitHub Secrets에서 쉼표로 구분)
+        recipients_str = os.environ.get("REPORT_RECIPIENTS", addr)
+        recipients = [r.strip() for r in recipients_str.split(",") if r.strip()]
+        if not recipients:
+            recipients = [addr]
+        if VAULT not in recipients:
+            recipients.append(VAULT)
+        subject = f"📊 [통합 브리핑]  데일리 리포트 - {today}"
+
     msg = MIMEMultipart('alternative')
-    msg["Subject"] = f"📊 [통합 브리핑]  데일리 리포트 - {today}"
+    msg["Subject"] = subject
     msg["From"] = addr
     msg["To"] = ", ".join(recipients)
+    # multipart/alternative: 덜 선호되는 것부터 → text/plain(볼트용) 먼저, HTML(사람용) 나중
+    msg.attach(MIMEText(md_body, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))
     
     try:
