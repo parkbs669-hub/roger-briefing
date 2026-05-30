@@ -312,84 +312,214 @@ def _clean(text: str) -> str:
 
 
 def build_markdown_report(data: dict, today: str) -> str:
-    lines = [f"# {today} 통합 브리핑 데일리 리포트", ""]
+    # 1. KST Time and ISO formatted datetime
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    now_kst = datetime.datetime.now(KST)
+    date_iso = now_kst.isoformat()
+    
+    # 2. Setup from / to email addresses for YAML frontmatter
+    from_addr = os.environ.get("NAVER_ADDRESS", "parkbs669@naver.com")
+    recipients_str = os.environ.get("REPORT_RECIPIENTS", from_addr)
+    recipients = [r.strip() for r in recipients_str.split(",") if r.strip()]
+    if not recipients:
+        recipients = [from_addr]
+    
+    # Ensure email-to-vault-ssmyy88w0s@wshu.net is in the 'to' list for frontmatter to match format
+    frontmatter_recipients = recipients.copy()
+    if "email-to-vault-ssmyy88w0s@wshu.net" not in frontmatter_recipients:
+        frontmatter_recipients.append("email-to-vault-ssmyy88w0s@wshu.net")
+    to_addr = ", ".join(frontmatter_recipients)
+    
+    # 3. YAML Frontmatter
+    lines = [
+        "---",
+        f'from: "{from_addr}"',
+        f'to: "{to_addr}"',
+        'cc: ""',
+        f'subject: "📊 [통합 브리핑] 데일리 리포트 - {today}"',
+        f'date: {date_iso}',
+        "---",
+        "",
+        "# 📊 [통합 브리핑] 데일리 리포트",
+        "",
+        "> [!NOTE] 보고서 개요",
+        f"> {today} 기준 자동화 리포트입니다. (마크다운 표 형식으로 구조화되었습니다)",
+        ""
+    ]
+    
+    # 카테고리 이름 매핑
+    cat_names_default = {
+        "백신": "💉 백신 섹션",
+        "대상포진": "🦠 대상포진 (싱그릭스 등) 섹션",
+        "영양제": "🤰 임산부 영양제 및 관련 섹션",
+        "타파미디스": "💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션"
+    }
 
-    # 카테고리별로 뉴스 분류
+    cat_names_mfds = {
+        "백신": "💉 백신 섹션",
+        "대상포진": "🦠 대상포진 (싱그릭스 등) 섹션",
+        "임산부": "🤰 임산부 백신 섹션",
+        "타파미디스": "💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션"
+    }
+
+    # 1. 네이버 최신 뉴스
+    lines.append("## 📰 네이버 최신 뉴스")
     news_by_cat = {}
     for item in data["NEWS"][:30]:
         cat = item.get("category", "기타")
         news_by_cat.setdefault(cat, []).append(item)
+        
+    for cat in ["백신", "대상포진", "영양제", "타파미디스"]:
+        items = news_by_cat.get(cat, [])
+        sec_title = cat_names_default[cat]
+        lines.append(f"\n### {sec_title}")
+        if items:
+            lines.append("| 제목 | 날짜 | 링크 |")
+            lines.append("| :--- | :--- | :--- |")
+            for item in items[:10]:
+                title = _clean(item['title'])
+                date  = item.get('pubDate', '')[:16]
+                link  = item.get('link', '')
+                link_text = "기사보기" if "naver.com" in link else "확인하기"
+                lines.append(f"| {title} | {date} | [{link_text}]({link}) |")
+        else:
+            lines.append("> 관련 데이터가 없습니다.")
 
-    cat_icons = {"백신": "💉", "대상포진": "🦠", "영양제": "🤰", "타파미디스": "💊"}
-    lines.append("## 📰 네이버 최신 뉴스")
-    for cat, items in news_by_cat.items():
-        icon = cat_icons.get(cat, "📌")
-        lines.append(f"\n### {icon} {cat}")
-        for item in items[:5]:
-            title = _clean(item['title'])
-            date  = item.get('pubDate', '')[:16]
-            link  = item.get('link', '')
-            lines.append(f"- [{title}]({link}) *{date}*")
+    # 2. 나라장터 입찰공고
+    lines.append("\n---\n\n## 🏛️ 나라장터 입찰공고")
+    g2b_by_cat = {}
+    for item in data["G2B"]:
+        cat = item.get("category", "기타")
+        g2b_by_cat.setdefault(cat, []).append(item)
 
-    lines.append("\n## 🏛️ 나라장터 입찰공고")
-    if data["G2B"]:
-        for item in data["G2B"][:10]:
-            name = _clean(item.get('bidNtceNm', ''))
-            org  = _clean(item.get('ntceInsttNm', ''))
-            date = item.get('bidNtceDt', '')[:10]
-            url  = item.get('bidNtceUrl', '')
-            cat  = item.get('category', '')
-            link_part = f" → [공고보기]({url})" if url else ""
-            lines.append(f"- **{name}** | {org} | {date} `{cat}`{link_part}")
-    else:
-        lines.append("- 해당 공고 없음")
+    for cat in ["백신", "대상포진", "영양제", "타파미디스"]:
+        items = g2b_by_cat.get(cat, [])
+        sec_title = cat_names_default[cat]
+        lines.append(f"\n### {sec_title}")
+        if items:
+            lines.append("| 공고명 | 기관명 | 공고일 | 링크 |")
+            lines.append("| :--- | :--- | :--- | :--- |")
+            for item in items[:10]:
+                name = _clean(item.get('bidNtceNm', ''))
+                org  = _clean(item.get('ntceInsttNm', ''))
+                date = item.get('bidNtceDt', '')
+                url  = item.get('bidNtceUrl', '')
+                link_part = f"[공고보기]({url})" if url else "-"
+                lines.append(f"| {name} | {org} | {date} | {link_part} |")
+        else:
+            lines.append("> 관련 데이터가 없습니다.")
 
-    lines.append("\n## 🔬 학술 논문 (PubMed)")
-    if data["PUBMED"]:
-        for item in data["PUBMED"][:8]:
-            title   = _clean(item.get('title', ''))
-            journal = _clean(item.get('journal', ''))
-            year    = item.get('year', '')
-            link    = item.get('link', '')
-            cat     = item.get('category', '')
-            lines.append(f"- [{title}]({link})\n  *{journal}, {year}* `{cat}`")
-    else:
-        lines.append("- 최근 논문 없음")
+    # 3. 학술 논문 (PubMed)
+    lines.append("\n---\n\n## 🔬 학술 논문 (PubMed)")
+    pubmed_by_cat = {}
+    for item in data["PUBMED"]:
+        cat = item.get("category", "기타")
+        pubmed_by_cat.setdefault(cat, []).append(item)
 
-    lines.append("\n## 🏥 질병관리청 감염병 현황")
-    if data["KDCA"]:
-        for item in data["KDCA"][:8]:
+    for cat in ["백신", "대상포진", "영양제", "타파미디스"]:
+        items = pubmed_by_cat.get(cat, [])
+        sec_title = cat_names_default[cat]
+        lines.append(f"\n### {sec_title}")
+        if items:
+            lines.append("| 제목 | 저널 | 연도 | 링크 |")
+            lines.append("| :--- | :--- | :--- | :--- |")
+            for item in items[:8]:
+                title   = _clean(item.get('title', ''))
+                journal = _clean(item.get('journal', ''))
+                year    = item.get('year', '')
+                link    = item.get('link', '')
+                lines.append(f"| {title} | {journal} | {year} | [PubMed]({link}) |")
+        else:
+            lines.append("> 관련 데이터가 없습니다.")
+
+    # 4. 질병관리청 감염병 현황
+    lines.append("\n---\n\n## 🏥 질병관리청 감염병 현황")
+    kdca_by_cat = {}
+    for item in data["KDCA"]:
+        cat = item.get("category", "기타")
+        kdca_by_cat.setdefault(cat, []).append(item)
+
+    v_data = kdca_by_cat.get("백신", [])
+    z_data = kdca_by_cat.get("대상포진", [])
+    m_data = kdca_by_cat.get("임산부감염병", [])
+    t_data = kdca_by_cat.get("타파미디스", [])
+
+    def ct(items):
+        return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) 
+                   for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+
+    v_t, z_t, m_t, t_t = ct(v_data), ct(z_data), ct(m_data), ct(t_data)
+
+    kdca_cats = [
+        ("백신", v_data, f"🦠 폐렴구균 통계 (총 {v_t}건)"),
+        ("대상포진", z_data, f"🦠 대상포진 관련 통계 (총 {z_t}건)"),
+        ("임산부감염병", m_data, f"🤰 임산부 주의 감염병 통계 (총 {m_t}건)"),
+        ("타파미디스", t_data, f"💊 타파미디스 관련 통계 (총 {t_t}건)")
+    ]
+
+    for cat_id, items, sec_title in kdca_cats:
+        # 5월 27일자 파일과 동일하게 데이터가 없는 KDCA 섹션은 건너뜀
+        if not items:
+            continue
+        lines.append(f"\n### {sec_title}")
+        lines.append("| 질병명 | 등급 | 누계 | 링크 |")
+        lines.append("| :--- | :--- | :--- | :--- |")
+        for item in items[:8]:
             nm  = _clean(item.get("icdNm", item.get("diseaseNm", "")))
+            grp = _clean(item.get("icdGroupNm", ""))
             cnt = item.get("resultVal", item.get("patntCnt", ""))
-            cat = item.get('category', '')
-            lines.append(f"- **{nm}**: {cnt}건 `{cat}`")
-    else:
-        lines.append("- 데이터 없음")
+            url = "https://dportal.kdca.go.kr/pot/is/inftnsdsEDW.do"
+            lines.append(f"| {nm} | {grp} | {cnt}건 | [질병관리청 상세보기]({url}) |")
 
-    lines.append("\n## 💊 식약처 국가출하승인")
-    if data["MFDS"]:
-        for item in data["MFDS"][:8]:
-            name = _clean(item.get('SAMPLE_TYPE', ''))
-            mfr  = _clean(item.get('MANUF_ENTP_NAME', ''))
-            date = item.get('RESULT_TIME', '')[:10]
-            cat  = item.get('category', '')
-            lines.append(f"- **{name}** | {mfr} | {date} `{cat}`")
-    else:
-        lines.append("- 최근 승인 없음")
+    lines.append("\n*(※ 출처: 질병관리청 감염병포털)*")
 
-    lines.append("\n## 💰 심평원 약가 정보")
-    if data["HIRA"]:
-        for item in data["HIRA"][:8]:
-            name  = _clean(item.get('itmNm', ''))
-            co    = _clean(item.get('entrpsNm', ''))
-            price = item.get('mxDpc', '')
-            cat   = item.get('category', '')
-            lines.append(f"- **{name}** | {co} | {price}원 `{cat}`")
-    else:
-        lines.append("- 데이터 없음")
+    # 5. 식약처 국가출하승인
+    lines.append("\n---\n\n## 💊 식약처 국가출하승인")
+    mfds_by_cat = {}
+    for item in data["MFDS"]:
+        cat = item.get("category", "기타")
+        mfds_by_cat.setdefault(cat, []).append(item)
 
-    lines.append(f"\n---\n*자동 생성: roger-briefing | {today}*")
+    for cat in ["백신", "대상포진", "임산부", "타파미디스"]:
+        items = mfds_by_cat.get(cat, [])
+        sec_title = cat_names_mfds[cat]
+        lines.append(f"\n### {sec_title}")
+        if items:
+            lines.append("| 제품명 | 제조사 | 승인일 |")
+            lines.append("| :--- | :--- | :--- |")
+            for item in items[:8]:
+                name = _clean(item.get('SAMPLE_TYPE', ''))
+                mfr  = _clean(item.get('MANUF_ENTP_NAME', ''))
+                date = item.get('RESULT_TIME', '')[:10]
+                lines.append(f"| {name} | {mfr} | {date} |")
+        else:
+            lines.append("> 관련 데이터가 없습니다.")
+
+    # 6. 심평원 약가 정보
+    lines.append("\n---\n\n## 💰 심평원 약가 정보")
+    hira_by_cat = {}
+    for item in data["HIRA"]:
+        cat = item.get("category", "기타")
+        hira_by_cat.setdefault(cat, []).append(item)
+
+    for cat in ["백신", "대상포진", "영양제", "타파미디스"]:
+        items = hira_by_cat.get(cat, [])
+        sec_title = cat_names_default[cat]
+        lines.append(f"\n### {sec_title}")
+        if items:
+            lines.append("| 제품명 | 제약사 | 상한금액 |")
+            lines.append("| :--- | :--- | :--- |")
+            for item in items[:8]:
+                name  = _clean(item.get('itmNm', ''))
+                co    = _clean(item.get('entrpsNm', ''))
+                price = item.get('mxDpc', '')
+                price_str = f"{price}원" if price else "-"
+                lines.append(f"| {name} | {co} | {price_str} |")
+        else:
+            lines.append("> 관련 데이터가 없습니다.")
+
     return "\n".join(lines)
+
 
 
 def commit_to_vault(markdown: str, date_str: str, gh_pat: str):
