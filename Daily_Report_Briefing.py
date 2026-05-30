@@ -437,13 +437,22 @@ def main():
             recipients.append(VAULT)
         subject = f"📊 [통합 브리핑]  데일리 리포트 - {today}"
 
-    msg = MIMEMultipart('alternative')
+    today_iso = datetime.date.today().strftime("%Y-%m-%d")
+    msg = MIMEMultipart('mixed')
     msg["Subject"] = subject
     msg["From"] = addr
     msg["To"] = ", ".join(recipients)
-    # multipart/alternative: 덜 선호되는 것부터 → text/plain(볼트용) 먼저, HTML(사람용) 나중
-    msg.attach(MIMEText(md_body, "plain", "utf-8"))
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+    # 본문: 사람용 HTML + text/plain 마크다운 (게이트웨이는 HTML을 가져감)
+    body = MIMEMultipart('alternative')
+    body.attach(MIMEText(md_body, "plain", "utf-8"))
+    body.attach(MIMEText(html_body, "html", "utf-8"))
+    msg.attach(body)
+
+    # 📎 마크다운 첨부 (게이트웨이가 .md 첨부를 볼트에 그대로 저장하는지 — 표 보존 목적)
+    md_attach = MIMEText(md_body, "markdown", "utf-8")
+    md_attach.add_header("Content-Disposition", "attachment", filename=f"통합브리핑_{today_iso}.md")
+    msg.attach(md_attach)
     
     try:
         with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
