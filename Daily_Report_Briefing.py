@@ -303,6 +303,7 @@ def build_kdca_section(title, all_data, icon, color):
 # 📝 마크다운 생성 도구 (볼트 저장용 — HTML 표가 게이트웨이에서 납작해지는 문제 해결)
 # ==========================================
 def _md_cell(key, val):
+    import html as _html
     val = str(val or '')
     if key == 'bidNtceUrl' and val:
         return f"[공고보기]({val})"
@@ -311,7 +312,8 @@ def _md_cell(key, val):
         return f"[{lt}]({val})"
     if key == 'RESULT_TIME' and len(val) >= 8 and val[:8].isdigit():
         return f"{val[:4]}-{val[4:6]}-{val[6:8]}"
-    return val.replace('|', '/').replace('\n', ' ').strip()
+    # HTML 엔티티(&quot; 등) 정리 + 표 깨짐 방지
+    return _html.unescape(val).replace('|', '/').replace('\n', ' ').strip()
 
 def md_make_table(items, columns, col_keys):
     display = items[:10]
