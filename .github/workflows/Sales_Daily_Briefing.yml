@@ -1,7 +1,9 @@
 name: Sales_Daily_Briefing
 on:
-  schedule:
-    - cron: '45 21 * * 1-5'  # KST 평일(월~금) 오전 6:45 = UTC 월~금 21:45
+  workflow_run:
+    workflows: ["Daily_Report_Briefing"]
+    types:
+      - completed
 
   workflow_dispatch:
 
@@ -11,14 +13,31 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       # 1) roger-briefing 코드 + 누적 데이터 체크아웃
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # KST 평일(월~금) 여부 체크 (주말 발송 방지)
+      - name: Check if KST Weekday
+        id: check_day
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          TZ: Asia/Seoul
+        run: |
+          DAY=$(date +%u)
+          echo "Current KST Day: $DAY"
+          if [ "$DAY" -gt 5 ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       # 2) GH_PAT 사전 확인 (MyVault_Roger 체크아웃에 필요)
       - name: GH_PAT 유효성 확인
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.check_day.outputs.skip != 'true' }}
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -31,16 +50,19 @@ jobs:
 
       # 3) MyVault_Roger 옵시디언 볼트 체크아웃 → vault/ 경로
       - uses: actions/checkout@v4
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.check_day.outputs.skip != 'true' }}
         with:
           repository: parkbs669-hub/MyVault_Roger
           token: ${{ secrets.GH_PAT }}
           path: vault
 
       - uses: actions/setup-python@v5
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.check_day.outputs.skip != 'true' }}
         with:
           python-version: '3.11'
 
       - run: pip install requests anthropic
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.check_day.outputs.skip != 'true' }}
 
       - env:
           ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
@@ -54,10 +76,12 @@ jobs:
           VAULT_DIR:           vault
           PROJECTS_DIR:        data/projects
           PATTERNS_DIR:        data/patterns
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.check_day.outputs.skip != 'true' }}
         run: python sales_daily_briefing.py
 
       # 프로젝트 타임라인 누적 저장 (매일 자동 커밋)
       - name: 프로젝트 타임라인 저장
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.check_day.outputs.skip != 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
