@@ -2,8 +2,8 @@ name: Weekly_Report_Briefing
 
 on:
   schedule:
-    # 매주 월요일 오전 8시 KST = UTC 일요일 23:00
-    - cron: "0 23 * * 0"
+    # 매주 월요일 오전 6시 KST = UTC 일요일 21:00
+    - cron: "0 21 * * 0"
   workflow_dispatch:
 
 jobs:
