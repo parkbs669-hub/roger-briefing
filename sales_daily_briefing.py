@@ -11,6 +11,9 @@ import smtplib
 import requests
 import time
 import xml.etree.ElementTree as ET
+import base64
+import json
+from urllib.parse import quote
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from zoneinfo import ZoneInfo
@@ -33,6 +36,45 @@ PUBLIC_DATA_API_KEY = os.environ.get("PUBLIC_DATA_API_KEY", "")
 NAVER_ADDRESS       = os.environ.get("NAVER_ADDRESS", "")
 NAVER_PASSWORD      = os.environ.get("NAVER_PASSWORD", "")
 REPORT_RECIPIENTS   = os.environ.get("REPORT_RECIPIENTS", NAVER_ADDRESS)
+GH_PAT              = os.environ.get("GH_PAT", "")
+
+
+# ═══════════════════════════════════════════════════════════
+# vault 직접 저장 (GitHub API)
+# ═══════════════════════════════════════════════════════════
+
+def commit_to_vault(markdown: str, filename: str, gh_pat: str):
+    owner, repo = "parkbs669-hub", "MyVault_Roger"
+    path = f"Emails/{filename}"
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{quote(path)}"
+    headers = {
+        "Authorization": f"token {gh_pat}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+    }
+    sha = None
+    try:
+        r = requests.get(api_url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+    except Exception:
+        pass
+
+    body = {
+        "message": f"chore: 영업브리핑 자동 저장 {filename[:10]}",
+        "content": base64.b64encode(markdown.encode("utf-8")).decode("ascii"),
+    }
+    if sha:
+        body["sha"] = sha
+
+    try:
+        r = requests.put(api_url, headers=headers, data=json.dumps(body), timeout=30)
+        if r.status_code in (200, 201):
+            print(f"✅ vault 커밋 완료: {path}")
+        else:
+            print(f"⚠️  vault 커밋 실패 ({r.status_code}): {r.text[:200]}")
+    except Exception as e:
+        print(f"⚠️  vault 커밋 오류: {e}")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -425,6 +467,24 @@ def main():
         print(f"✅ 발송 완료 → {', '.join(recipients)}")
     except Exception as e:
         print(f"❌ 발송 실패: {e}")
+
+    # 6. vault 직접 저장 (email-to-vault 의존성 제거)
+    if GH_PAT:
+        date_ymd = today_kst.strftime("%Y-%m-%d")
+        now_iso  = datetime.datetime.now(KST).isoformat()
+        frontmatter = f"""---
+from: "{NAVER_ADDRESS}"
+to: "beomseo.park@pfizer.com, {NAVER_ADDRESS}"
+cc: ""
+subject: "🏃 영업 데일리 브리핑 [{today_str} {weekday}]"
+date: {now_iso}
+---
+
+"""
+        filename = f"{date_ymd} 🏃 영업 데일리 브리핑 [{today_str} {weekday}].md"
+        commit_to_vault(frontmatter + plain, filename, GH_PAT)
+    else:
+        print("⚠️  GH_PAT 없음 — vault 직접 커밋 건너뜀")
 
 
 if __name__ == "__main__":
