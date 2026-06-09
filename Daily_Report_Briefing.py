@@ -336,8 +336,8 @@ def main():
     recipients = [r.strip() for r in recipients_str.split(",") if r.strip()]
     if not recipients:
         recipients = [addr]
-    if "email-to-vault-ssmyy88w0s@wshu.net" not in recipients:
-        recipients.append("email-to-vault-ssmyy88w0s@wshu.net")
+    if "email-to-vault-ks4bvu6d3r@web-library.net" not in recipients:
+        recipients.append("email-to-vault-ks4bvu6d3r@web-library.net")
     
     msg = MIMEMultipart('alternative')
     msg["Subject"] = f"📊 [통합 브리핑]  데일리 리포트 - {today}"
