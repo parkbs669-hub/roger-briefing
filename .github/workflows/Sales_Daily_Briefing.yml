@@ -73,6 +73,7 @@ jobs:
           NAVER_ADDRESS:       ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD:      ${{ secrets.NAVER_PASSWORD }}
           REPORT_RECIPIENTS:   ${{ secrets.SALES_REPORT_RECIPIENTS }}
+          GH_PAT:              ${{ secrets.GH_PAT }}
           VAULT_DIR:           vault
           PROJECTS_DIR:        data/projects
           PATTERNS_DIR:        data/patterns
