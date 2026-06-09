@@ -15,7 +15,7 @@ RECIPIENTS = [
     "Jeong-Jun.Kim@Pfizer.com",
     "In-Sun.Lee@pfizer.com",
     "Kyoung-Soo.Moon@pfizer.com",
-    "email-to-vault-ssmyy88w0s@wshu.net",
+    "email-to-vault-ks4bvu6d3r@web-library.net",
 ]
 
 def get_weekly_briefing():
