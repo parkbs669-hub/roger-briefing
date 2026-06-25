@@ -38,7 +38,7 @@ _DONE_RE     = re.compile(r"✅\s*(.+)")
 _NEXT_RE     = re.compile(r"다음\s*단계[:\s]*(.+)")
 
 
-def _detect_projects(text: str) -> list[str]:
+def _detect_projects_based_on_keywords(text: str) -> list[str]:
     """텍스트에서 언급된 프로젝트 키 반환."""
     found = []
     for key, keywords in PROJECT_KEYWORDS.items():
@@ -46,8 +46,42 @@ def _detect_projects(text: str) -> list[str]:
             found.append(key)
     return found
 
+_detect_projects = _detect_projects_based_on_keywords
 
-def _extract_snapshot(text: str, project_key: str) -> dict:
+
+def _detect_projects_with_ai(text: str) -> list[str]:
+    from ai_processor import generate
+    
+    project_list = ", ".join(PROJECT_KEYWORDS.keys())
+    prompt = f"""
+다음 영업 메모 텍스트에서 언급되거나 관련된 프로젝트를 아래 목록에서 찾아내세요.
+목록: {project_list}
+
+[텍스트]
+{text}
+
+[매핑 가이드]
+- '조례 협의 미팅'이나 '수성구' 관련 조례 언급이 있으면 '수성구청' 프로젝트에 매핑하세요.
+- '이원 대표', '천안', '재중약품' 언급이 있으면 '천안_서북구청' 프로젝트에 매핑하세요.
+- '제주' 관련 언급이 있으면 '제주도청'에 매핑하세요.
+- '노인회' 관련 언급이 있으면 '대한노인회'에 매핑하세요.
+
+반드시 아래 JSON 리스트 형식으로만 응답하세요. 다른 설명은 포함하지 마십시오.
+예: ["수성구청", "제주도청"]
+"""
+    system = "당신은 텍스트에서 프로젝트 관련성을 판별하는 매핑 어시스턴트입니다."
+    try:
+        res = generate(prompt, system)
+        m = re.search(r"\[.*\]", res, re.DOTALL)
+        if m:
+            keys = json.loads(m.group(0))
+            return [k for k in keys if k in PROJECT_KEYWORDS]
+    except Exception as e:
+        print(f"AI 프로젝트 감지 오류: {e}")
+    return _detect_projects_based_on_keywords(text)
+
+
+def _extract_snapshot_based_on_regex(text: str, project_key: str) -> dict:
     """파일 본문에서 프로젝트 스냅샷 정보 추출."""
     snap = {}
 
@@ -78,6 +112,58 @@ def _extract_snapshot(text: str, project_key: str) -> dict:
 
     return snap
 
+_extract_snapshot = _extract_snapshot_based_on_regex
+
+
+def _extract_snapshot_with_ai(text: str, project_key: str) -> dict:
+    from ai_processor import generate
+    
+    prompt = f"""
+다음은 제약 영업 메모 텍스트입니다. 이 텍스트에서 프로젝트 '{project_key}'와 관련된 진행상황 정보를 추출하세요.
+
+[텍스트]
+{text}
+
+[추출할 정보]
+1. progress (진행률 %, 숫자로만, 예: 40)
+   - 만약 '프로젝트 끝', '종료', '안 된다고 함', '해결 불가', '2026년은 안 된다고 함' 등의 표현이 있으면 진행률을 0으로 판단하세요.
+   - 만약 진행률 수치 변경 언급이 없고 '보류', '연기' 등의 상황이면 기존 진행률을 유지하거나 생략하세요.
+2. success_prob (성공 확률: 높음 / 중간 / 낮음)
+3. completed (이번에 완료된 마일스톤 목록, 리스트)
+4. next_steps (다음 단계 작업 목록, 리스트)
+5. excerpt (해당 프로젝트와 관련된 구체적 내용 요약, 최대 250자)
+
+반드시 아래 JSON 형식으로만 응답하세요. 다른 설명은 포함하지 마십시오.
+{{
+  "progress": 40, 
+  "success_prob": "높음", 
+  "completed": ["마일스톤1"], 
+  "next_steps": ["다음단계1"], 
+  "excerpt": "요약 내용..."
+}}
+"""
+    system = "당신은 제약 영업 데이터를 분석하여 구조화된 JSON으로 변환하는 전문가 데이터 추출기입니다."
+    try:
+        res = generate(prompt, system)
+        m = re.search(r"\{.*\}", res, re.DOTALL)
+        if m:
+            raw_data = json.loads(m.group(0))
+            snap = {}
+            if "progress" in raw_data and raw_data["progress"] is not None:
+                snap["progress"] = int(raw_data["progress"])
+            if "success_prob" in raw_data and raw_data["success_prob"]:
+                snap["success_prob"] = str(raw_data["success_prob"])
+            if "completed" in raw_data and isinstance(raw_data["completed"], list) and raw_data["completed"]:
+                snap["completed"] = raw_data["completed"]
+            if "next_steps" in raw_data and isinstance(raw_data["next_steps"], list) and raw_data["next_steps"]:
+                snap["next_steps"] = raw_data["next_steps"]
+            if "excerpt" in raw_data and raw_data["excerpt"]:
+                snap["excerpt"] = str(raw_data["excerpt"])
+            return snap
+    except Exception as e:
+        print(f"AI 추출 오류: {e}")
+    return _extract_snapshot_based_on_regex(text, project_key)
+
 
 def _load_timeline(project_key: str) -> dict:
     path = os.path.join(PROJECTS_DIR, f"{project_key}.json")
@@ -94,10 +180,25 @@ def _save_timeline(project_key: str, data: dict):
     )
 
 
+def _is_recent(date_str: str) -> bool:
+    try:
+        dt = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+        today = datetime.date.today()
+        return (today - dt).days <= 3
+    except:
+        return False
+
+
+def _has_ai_credentials() -> bool:
+    return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("GEMINI_API_KEY"))
+
+
 def update_all_projects() -> dict[str, dict]:
     """vault 전체를 스캔해 모든 프로젝트 타임라인 업데이트. 변경된 프로젝트 반환."""
     updated = {}
     all_files = glob.glob(os.path.join(VAULT_DIR, "**", "*.md"), recursive=True)
+
+    use_ai = _has_ai_credentials()
 
     for path in sorted(all_files):
         text = _read(path)
@@ -106,7 +207,14 @@ def update_all_projects() -> dict[str, dict]:
         date = _date_from_filename(path)
         fname = os.path.basename(path).replace(".md", "")
 
-        for project_key in _detect_projects(text):
+        is_recent_file = _is_recent(date)
+
+        if use_ai and is_recent_file:
+            detected_projects = _detect_projects_with_ai(text)
+        else:
+            detected_projects = _detect_projects_based_on_keywords(text)
+
+        for project_key in detected_projects:
             timeline = _load_timeline(project_key)
             # 같은 날짜+파일 중복 방지
             existing_dates = {e["date"] + e.get("source", "") for e in timeline["timeline"]}
@@ -114,7 +222,11 @@ def update_all_projects() -> dict[str, dict]:
             if entry_id in existing_dates:
                 continue
 
-            snap = _extract_snapshot(text, project_key)
+            if use_ai and is_recent_file:
+                snap = _extract_snapshot_with_ai(text, project_key)
+            else:
+                snap = _extract_snapshot_based_on_regex(text, project_key)
+
             if not snap:
                 continue
 
