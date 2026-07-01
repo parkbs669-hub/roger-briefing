@@ -104,6 +104,7 @@ def get_weekly_briefing():
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🫁 RSV 학술/임상 동향
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• ABRYSVO (Pfizer, 60세 이상 / 산모 접종) 임상 최신 결과:
 • ENFLONSIA (Clesrovimab, MSD) 임상 최신 결과:
 • mResvia (Moderna mRNA RSV 백신) 논문/학술 동향:
 • Arexvy (GSK) 임상·효능 업데이트:
@@ -124,7 +125,7 @@ def get_weekly_briefing():
         "PCV20 PCV21 clinical trial results",
         "pneumococcal immunization policy WHO CDC",
         "herpes zoster vaccine shingrix update",
-        "RSV vaccine nirsevimab clesrovimab clinical trial 2026",
+        "RSV vaccine nirsevimab clesrovimab ABRYSVO clinical trial 2026",
     ]
     articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
     news_text = format_news_text(articles)

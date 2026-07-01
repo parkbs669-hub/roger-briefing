@@ -72,6 +72,7 @@ def get_weekly_report():
 • 기타 경쟁사:
 
 [RSV 백신/항체 동향]
+• Pfizer ABRYSVO (아브리스보, 60세 이상 / 산모 접종):
 • MSD ENFLONSIA (Clesrovimab, 신생아용):
 • Moderna mResvia (60세 이상):
 • GSK Arexvy (60세 이상, 글로벌 70개국):
@@ -136,7 +137,7 @@ def get_weekly_report():
         "Prevnar Capvaxive market 2026",
         "pneumococcal NIP policy Korea",
         "pneumococcal vaccine clinical trial",
-        "RSV vaccine nirsevimab clesrovimab mResvia Arexvy Korea 2026",
+        "RSV vaccine nirsevimab clesrovimab mResvia Arexvy ABRYSVO Korea 2026",
     ]
     articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
     news_text = format_news_text(articles)
