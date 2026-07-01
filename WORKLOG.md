@@ -1,0 +1,264 @@
+# Roger-Briefing 작업 기록 & 계획
+
+작성일: 2026-07-01  
+상태: 진행 중
+
+---
+
+## ✅ 완료된 작업
+
+### 1. 주간 보고서 시간 변경 (08:00 → 06:00 KST)
+- **파일**: `.github/workflows/Weekly_Report_Briefing.yml`, `.github/workflows/weekly_academic_briefing.yml`
+- **변경**: cron `"0 23 * * 0"` → `"0 21 * * 0"` (UTC 기준, KST는 -9시간)
+- **상태**: ✅ main에 병합됨
+
+### 2. email-to-vault 도메인 교체
+- **이유**: mail.tm 도메인 `wshu.net` 만료 → `web-library.net`으로 교체
+- **수정 파일**:
+  - `weekly_academic_briefing.py` (line 18)
+  - `Weekly_Report_Briefing.py` (line 17)
+  - `Daily_Report_Briefing.py` (line 340)
+- **주소**: `email-to-vault-ks4bvu6d3r@web-library.net`
+- **상태**: ✅ main에 병합됨
+
+### 3. Claude 모델 마이그레이션 (claude-sonnet-4-5 → claude-sonnet-4-6)
+- **이유**: claude-sonnet-4-5 은퇴 (2026-06-15)
+- **수정 파일**:
+  - `Weekly_Report_Briefing.py` (line 111)
+  - `weekly_academic_briefing.py` (line 96)
+- **웹검색 도구 업그레이드**:
+  - `web_search_20250305` → `web_search_20260209` (동적 필터링 지원)
+- **상태**: ✅ main에 병합됨
+
+### 4. sales_daily_briefing.py DeepSeek 통합
+- **파일**: `ai_processor.py`, `.github/workflows/Sales_Daily_Briefing.yml`
+- **변경 사항**:
+  - `ai_processor.py`에 `_call_deepseek()` 함수 추가
+  - 우선순위: **DeepSeek → Claude → Gemini → LM Studio**
+  - `.github/workflows/Sales_Daily_Briefing.yml`에 `DEEPSEEK_API_KEY` env 추가
+- **비용 절감**: Claude($1.85/월) → DeepSeek($0.05/월) **약 97% 절감**
+- **상태**: ✅ main에 병합됨
+- **필수**: GitHub Secrets에 `DEEPSEEK_API_KEY` 등록 필요 (이미 완료)
+
+### 5. GH_PAT 환경변수 워크플로우 추가
+- **파일**: `.github/workflows/Sales_Daily_Briefing.yml`
+- **목적**: GitHub API 직접 커밋 (vault 저장) 지원
+- **상태**: ✅ main에 병합됨
+
+### 6. 월간 비용 분석
+| 프로그램 | 빈도 | 모델 | 월 비용 |
+|---|---|---|---|
+| `sales_daily_briefing.py` | 평일 매일(~22회) | claude-sonnet-4-6 | $1.85 |
+| `Weekly_Report_Briefing.py` | 주 1회 | claude-sonnet-4-6 | $0.54 |
+| `weekly_academic_briefing.py` | 주 1회 | claude-sonnet-4-6 | $0.54 |
+| `Daily_Report_Briefing.py` | 매일 | 없음 (원자료 수집만) | $0 |
+| **합계** | | | **~$2.93/월** |
+
+---
+
+## 📋 진행 중인 작업
+
+### 주간 브리핑 2개 newsapi.org + DeepSeek 전환
+**목표**: 비용 95% 절감 + 웹검색 기능 유지
+
+#### 현재 상태 (문제점)
+- `Weekly_Report_Briefing.py`, `weekly_academic_briefing.py`는 Claude의 built-in `web_search_20260209` 도구 사용
+- 이 도구는 **Anthropic 전용** — DeepSeek에는 없음
+
+#### 해결책
+newsapi.org API(무료)로 뉴스 수집 → DeepSeek에 결과 텍스트로 전달 → 한국어 분석
+
+#### 계획 상세
+
+**1단계: news_collector.py 생성**
+
+```python
+import requests
+from datetime import datetime, timedelta
+
+def collect_news_from_newsapi(keywords: list[str], api_key: str) -> list[dict]:
+    """
+    newsapi.org에서 뉴스 수집
+    - 최근 1주일 뉴스만
+    - 상위 3개 기사/키워드
+    - 영문 결과
+    """
+    base_url = "https://newsapi.org/v2/everything"
+    results = []
+    
+    from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    
+    for kw in keywords:
+        try:
+            r = requests.get(base_url, params={
+                "q": kw,
+                "apiKey": api_key,
+                "language": "en",
+                "sortBy": "publishedAt",
+                "from": from_date,
+                "pageSize": 3
+            }, timeout=10)
+            
+            articles = r.json().get("articles", [])
+            for a in articles[:3]:
+                results.append({
+                    "title": a.get("title", ""),
+                    "source": a.get("source", {}).get("name", ""),
+                    "url": a.get("url", ""),
+                    "publishedAt": a.get("publishedAt", ""),
+                    "description": a.get("description", ""),
+                    "keyword": kw
+                })
+        except Exception as e:
+            print(f"Error collecting {kw}: {e}")
+            continue
+    
+    return results
+```
+
+**2단계: Weekly_Report_Briefing.py 수정**
+
+기존:
+```python
+response = client.messages.create(
+    model="claude-sonnet-4-6",
+    tools=[{"type": "web_search_20260209", "name": "web_search"}],
+    messages=[{"role": "user", "content": prompt}]
+)
+```
+
+변경:
+```python
+from news_collector import collect_news_from_newsapi
+import json
+
+# 뉴스 수집 (newsapi.org)
+keywords = ["pneumococcal vaccine PCV20", "pneumococcal vaccine PCV21", "pneumococcal immunization policy Korea"]
+news = collect_news_from_newsapi(keywords, os.environ.get("NEWS_API_KEY", ""))
+
+# 프롬프트에 뉴스 데이터 포함
+news_text = json.dumps([
+    {"title": n["title"], "source": n["source"], "url": n["url"], "keyword": n["keyword"]}
+    for n in news
+], ensure_ascii=False, indent=2)
+
+prompt = f"""이번 주({year} {week_start}~{week_end}) 폐렴구균 백신 관련 정보 분석
+
+[검색된 뉴스 (newsapi.org)]
+{news_text}
+
+위 뉴스들을 분석하고 아래 두 가지 형식의 보고서를 한국어로 작성해 주세요:
+...기존 프롬프트...
+"""
+
+response = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=6000,
+    messages=[{"role": "user", "content": prompt}]
+    # ← tools 제거 (웹검색 도구 불필요)
+)
+```
+
+**3단계: weekly_academic_briefing.py 동일하게 수정**
+
+키워드 조정:
+```python
+keywords = [
+    "pneumococcal vaccine serotype Korea",
+    "PCV20 PCV21 clinical trial",
+    "pneumococcal immunization policy",
+    "herpes zoster vaccine shingrix"
+]
+```
+
+**4단계: 환경변수 추가**
+
+`.github/workflows/Weekly_Report_Briefing.yml`:
+```yaml
+- env:
+    ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+    NEWS_API_KEY:        ${{ secrets.NEWS_API_KEY }}  # ← 추가
+    ...
+```
+
+`.github/workflows/weekly_academic_briefing.yml`:
+```yaml
+- env:
+    ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+    NEWS_API_KEY:        ${{ secrets.NEWS_API_KEY }}  # ← 추가
+    ...
+```
+
+---
+
+## 🔧 필요한 작업
+
+### A. newsapi.org 구현 (우선순위: 높음)
+
+1. `news_collector.py` 생성
+2. `Weekly_Report_Briefing.py` 수정 (뉴스 수집 통합)
+3. `weekly_academic_briefing.py` 수정 (뉴스 수집 통합)
+4. GitHub Secrets에 `NEWS_API_KEY` 추가
+5. 워크플로우 YAML 2개 수정 (env에 NEWS_API_KEY 추가)
+6. 테스트 실행 & 검증
+
+### B. DeepSeek 마이그레이션 검토 (향후)
+
+- sales_daily_briefing.py는 이미 DeepSeek 적용됨
+- 주간 보고서 2개는 아직 Claude 사용 (newsapi.org 도입 후 추가 검토)
+
+---
+
+## 📊 예상 효과
+
+| 항목 | 현재 | 전환 후 |
+|---|---|---|
+| **Weekly_Report 비용** | $0.54/월 | $0.01/월 |
+| **academic_briefing 비용** | $0.54/월 | $0.01/월 |
+| **월 합계** | $2.93 | ~$1.07 |
+| **절감액** | - | **63% 절감** |
+
+---
+
+## 🔑 필요한 API 키 (GitHub Secrets)
+
+| 키 | 상태 | 용도 |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | ✅ 있음 | Claude API |
+| `DEEPSEEK_API_KEY` | ✅ 있음 | DeepSeek API |
+| `NEWS_API_KEY` | ❓ 등록 필요 | newsapi.org |
+| `NAVER_CLIENT_ID` | ✅ 있음 | Naver News API |
+| `NAVER_CLIENT_SECRET` | ✅ 있음 | Naver News API |
+| `GEMINI_API_KEY` | ✅ 있음 | Gemini (폴백) |
+| `GH_PAT` | ✅ 있음 | GitHub API (vault 커밋) |
+
+---
+
+## 📝 작업 체크리스트
+
+- [ ] `news_collector.py` 생성
+- [ ] `Weekly_Report_Briefing.py` 수정
+- [ ] `weekly_academic_briefing.py` 수정
+- [ ] GitHub Secrets에 `NEWS_API_KEY` 추가
+- [ ] `.github/workflows/Weekly_Report_Briefing.yml` env 수정
+- [ ] `.github/workflows/weekly_academic_briefing.yml` env 수정
+- [ ] 로컬 테스트 실행
+- [ ] main에 병합
+- [ ] 다음 주간 실행 모니터링
+
+---
+
+## 📌 주의사항
+
+1. **newsapi.org 무료 사용량**: 월 100 requests (현재 계획: 월 ~40 requests → 충분함)
+2. **최신성**: newsapi.org는 약 15분 지연 (RT가 아님)
+3. **언어**: newsapi.org 결과는 영어 → Claude/DeepSeek이 번역+분석
+4. **30일 제한**: Free 플랜은 최근 30일 뉴스만 검색 가능
+
+---
+
+## 참고 링크
+
+- newsapi.org: https://newsapi.org
+- 토큰 사용: sales_daily_briefing이 이미 DeepSeek 사용 중 (ai_processor.py 우선순위)
+- 비용 명세: 월 $2.93 (현재) → $1.07 (전환 후)
