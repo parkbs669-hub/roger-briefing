@@ -28,7 +28,7 @@ def collect_pubmed():
         "영양제": "(folic acid OR iron supplementation) AND pregnancy AND 2026[pdat]",
         "대상포진": "(herpes zoster vaccine OR shingrix OR skyzoster) AND 2026[pdat]",
         "타파미디스": "(tafamidis OR transthyretin amyloidosis OR TTR cardiomyopathy OR cardiac amyloidosis) AND 2026[pdat]",
-        "RSV": "(respiratory syncytial virus vaccine OR nirsevimab OR palivizumab OR RSV mRNA vaccine) AND 2026[pdat]"
+        "RSV": "(respiratory syncytial virus vaccine OR nirsevimab OR clesrovimab OR palivizumab OR mResvia OR Arexvy OR RSV mRNA vaccine) AND 2026[pdat]"
     }
     all_papers, seen = [], set()
 
@@ -81,7 +81,7 @@ def collect_naver_news():
         "영양제": ["임산부 엽산", "임산부 철분제"],
         "대상포진": ["대상포진 백신", "싱그릭스", "스카이조스터"],
         "타파미디스": ["타파미디스", "심장 아밀로이드증", "빈다맥스"],
-        "RSV": ["RSV 백신", "호흡기세포융합바이러스", "니르세비맙", "아브리스보"]
+        "RSV": ["RSV 백신", "호흡기세포융합바이러스", "니르세비맙", "아브리스보", "엔플론시아", "아렉스비", "mResvia"]
     }
     all_news, seen = [], set()
     headers = {"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET}
@@ -111,7 +111,7 @@ def collect_g2b():
         "백신": ["폐렴구균"], "영양제": ["임산부 영양제", "엽산", "철분"],
         "대상포진": ["대상포진", "싱그릭스"],
         "타파미디스": ["타파미디스", "빈다맥스"],
-        "RSV": ["RSV", "호흡기세포융합바이러스", "아브리스보"]
+        "RSV": ["RSV", "호흡기세포융합바이러스", "아브리스보", "엔플론시아", "아렉스비"]
     }
     all_items, seen = [], set()
     start = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y%m%d0000")
@@ -176,7 +176,7 @@ def collect_mfds():
         "임산부": ["아다셀", "부스트릭스", "아브리스보"],
         "대상포진": ["대상포진", "싱그릭스", "스카이조스터"],
         "타파미디스": ["타파미디스", "빈다맥스"],
-        "RSV": ["아브리스보", "니르세비맙", "RSV"]
+        "RSV": ["아브리스보", "니르세비맙", "RSV", "엔플론시아", "클레스로비맙", "아렉스비"]
     }
     all_items, seen = [], set()
     for cat, kws in targets.items():
@@ -206,7 +206,7 @@ def collect_mfds():
 # ==========================================
 def collect_hira():
     url = "https://apis.data.go.kr/B551182/dgamtCrtrInfoService1.2/getDgamtList"
-    kws = {"백신": ["프리베나", "캡박시브"], "영양제": ["폴산", "철분"], "대상포진": ["싱그릭스", "스카이조스터"], "타파미디스": ["타파미디스", "빈다맥스"], "RSV": ["아브리스보", "니르세비맙"]}
+    kws = {"백신": ["프리베나", "캡박시브"], "영양제": ["폴산", "철분"], "대상포진": ["싱그릭스", "스카이조스터"], "타파미디스": ["타파미디스", "빈다맥스"], "RSV": ["아브리스보", "니르세비맙", "엔플론시아", "아렉스비"]}
     all_items, seen = [], set()
     for cat, words in kws.items():
         for kw in words:
@@ -219,6 +219,88 @@ def collect_hira():
                         d['category'] = cat; seen.add(d.get("itmCd")); all_items.append(d)
             except: continue
     return all_items
+
+# ==========================================
+# 🫁 RSV 제품 레퍼런스 카드 (정적 데이터)
+# ==========================================
+RSV_PRODUCTS = [
+    {
+        "name": "ENFLONSIA (Clesrovimab, MK-1654)",
+        "company": "MSD",
+        "color": "#1565C0",
+        "target": "신생아 및 생후 8개월 미만 영유아",
+        "type": "단일 투여 장기지속형 항체주사 (Monoclonal Antibody)",
+        "dose": "105 mg (체중 무관 고정용량)",
+        "approval": "FDA 승인 완료",
+        "duration": "5개월 (RSV 시즌 전체 커버)",
+        "note": "RSV 시즌 동안 출생하거나 첫 RSV 시즌 진입 영유아 대상"
+    },
+    {
+        "name": "mResvia",
+        "company": "Moderna",
+        "color": "#2E7D32",
+        "target": "60세 이상 성인",
+        "type": "RSV mRNA 백신",
+        "dose": "-",
+        "approval": "FDA 승인 완료",
+        "duration": "-",
+        "note": "임상시험 42일 이내 길랑-바레 증후군 사례 없음 (안전성 확인)"
+    },
+    {
+        "name": "Arexvy",
+        "company": "GSK",
+        "color": "#6A1B9A",
+        "target": "60세 이상 성인 (주 적응증), 50-59세 고위험군",
+        "type": "RSV 백신",
+        "dose": "-",
+        "approval": "70개국 이상 승인 / 미국: 18-49세 고위험군 추가 승인 / 유럽경제지역: 18세 이상 전체",
+        "duration": "-",
+        "note": "글로벌 최다 승인 RSV 백신"
+    },
+]
+
+
+def build_rsv_product_card_html():
+    cards = ""
+    for p in RSV_PRODUCTS:
+        rows = "".join([
+            f"<tr><td style='padding:5px 8px;color:#555;font-size:12px;width:90px;'>{k}</td>"
+            f"<td style='padding:5px 8px;font-size:12px;font-weight:bold;'>{v}</td></tr>"
+            for k, v in [
+                ("대상", p["target"]), ("제형", p["type"]), ("용량", p["dose"]),
+                ("승인", p["approval"]), ("보호기간", p["duration"]), ("비고", p["note"]),
+            ]
+        ])
+        cards += f"""
+        <div style='display:inline-block;vertical-align:top;width:31%;min-width:220px;
+                    margin:0 1% 12px 0;border:1px solid {p["color"]}33;border-radius:8px;
+                    overflow:hidden;background:#fff;'>
+            <div style='background:{p["color"]};color:#fff;padding:10px 14px;'>
+                <div style='font-size:13px;font-weight:bold;'>{p["name"]}</div>
+                <div style='font-size:11px;opacity:0.85;margin-top:2px;'>{p["company"]}</div>
+            </div>
+            <table style='width:100%;border-collapse:collapse;'>{rows}</table>
+        </div>"""
+    return f"""
+    <div style='margin-bottom:20px;padding:14px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;'>
+        <h4 style='margin:0 0 12px 0;color:#2c3e50;'>🫁 RSV 주요 제품 현황</h4>
+        <div style='white-space:nowrap;overflow-x:auto;'>{cards}</div>
+    </div>"""
+
+
+def build_rsv_product_card_md():
+    lines = [
+        "\n### 🫁 RSV 주요 제품 현황\n",
+        "| 제품명 | 회사 | 대상 | 제형 | 용량 | 승인 | 보호기간 | 비고 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+    ]
+    for p in RSV_PRODUCTS:
+        lines.append(
+            f"| {p['name']} | {p['company']} | {p['target']} | {p['type']} "
+            f"| {p['dose']} | {p['approval']} | {p['duration']} | {p['note']} |"
+        )
+    return "\n".join(lines)
+
 
 # ==========================================
 # 🎨 UI 생성 도구
@@ -262,6 +344,7 @@ def build_section(title, all_data, columns, col_keys, icon, color):
             <h4 style='margin:25px 0 10px 0; color:#c0392b; border-left:4px solid #c0392b; padding-left:8px;'>💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션</h4>
             {make_table(t_data, columns, col_keys)}
             <h4 style='margin:25px 0 10px 0; color:#e67e22; border-left:4px solid #e67e22; padding-left:8px;'>🫁 RSV (호흡기세포융합바이러스) 섹션</h4>
+            {build_rsv_product_card_html()}
             {make_table(r_data, columns, col_keys)}
         </div>
     </div>"""
@@ -374,8 +457,12 @@ def build_markdown_report(data: dict, today: str) -> str:
         "RSV": "🫁 RSV (호흡기세포융합바이러스) 섹션"
     }
 
+    # RSV 제품 현황 (마크다운 리포트 최상단)
+    lines.append("## 🫁 RSV 주요 제품 현황")
+    lines.append(build_rsv_product_card_md())
+
     # 1. 네이버 최신 뉴스
-    lines.append("## 📰 네이버 최신 뉴스")
+    lines.append("\n---\n\n## 📰 네이버 최신 뉴스")
     news_by_cat = {}
     for item in data["NEWS"][:30]:
         cat = item.get("category", "기타")
