@@ -1,11 +1,30 @@
-import os, smtplib, datetime
+import os, smtplib, datetime, json, urllib.request
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import anthropic
+from news_collector import collect_news, format_news_text
 
-A = os.environ["ANTHROPIC_API_KEY"]
 N = os.environ["NAVER_ADDRESS"]
 P = os.environ["NAVER_PASSWORD"]
+
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+NEWS_API_KEY     = os.environ.get("NEWS_API_KEY", "")
+
+
+def _deepseek(prompt: str) -> str:
+    body = json.dumps({
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 영업 전문가 어시스턴트입니다."},
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": 6000,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.deepseek.com/chat/completions", data=body,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+    )
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return json.loads(r.read())["choices"][0]["message"]["content"]
 RECIPIENTS = [
     "parkbs669@naver.com",
     "jaehwan.bae@pfizer.com",
@@ -18,7 +37,6 @@ RECIPIENTS = [
 ]
 
 def get_weekly_report():
-    client = anthropic.Anthropic(api_key=A)
     KST = datetime.timezone(datetime.timedelta(hours=9))
     today = datetime.datetime.now(KST).date()
     week_start = (today - datetime.timedelta(days=4)).strftime("%m월 %d일")
@@ -107,13 +125,16 @@ def get_weekly_report():
 • 중기 (3~6개월):
 • 장기 (1년 이상):"""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=6000,
-        tools=[{"type": "web_search_20250305", "name": "web_search"}],
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return "".join(b.text for b in response.content if hasattr(b, "text")).strip()
+    keywords = [
+        "pneumococcal vaccine PCV20 PCV21 Korea",
+        "Prevnar Capvaxive market 2026",
+        "pneumococcal NIP policy Korea",
+        "pneumococcal vaccine clinical trial",
+    ]
+    articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
+    news_text = format_news_text(articles)
+    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일)]\n{news_text}"
+    return _deepseek(full_prompt)
 
 def send_email(body):
     KST = datetime.timezone(datetime.timedelta(hours=9))
@@ -124,7 +145,7 @@ def send_email(body):
     msg["Subject"] = subject
     msg["From"] = N
     msg["To"] = ", ".join(RECIPIENTS)
-    text = f"안녕하세요,\n\n이번 주 폐렴구균 백신 종합 업무 보고서입니다.\n임원용 요약본과 실무자용 상세본 두 가지를 함께 보내드립니다.\n\n{body}\n\n---\nClaude AI 자동 발송"
+    text = f"안녕하세요,\n\n이번 주 폐렴구균 백신 종합 업무 보고서입니다.\n임원용 요약본과 실무자용 상세본 두 가지를 함께 보내드립니다.\n\n{body}\n\n---\nDeepSeek AI 자동 발송"
     msg.attach(MIMEText(text, "plain", "utf-8"))
     with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
         s.login(N, P)

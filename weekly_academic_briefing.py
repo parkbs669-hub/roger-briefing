@@ -1,11 +1,30 @@
-import os, smtplib, datetime
+import os, smtplib, datetime, json, urllib.request
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import anthropic
+from news_collector import collect_news, format_news_text
 
-A = os.environ["ANTHROPIC_API_KEY"]
 N = os.environ["NAVER_ADDRESS"]
 P = os.environ["NAVER_PASSWORD"]
+
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+NEWS_API_KEY     = os.environ.get("NEWS_API_KEY", "")
+
+
+def _deepseek(prompt: str) -> str:
+    body = json.dumps({
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다."},
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": 6000,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.deepseek.com/chat/completions", data=body,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+    )
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return json.loads(r.read())["choices"][0]["message"]["content"]
 
 RECIPIENTS = [
     "parkbs669@naver.com",
@@ -19,7 +38,6 @@ RECIPIENTS = [
 ]
 
 def get_weekly_briefing():
-    client = anthropic.Anthropic(api_key=A)
     KST = datetime.timezone(datetime.timedelta(hours=9))
     today = datetime.datetime.now(KST).date().strftime("%Y년 %m월 %d일")
     
@@ -92,13 +110,16 @@ def get_weekly_briefing():
 
 해당 정보가 없는 카테고리는 "이번 주 해당 없음"으로 표시해주세요."""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=6000,
-        tools=[{"type": "web_search_20250305", "name": "web_search"}],
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return "".join(b.text for b in response.content if hasattr(b, "text")).strip()
+    keywords = [
+        "pneumococcal vaccine serotype Korea clinical",
+        "PCV20 PCV21 clinical trial results",
+        "pneumococcal immunization policy WHO CDC",
+        "herpes zoster vaccine shingrix update",
+    ]
+    articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
+    news_text = format_news_text(articles)
+    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일)]\n{news_text}"
+    return _deepseek(full_prompt)
 
 def send_email(body):
     KST = datetime.timezone(datetime.timedelta(hours=9))
@@ -107,7 +128,7 @@ def send_email(body):
     msg["Subject"] = f"[폐렴구균 주간 학술 브리핑] {today}"
     msg["From"] = N
     msg["To"] = ", ".join(RECIPIENTS)
-    text = f"안녕하세요,\n\n{today} 폐렴구균 백신 주간 학술 브리핑입니다.\n\n{body}\n\n---\nClaude AI 자동 발송"
+    text = f"안녕하세요,\n\n{today} 폐렴구균 백신 주간 학술 브리핑입니다.\n\n{body}\n\n---\nDeepSeek AI 자동 발송"
     msg.attach(MIMEText(text, "plain", "utf-8"))
     with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
         s.login(N, P)
