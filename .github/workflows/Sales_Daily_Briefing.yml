@@ -42,6 +42,7 @@ jobs:
       - run: pip install requests anthropic
 
       - env:
+          DEEPSEEK_API_KEY:    ${{ secrets.DEEPSEEK_API_KEY }}
           ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
           NAVER_CLIENT_ID:     ${{ secrets.NAVER_CLIENT_ID }}

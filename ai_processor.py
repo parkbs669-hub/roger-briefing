@@ -1,11 +1,31 @@
 """
-Claude / Gemini / LM Studio 중 사용 가능한 AI로 텍스트를 처리하는 모듈.
-우선순위: Claude → Gemini → LM Studio (로컬)
+DeepSeek / Claude / Gemini / LM Studio 중 사용 가능한 AI로 텍스트를 처리하는 모듈.
+우선순위: DeepSeek → Claude → Gemini → LM Studio (로컬)
 """
 import os
 import json
 import urllib.request
 import urllib.error
+
+
+def _call_deepseek(prompt: str, system: str) -> str:
+    api_key = os.environ["DEEPSEEK_API_KEY"]
+    url = "https://api.deepseek.com/chat/completions"
+    body = json.dumps({
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": 4096,
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=body, headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    })
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read())
+    return data["choices"][0]["message"]["content"]
 
 
 def _call_claude(prompt: str, system: str) -> str:
@@ -55,6 +75,12 @@ def _call_lmstudio(prompt: str, system: str) -> str:
 def generate(prompt: str, system: str = "당신은 제약회사 영업 전문가 어시스턴트입니다.") -> str:
     """사용 가능한 AI 엔진 순서대로 시도."""
     errors = []
+
+    if os.environ.get("DEEPSEEK_API_KEY"):
+        try:
+            return _call_deepseek(prompt, system)
+        except Exception as e:
+            errors.append(f"DeepSeek: {e}")
 
     if os.environ.get("ANTHROPIC_API_KEY"):
         try:
