@@ -102,11 +102,20 @@ def get_weekly_briefing():
 • 건강보험 급여 관련 동향
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🫁 RSV 학술/임상 동향
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• ENFLONSIA (Clesrovimab, MSD) 임상 최신 결과:
+• mResvia (Moderna mRNA RSV 백신) 논문/학술 동향:
+• Arexvy (GSK) 임상·효능 업데이트:
+• 국내 RSV 역학 및 NIP 도입 논의:
+• 주요 RSV 관련 논문 (PubMed 최신):
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💡 이번 주 핵심 시사점
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 해당 정보가 없는 카테고리는 "이번 주 해당 없음"으로 표시해주세요."""
 
@@ -115,6 +124,7 @@ def get_weekly_briefing():
         "PCV20 PCV21 clinical trial results",
         "pneumococcal immunization policy WHO CDC",
         "herpes zoster vaccine shingrix update",
+        "RSV vaccine nirsevimab clesrovimab clinical trial 2026",
     ]
     articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
     news_text = format_news_text(articles)
@@ -130,7 +140,8 @@ def send_email(body):
     msg["To"] = ", ".join(RECIPIENTS)
     text = f"안녕하세요,\n\n{today} 폐렴구균 백신 주간 학술 브리핑입니다.\n\n{body}\n\n---\nDeepSeek AI 자동 발송"
     msg.attach(MIMEText(text, "plain", "utf-8"))
-    with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
+    with smtplib.SMTP("smtp.gmail.com", 587) as s:
+        s.starttls()
         s.login(N, P)
         s.sendmail(N, RECIPIENTS, msg.as_string())
     print(f"✅ 주간 브리핑 발송 완료! (수신자: {', '.join(RECIPIENTS)})")

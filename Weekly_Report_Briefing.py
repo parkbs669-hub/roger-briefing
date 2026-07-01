@@ -71,6 +71,12 @@ def get_weekly_report():
 • MSD(PCV21 캡박시브):
 • 기타 경쟁사:
 
+[RSV 백신/항체 동향]
+• MSD ENFLONSIA (Clesrovimab, 신생아용):
+• Moderna mResvia (60세 이상):
+• GSK Arexvy (60세 이상, 글로벌 70개국):
+• 국내 도입 현황 및 NIP 논의:
+
 [정책/보건소 변화]
 • 질병관리청:
 • NIP 변경사항:
@@ -130,6 +136,7 @@ def get_weekly_report():
         "Prevnar Capvaxive market 2026",
         "pneumococcal NIP policy Korea",
         "pneumococcal vaccine clinical trial",
+        "RSV vaccine nirsevimab clesrovimab mResvia Arexvy Korea 2026",
     ]
     articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
     news_text = format_news_text(articles)
@@ -147,7 +154,8 @@ def send_email(body):
     msg["To"] = ", ".join(RECIPIENTS)
     text = f"안녕하세요,\n\n이번 주 폐렴구균 백신 종합 업무 보고서입니다.\n임원용 요약본과 실무자용 상세본 두 가지를 함께 보내드립니다.\n\n{body}\n\n---\nDeepSeek AI 자동 발송"
     msg.attach(MIMEText(text, "plain", "utf-8"))
-    with smtplib.SMTP_SSL("smtp.naver.com", 465) as s:
+    with smtplib.SMTP("smtp.gmail.com", 587) as s:
+        s.starttls()
         s.login(N, P)
         s.sendmail(N, RECIPIENTS, msg.as_string())
     print(f"주간 보고서 발송 완료! (수신자: {len(RECIPIENTS)}명)")
