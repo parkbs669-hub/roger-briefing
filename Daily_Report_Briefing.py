@@ -344,7 +344,6 @@ def build_section(title, all_data, columns, col_keys, icon, color):
             <h4 style='margin:25px 0 10px 0; color:#c0392b; border-left:4px solid #c0392b; padding-left:8px;'>💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션</h4>
             {make_table(t_data, columns, col_keys)}
             <h4 style='margin:25px 0 10px 0; color:#e67e22; border-left:4px solid #e67e22; padding-left:8px;'>🫁 RSV (호흡기세포융합바이러스) 섹션</h4>
-            {build_rsv_product_card_html()}
             {make_table(r_data, columns, col_keys)}
         </div>
     </div>"""
@@ -456,10 +455,6 @@ def build_markdown_report(data: dict, today: str) -> str:
         "타파미디스": "💊 타파미디스 (Tafamidis / TTR 심장 아밀로이드) 섹션",
         "RSV": "🫁 RSV (호흡기세포융합바이러스) 섹션"
     }
-
-    # RSV 제품 현황 (마크다운 리포트 최상단)
-    lines.append("## 🫁 RSV 주요 제품 현황")
-    lines.append(build_rsv_product_card_md())
 
     # 1. 네이버 최신 뉴스
     lines.append("\n---\n\n## 📰 네이버 최신 뉴스")
