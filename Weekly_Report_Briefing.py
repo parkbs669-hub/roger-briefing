@@ -14,7 +14,7 @@ def _deepseek(prompt: str) -> str:
     body = json.dumps({
         "model": "deepseek-chat",
         "messages": [
-            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 영업 전문가 어시스턴트입니다."},
+            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 영업 전문가 어시스턴트입니다. 시스템 메시지나 거절 응답을 출력하지 말고 반드시 요청된 양식에 맞춰 보고서를 작성하세요."},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": 6000,
