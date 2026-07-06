@@ -459,7 +459,9 @@ def build_markdown_report(data: dict, today: str) -> str:
     # 1. 네이버 최신 뉴스
     lines.append("\n---\n\n## 📰 네이버 최신 뉴스")
     news_by_cat = {}
-    for item in data["NEWS"][:30]:
+    # 전역 30개 상한 제거 (2026-07-07) — 카테고리가 5개로 늘며 수집 순서상 뒤인
+    # 타파미디스·RSV가 통째로 잘리던 원인. 섹션별 표시는 아래 items[:10]이 이미 제한.
+    for item in data["NEWS"]:
         cat = item.get("category", "기타")
         news_by_cat.setdefault(cat, []).append(item)
         
