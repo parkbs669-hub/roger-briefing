@@ -252,13 +252,6 @@ def _docs_html(items: list[dict]) -> str:
         </tr></thead><tbody>{rows}</tbody></table>"""
 
 
-def _pending_html(pending: list[str]) -> str:
-    if not pending:
-        return "<p style='color:#27ae60; font-size:13px;'>미완료 항목 없음</p>"
-    items = "".join([f"<li style='margin:5px 0; font-size:13px;'>{p}</li>" for p in pending[:15]])
-    return f"<ul style='padding-left:18px; margin:0;'>{items}</ul>"
-
-
 def _policy_html(items: list[dict]) -> str:
     """정책 자료 목록 — 제목 + 첫 두 줄 요약."""
     if not items:
@@ -375,23 +368,8 @@ def main():
     <div style='padding:15px;'>{_icebreaking_html(ai_text)}</div>
   </div>
 
-  <!-- 미완료 후속 조치 -->
-  <div style='{_css_card("")}'>
-    {_section_header(f"미완료 후속 조치 ({len(pending)}건)", "#e67e22", "⚠️")}
-    <div style='padding:15px;'>{_pending_html(pending)}</div>
-  </div>
-
-  <!-- 최근 영업 활동 -->
-  <div style='{_css_card("")}'>
-    {_section_header(f"최근 영업 활동 ({len(sales)}건)", "#27ae60", "📋")}
-    <div style='padding:15px;'>{_docs_html(sales)}</div>
-  </div>
-
-  <!-- 최근 회의·파트너 협의 -->
-  <div style='{_css_card("")}'>
-    {_section_header(f"최근 회의·파트너 협의 ({len(meetings)}건)", "#8e44ad", "🤝")}
-    <div style='padding:15px;'>{_docs_html(meetings)}</div>
-  </div>
+  <!-- 미완료 후속 조치·최근 영업 활동·최근 회의 섹션 제거 (사장님 지시 2026-07-07)
+       — 데이터 수집은 AI 요약(섹션 1~3) 입력으로 계속 사용, 출력만 생략 -->
 
   <!-- 수신 이메일·보고서 -->
   <div style='{_css_card("")}'>
@@ -436,20 +414,10 @@ def main():
         return
 
     # 옵시디언 vault용 plain text(마크다운) 버전
+    # 미완료 후속 조치·최근 영업 활동·최근 회의 섹션 제거 (사장님 지시 2026-07-07)
     plain = f"""# 🏃 영업 데일리 브리핑 [{today_str} {weekday}]
 
 {ai_text}
-
----
-
-## ⚠️ 미완료 후속 조치 ({len(pending)}건)
-{chr(10).join(f'- [ ] {p}' for p in pending[:15]) or '없음'}
-
-## 📋 최근 영업 활동 ({len(sales)}건)
-{chr(10).join(f'- {i["date"]} {i["title"]}' for i in sales[:8]) or '없음'}
-
-## 🤝 최근 회의·파트너 협의 ({len(meetings)}건)
-{chr(10).join(f'- {i["date"]} {i["title"]}' for i in meetings[:8]) or '없음'}
 """
 
     recipients = [r.strip() for r in REPORT_RECIPIENTS.split(",") if r.strip()] or [NAVER_ADDRESS]
