@@ -21,4 +21,5 @@ jobs:
           NAVER_ADDRESS:    ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD:   ${{ secrets.NAVER_PASSWORD }}
           WEEKLY_REPORT_RECIPIENTS: ${{ secrets.WEEKLY_REPORT_RECIPIENTS }}
+          GH_PAT:            ${{ secrets.GH_PAT }}
         run: python weekly_academic_briefing.py

@@ -262,3 +262,11 @@ keywords = [
 - newsapi.org: https://newsapi.org
 - 토큰 사용: sales_daily_briefing이 이미 DeepSeek 사용 중 (ai_processor.py 우선순위)
 - 비용 명세: 월 $2.93 (현재) → $1.07 (전환 후)
+
+## 2026-07-07 — 주간보고·학술브리핑 vault 직접 커밋 이식
+
+- 배경: 주간보고·학술브리핑이 email-to-vault 수신으로 vault에 들어와, 재실행 시 ` 1.md` 중복 발생 (2026-07-06 사례: 스케줄 실패 → 수동 재실행 2회 → 중복 2건 + 1차 발송분에 DeepSeek 거절 문구 포함).
+- 조치: sales_daily_briefing의 검증된 commit_to_vault() 패턴을 Weekly_Report_Briefing.py·weekly_academic_briefing.py에 이식. RECIPIENTS에서 email-to-vault 주소 제거. 두 워크플로에 GH_PAT env 추가.
+- 효과: vault 파일은 GitHub API 직접 커밋(같은 파일명 재실행 시 sha 덮어쓰기 → 중복 원천 차단), 이메일은 사람 수신자 7명에게만.
+- 검증: py_compile + 스텁 임포트 + commit_to_vault 실제 API 왕복(생성→확인→삭제) 통과. 실전 검증은 다음 월요일 06:00 스케줄 실행에서 vault 파일 생성 확인.
+- 남은 개선(별건): DeepSeek 거절 문구 감지 후 재시도 가드 — 팀원에게 오류 문구 든 메일이 나가는 것 방지.

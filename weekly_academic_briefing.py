@@ -1,4 +1,6 @@
-import os, smtplib, datetime, json, urllib.request
+import os, smtplib, datetime, json, urllib.request, base64
+import requests
+from urllib.parse import quote
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from news_collector import collect_news, format_news_text
@@ -34,8 +36,47 @@ RECIPIENTS = [
     "Jeong-Jun.Kim@Pfizer.com",
     "In-Sun.Lee@pfizer.com",
     "Kyoung-Soo.Moon@pfizer.com",
-    "email-to-vault-ks4bvu6d3r@web-library.net",
-]
+]  # email-to-vault 주소 제거 (2026-07-07) — vault는 commit_to_vault()로 직접 저장
+
+
+
+GH_PAT = os.environ.get("GH_PAT", "")
+
+
+def commit_to_vault(markdown: str, filename: str, gh_pat: str):
+    """MyVault_Roger/Emails/에 직접 커밋 (email-to-vault 의존성 제거, sales_daily_briefing과 동일 패턴)."""
+    owner, repo = "parkbs669-hub", "MyVault_Roger"
+    path = f"Emails/{filename}"
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{quote(path)}"
+    headers = {
+        "Authorization": f"token {gh_pat}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+    }
+    sha = None
+    try:
+        r = requests.get(api_url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+    except Exception:
+        pass
+
+    body = {
+        "message": f"chore: 학술브리핑 자동 저장 {filename[:10]}",
+        "content": base64.b64encode(markdown.encode("utf-8")).decode("ascii"),
+    }
+    if sha:
+        body["sha"] = sha
+
+    try:
+        r = requests.put(api_url, headers=headers, data=json.dumps(body), timeout=30)
+        if r.status_code in (200, 201):
+            print(f"vault 커밋 완료: {path}")
+        else:
+            print(f"vault 커밋 실패 ({r.status_code}): {r.text[:200]}")
+    except Exception as e:
+        print(f"vault 커밋 오류: {e}")
+
 
 def get_weekly_briefing():
     KST = datetime.timezone(datetime.timedelta(hours=9))
@@ -152,4 +193,28 @@ if __name__ == "__main__":
     briefing = get_weekly_briefing()
     print("이메일 발송 중...")
     send_email(briefing)
+    # vault 직접 저장 — 같은 파일명 재실행 시 sha 덮어쓰기라 중복 파일이 생기지 않음
+    if GH_PAT:
+        KST = datetime.timezone(datetime.timedelta(hours=9))
+        now = datetime.datetime.now(KST)
+        today_str = now.date().strftime("%Y년 %m월 %d일")
+        subject = f"[폐렴구균 주간 학술 브리핑] {today_str}"
+        md = f"""---
+from: "{N}"
+subject: "{subject}"
+date: {now.isoformat()}
+---
+
+안녕하세요,
+
+{today_str} 폐렴구균 백신 주간 학술 브리핑입니다.
+
+{briefing}
+
+---
+DeepSeek AI 자동 발송
+"""
+        commit_to_vault(md, f"{now.date().isoformat()} {subject}.md", GH_PAT)
+    else:
+        print("GH_PAT 없음 — vault 직접 커밋 건너뜀")
     print("완료!")
