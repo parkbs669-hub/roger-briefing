@@ -180,10 +180,20 @@ def collect_local_policy(days: int = 9999) -> list[dict]:
     return sorted(items, key=lambda x: x["title"])
 
 
+# 미완료 수집 제외 폴더 (2026-07-07 사장님 승인)
+# - Emails/: 과거 브리핑 출력물의 체크박스가 재수집되는 자기 증식 루프 차단
+# - copilot/: AI 대화 저장본 — 실제 업무 태스크 아님
+# - archive/: 보관 문서 — 활성 태스크 아님
+_PENDING_EXCLUDE_DIRS = ("/Emails/", "/copilot/", "/archive/")
+
+
 def collect_pending_actions() -> list[dict]:
-    """볼트 전체에서 미완료 체크박스(- [ ]) 수집."""
+    """볼트에서 미완료 체크박스(- [ ]) 수집. 브리핑 출력물·대화록·보관 폴더는 제외."""
     pending = []
     for path in glob.glob(os.path.join(VAULT_DIR, "**", "*.md"), recursive=True):
+        posix = "/" + path.replace(os.sep, "/").lstrip("/") + "/"
+        if any(ex in posix for ex in _PENDING_EXCLUDE_DIRS):
+            continue
         text = _read(path)
         date = _date_from_filename(path)
         fname = os.path.basename(path).replace(".md", "")
