@@ -17,6 +17,7 @@ import datetime
 from sales_collector import _date_from_filename, _read, VAULT_DIR
 
 PROJECTS_DIR = os.environ.get("PROJECTS_DIR", "data/projects")
+PROCESSED_CACHE = os.path.join(PROJECTS_DIR, ".processed_cache.json")
 
 # 추적할 프로젝트 키워드 (파일명에 저장될 키)
 PROJECT_KEYWORDS = {
@@ -188,14 +189,39 @@ def _has_ai_credentials() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("GEMINI_API_KEY"))
 
 
+def _load_processed_cache() -> dict:
+    if os.path.exists(PROCESSED_CACHE):
+        try:
+            return json.loads(open(PROCESSED_CACHE, encoding="utf-8").read())
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_processed_cache(cache: dict):
+    os.makedirs(PROJECTS_DIR, exist_ok=True)
+    open(PROCESSED_CACHE, "w", encoding="utf-8").write(
+        json.dumps(cache, ensure_ascii=False)
+    )
+
+
 def update_all_projects() -> dict[str, dict]:
-    """vault 전체를 스캔해 모든 프로젝트 타임라인 업데이트. 변경된 프로젝트 반환."""
+    """vault 전체를 스캔해 모든 프로젝트 타임라인 업데이트. 변경된 프로젝트 반환.
+
+    캐싱: 파일의 mtime이 이전 실행과 같으면 스킵 — 매일 수백 개 파일을
+    재읽고 재처리하던 I/O 낭비 제거 (7월 11일 비용 폭주 이후 추가).
+    """
     updated = {}
     all_files = glob.glob(os.path.join(VAULT_DIR, "**", "*.md"), recursive=True)
+    cache = _load_processed_cache()
 
     use_ai = False  # 비용 폭주 방지 (2026-07-11): AI 기반 감지 비활성화, 키워드만 사용
 
     for path in sorted(all_files):
+        mtime = os.path.getmtime(path)
+        if cache.get(path) == mtime:
+            continue  # 변경 없는 파일 — 스킵
+
         text = _read(path)
         if not text:
             continue
@@ -231,6 +257,9 @@ def update_all_projects() -> dict[str, dict]:
             _save_timeline(project_key, timeline)
             updated[project_key] = timeline
 
+        cache[path] = mtime
+
+    _save_processed_cache(cache)
     return updated
 
 
