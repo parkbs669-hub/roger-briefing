@@ -193,7 +193,7 @@ def update_all_projects() -> dict[str, dict]:
     updated = {}
     all_files = glob.glob(os.path.join(VAULT_DIR, "**", "*.md"), recursive=True)
 
-    use_ai = _has_ai_credentials()
+    use_ai = False  # 비용 폭주 방지 (2026-07-11): AI 기반 감지 비활성화, 키워드만 사용
 
     for path in sorted(all_files):
         text = _read(path)

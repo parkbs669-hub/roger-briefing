@@ -12,8 +12,8 @@ permissions:
 
 jobs:
   run:
+    if: false  # 비용 폭주 방지 (2026-07-11): AI 호출 반복 버그로 인한 일시 비활성화. 테스트는 workflow_dispatch로만 가능.
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       # 1) roger-briefing 코드 + 누적 데이터 체크아웃
       - uses: actions/checkout@v4

@@ -38,6 +38,10 @@ NAVER_PASSWORD      = os.environ.get("NAVER_PASSWORD", "")
 REPORT_RECIPIENTS   = os.environ.get("REPORT_RECIPIENTS", NAVER_ADDRESS)
 GH_PAT              = os.environ.get("GH_PAT", "")
 
+# ── 비용 제어 ──────────────────────────────────────────────
+MAX_DEEPSEEK_CALLS_PER_DAY = 50  # 일일 최대 AI 호출 횟수 (비용 폭주 방지, 2026-07-11)
+_deepseek_call_count = 0  # 오늘의 누적 호출 수
+
 
 # ═══════════════════════════════════════════════════════════
 # vault 직접 저장 (GitHub API)
@@ -123,8 +127,22 @@ def _g2b_bids(keywords: list[str]) -> list[dict]:
 # AI 섹션 생성
 # ═══════════════════════════════════════════════════════════
 
+def _check_daily_limit() -> bool:
+    """AI 호출 일일 한도 체크 (비용 폭주 방지)."""
+    global _deepseek_call_count
+    if _deepseek_call_count >= MAX_DEEPSEEK_CALLS_PER_DAY:
+        print(f"⚠️  일일 AI 호출 한도 도달 ({MAX_DEEPSEEK_CALLS_PER_DAY}회). 생성 스킵.")
+        return False
+    _deepseek_call_count += 1
+    return True
+
+
 def _make_ai_section(vault_summary: str, news: list[dict],
                      project_context: str, pattern_context: str) -> str:
+    # 일일 한도 체크 (2026-07-11 긴급 조치)
+    if not _check_daily_limit():
+        return "[AI 호출 일일 한도 도달. 생성이 생략되었습니다.]"
+
     news_text = "\n".join([f"- {n['title']} ({n['keyword']})" for n in news[:10]])
     today = datetime.datetime.now(KST).date().strftime("%Y-%m-%d (%A)")
 
