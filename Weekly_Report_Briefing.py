@@ -78,16 +78,16 @@ def commit_to_vault(markdown: str, filename: str, gh_pat: str):
 
 
 def collect_gemini_search() -> str:
-    """Gemini 2.5 Flash와 Google Search 도구로 실시간 웹 검색 수행"""
-    from google import genai
-    from google.genai import types
+    """Gemini 2.5 Flash REST API와 Google Search 도구로 실시간 웹 검색 수행"""
     import os
+    import json
+    import urllib.request
     
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return "(GEMINI_API_KEY가 설정되지 않아 실시간 검색을 생략합니다)"
         
-    client = genai.Client(api_key=api_key)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     prompt = """오늘 기준 최근 7일간 아래 주제들에 대한 글로벌 및 한국의 최신 학술 논문, 임상시험 결과, 보건당국(WHO, CDC, FDA, 한국 질병관리청) 정책 동향 정보를 검색하고 요약해 주세요.
 반드시 각 정보의 출처 웹사이트 URL을 함께 명시하세요.
 
@@ -96,15 +96,17 @@ def collect_gemini_search() -> str:
 2. 대상포진 백신 (싱그릭스 Shingrix 등) 최신 연구 및 허가 동향
 3. RSV 백신 및 항체주사 (MSD Clesrovimab/Enflonsia, 화이자 Abrysvo, 모더나 mResvia, GSK Arexvy) 최신 임상/학술 동향
 """
+    body = json.dumps({
+        "contents": [{"parts": [{"text": prompt}]}],
+        "tools": [{"google_search": {}}],
+        "generationConfig": {"maxOutputTokens": 4096}
+    }).encode("utf-8")
+    
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())]
-            )
-        )
-        return response.text
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            res_data = json.loads(resp.read())
+            return res_data["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:
         return f"(Gemini 실시간 검색 오류: {e})"
 
