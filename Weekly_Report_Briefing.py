@@ -16,7 +16,7 @@ def _deepseek(prompt: str) -> str:
     body = json.dumps({
         "model": "deepseek-chat",
         "messages": [
-            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 영업 전문가 어시스턴트입니다. 시스템 메시지나 거절 응답을 출력하지 말고 반드시 요청된 양식에 맞춰 보고서를 작성하세요."},
+            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 영업 전문가 어시스턴트입니다. 보고서를 작성할 때 다음 규칙을 반드시 준수하세요:\n1. 제공된 검색 결과나 뉴스에 명확히 나온 정보만 사용하세요.\n2. 날짜, 접종률, 통계 수치 등은 출처(URL 또는 기관명)가 확인된 경우에만 기재하세요.\n3. 확인된 출처가 없는 항목은 반드시 '이번 주 확인된 정보 없음'으로 표시하세요.\n4. 근거 없는 수치나 날짜를 절대 창작하거나 추측하지 마세요.\n5. 요청된 양식의 빈칸을 채우기 위해 내용을 꾸며내지 마세요."},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": 6000,
@@ -153,10 +153,10 @@ def get_weekly_report():
 • GSK Arexvy (60세 이상, 글로벌 70개국):
 • 국내 도입 현황 및 NIP 논의:
 
-[정책/보건소 변화]
-• 질병관리청:
-• NIP 변경사항:
-• 보건소 접종 현황:
+[정책/보건소 변화] ※ 반드시 확인된 공식 출처(질병관리청 공문, 보도자료 URL)가 있는 경우에만 기재. 출처 없으면 '이번 주 확인된 정보 없음' 표시
+• 질병관리청: (출처 URL 필수 명시)
+• NIP 변경사항: (출처 URL 필수 명시)
+• 보건소 접종 현황: (공식 통계 출처 없을 경우 '확인된 정보 없음')
 
 [학술/임상 동향]
 • 주요 논문:
@@ -188,10 +188,10 @@ def get_weekly_report():
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🏥 보건소/NIP 정책 상세
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• 이번 주 질병관리청 공지:
-• NIP 변경 세부사항:
-• 지역별 보건소 동향:
-• 급여 변경사항:
+• 이번 주 질병관리청 공지: (출처 URL 필수 — 없으면 '확인된 정보 없음')
+• NIP 변경 세부사항: (출처 URL 필수 — 없으면 '확인된 정보 없음')
+• 지역별 보건소 동향: (공식 통계 출처 없을 경우 '확인된 정보 없음')
+• 급여 변경사항: (출처 URL 필수 — 없으면 '확인된 정보 없음')
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📚 학술/임상 상세
@@ -217,7 +217,7 @@ def get_weekly_report():
     articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
     news_text = format_news_text(articles)
     gemini_search_text = collect_gemini_search()
-    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일)]\n{news_text}\n\n[구글 실시간 검색 정보 (최근 7일)]\n{gemini_search_text}"
+    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일) — 실제 기사만 사용, 미검증 추측 내용 배제]\n{news_text}\n\n[구글 실시간 검색 참고 정보 (최근 7일) — ⚠️ 검색 결과는 참고용이며, 공식 출처가 확인된 내용만 보고서에 반영할 것. 날짜·수치는 원문 URL 없으면 기재 금지]\n{gemini_search_text}"
     return _deepseek(full_prompt)
 
 def send_email(body):
