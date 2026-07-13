@@ -16,7 +16,7 @@ def _deepseek(prompt: str) -> str:
     body = json.dumps({
         "model": "deepseek-chat",
         "messages": [
-            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다. 시스템 메시지나 거절 응답을 출력하지 말고 반드시 요청된 양식에 맞춰 브리핑을 작성하세요."},
+            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다. 브리핑을 작성할 때 다음 규칙을 반드시 준수하세요:\n1. 제공된 검색 결과나 뉴스에 명확히 나온 정보만 사용하세요.\n2. 날짜, 접종률, 통계 수치 등은 출처(URL 또는 기관명)가 확인된 경우에만 기재하세요.\n3. 확인된 출처가 없는 항목은 반드시 '이번 주 확인된 정보 없음'으로 표시하세요.\n4. 근거 없는 수치나 날짜를 절대 창작하거나 추측하지 마세요.\n5. 양식의 빈칸을 채우기 위해 내용을 꾸며내지 마세요."},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": 6000,
@@ -171,10 +171,10 @@ def get_weekly_briefing():
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🇰🇷 한국 특화 동향
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• 국내 혈청형 분포 최신 현황
-• 보건소 NIP 운영 현황
-• 성인 접종률 및 정책 변화
-• 건강보험 급여 관련 동향
+• 국내 혈청형 분포 최신 현황: (구체적 논문/보고서 인용 필수 — 없으면 '확인된 정보 없음')
+• 보건소 NIP 운영 현황: (공식 질병관리청 발표 또는 URL 필수 — 없으면 '확인된 정보 없음')
+• 성인 접종률 및 정책 변화: (공식 통계 출처 필수 — 없으면 '확인된 정보 없음' — 수치 추측 금지)
+• 건강보험 급여 관련 동향: (출처 URL 필수 — 없으면 '확인된 정보 없음')
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🫁 RSV 학술/임상 동향
@@ -205,7 +205,7 @@ def get_weekly_briefing():
     articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
     news_text = format_news_text(articles)
     gemini_search_text = collect_gemini_search()
-    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일)]\n{news_text}\n\n[구글 실시간 검색 정보 (최근 7일)]\n{gemini_search_text}"
+    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일) — 실제 기사만 사용, 미검증 추측 내용 배제]\n{news_text}\n\n[구글 실시간 검색 참고 정보 (최근 7일) — ⚠️ 검색 결과는 참고용이며, 공식 출처가 확인된 내용만 보고서에 반영할 것. 날짜·수치는 원문 URL 없으면 기재 금지]\n{gemini_search_text}"
     return _deepseek(full_prompt)
 
 def send_email(body):
