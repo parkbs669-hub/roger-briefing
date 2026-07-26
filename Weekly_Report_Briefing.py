@@ -29,7 +29,13 @@ def _deepseek(prompt: str) -> str:
         return json.loads(r.read())["choices"][0]["message"]["content"]
 RECIPIENTS = [
     "parkbs669@naver.com",
-]  # TEMP: Gemini API 키 수정 검증용 단독 테스트 발송 — 검증 후 원복 예정
+    "jaehwan.bae@pfizer.com",
+    "Eun-Hye.Han@pfizer.com",
+    "daeyoung.kang@pfizer.com",
+    "Jeong-Jun.Kim@Pfizer.com",
+    "In-Sun.Lee@pfizer.com",
+    "Kyoung-Soo.Moon@pfizer.com",
+]  # email-to-vault 주소 제거 (2026-07-07) — vault는 commit_to_vault()로 직접 저장
 
 
 
