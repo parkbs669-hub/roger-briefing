@@ -796,3 +796,8 @@ Gemini: HTTP Error 400: Bad Request
 <!-- 2026-W30 | 2026-07-24 -->
 [AI 처리 실패]
 Gemini: HTTP Error 400: Bad Request
+
+---
+<!-- 2026-W31 | 2026-07-31 -->
+[AI 처리 실패]
+Gemini: HTTP Error 404: Not Found
