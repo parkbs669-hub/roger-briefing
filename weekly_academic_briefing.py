@@ -1,22 +1,35 @@
-import os, smtplib, datetime, json, urllib.request, base64
+import os, sys, smtplib, datetime, json, urllib.request, base64, time
 import requests
 from urllib.parse import quote
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from news_collector import collect_news, format_news_text
+from news_collector import (
+    collect_google_news, collect_google_news_kr,
+    collect_pubmed, format_news_text, format_pubmed_text,
+)
 
 N = os.environ["NAVER_ADDRESS"]
 P = os.environ["NAVER_PASSWORD"]
 
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-NEWS_API_KEY     = os.environ.get("NEWS_API_KEY", "")
 
 
 def _deepseek(prompt: str) -> str:
     body = json.dumps({
-        "model": "deepseek-chat",
+        "model": "deepseek-v4-flash",
         "messages": [
-            {"role": "system", "content": "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다. 브리핑을 작성할 때 다음 규칙을 반드시 준수하세요:\n1. 제공된 검색 결과나 뉴스에 명확히 나온 정보만 사용하세요.\n2. 날짜, 접종률, 통계 수치 등은 출처(URL 또는 기관명)가 확인된 경우에만 기재하세요.\n3. 확인된 출처가 없는 항목은 반드시 '이번 주 확인된 정보 없음'으로 표시하세요.\n4. 근거 없는 수치나 날짜를 절대 창작하거나 추측하지 마세요.\n5. 양식의 빈칸을 채우기 위해 내용을 꾸며내지 마세요."},
+            {"role": "system", "content": (
+                "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다. 브리핑을 작성할 때 다음 규칙을 반드시 준수하세요:\n"
+                "1. 제공된 검색 결과나 뉴스에 명확히 나온 정보를 우선 사용하세요.\n"
+                "2. 날짜, 접종률, 통계 수치 등은 출처(URL 또는 기관명)가 확인된 경우에만 기재하세요.\n"
+                "3. 확인된 출처가 없는 항목은 '이번 주 확인된 정보 없음'으로 표시하세요.\n"
+                "4. 근거 없는 수치나 날짜를 절대 창작하거나 추측하지 마세요.\n"
+                "5. 양식의 빈칸을 채우기 위해 내용을 꾸며내지 마세요.\n"
+                "6. 단, 제공된 검색 결과가 모두 비어있거나 오류인 경우에도, "
+                "당신이 알고 있는 최근 공개된 학술 정보를 활용하여 브리핑을 작성하되, "
+                "해당 내용 앞에 '※ AI 지식 기반 참고 정보 (검색 미확인):' 표시를 붙이세요. "
+                "모든 항목이 '없음'인 브리핑은 작성하지 마세요."
+            )},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": 6000,
@@ -25,8 +38,12 @@ def _deepseek(prompt: str) -> str:
         "https://api.deepseek.com/chat/completions", data=body,
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
     )
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return json.loads(r.read())["choices"][0]["message"]["content"]
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return json.loads(r.read())["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"  ⚠️  DeepSeek API 오류: {e}")
+        return f"(DeepSeek API 오류: {e})"
 
 RECIPIENTS = [
     "parkbs669@naver.com",
@@ -79,11 +96,7 @@ def commit_to_vault(markdown: str, filename: str, gh_pat: str):
 
 
 def collect_gemini_search() -> str:
-    """Gemini 2.5 Flash REST API와 Google Search 도구로 실시간 웹 검색 수행"""
-    import os
-    import json
-    import urllib.request
-    
+    """Gemini 2.5 Flash REST API와 Google Search 도구로 실시간 웹 검색 수행 (재시도 포함)"""
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return "(GEMINI_API_KEY가 설정되지 않아 실시간 검색을 생략합니다)"
@@ -104,12 +117,18 @@ def collect_gemini_search() -> str:
     }).encode("utf-8")
     
     req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            res_data = json.loads(resp.read())
-            return res_data["candidates"][0]["content"]["parts"][0]["text"]
-    except Exception as e:
-        return f"(Gemini 실시간 검색 오류: {e})"
+    last_err = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=90) as resp:
+                res_data = json.loads(resp.read())
+                return res_data["candidates"][0]["content"]["parts"][0]["text"]
+        except Exception as e:
+            last_err = e
+            print(f"  ⚠️  Gemini 검색 시도 {attempt+1}/3 실패: {e}")
+            if attempt < 2:
+                time.sleep(5)
+    return f"(Gemini 실시간 검색 3회 실패: {last_err})"
 
 
 def get_weekly_briefing():
@@ -195,17 +214,51 @@ def get_weekly_briefing():
 
 해당 정보가 없는 카테고리는 "이번 주 해당 없음"으로 표시해주세요."""
 
-    keywords = [
+    # ── 1) Google News RSS 수집 (영문 + 한국어) ──
+    keywords_en = [
         "pneumococcal vaccine serotype Korea clinical",
         "PCV20 PCV21 clinical trial results",
         "pneumococcal immunization policy WHO CDC",
         "herpes zoster vaccine shingrix update",
         "RSV vaccine nirsevimab clesrovimab ABRYSVO clinical trial 2026",
     ]
-    articles = collect_news(keywords, NEWS_API_KEY) if NEWS_API_KEY else []
-    news_text = format_news_text(articles)
+    keywords_kr = [
+        "폐렴구균 백신",
+        "폐렴구균 NIP 보건소",
+        "RSV 백신 한국",
+    ]
+    print("  📰 Google News RSS 수집 중...")
+    articles_en = collect_google_news(keywords_en)
+    articles_kr = collect_google_news_kr(keywords_kr)
+    all_news = articles_en + articles_kr
+    news_text = format_news_text(all_news)
+    print(f"  📰 뉴스 {len(all_news)}건 수집 완료")
+
+    # ── 2) PubMed E-utilities 수집 ──
+    pubmed_queries = [
+        "pneumococcal vaccine",
+        "PCV20 OR PCV21 OR pneumococcal conjugate",
+        "RSV vaccine OR respiratory syncytial virus vaccine",
+    ]
+    print("  📚 PubMed 논문 수집 중...")
+    all_pubmed = []
+    for q in pubmed_queries:
+        all_pubmed.extend(collect_pubmed(q, days=7, max_results=3))
+    pubmed_text = format_pubmed_text(all_pubmed)
+    print(f"  📚 PubMed 논문 {len(all_pubmed)}건 수집 완료")
+
+    # ── 3) Gemini 실시간 검색 ──
+    print("  🔍 Gemini 실시간 검색 중...")
     gemini_search_text = collect_gemini_search()
-    full_prompt = f"{prompt}\n\n[newsapi.org 수집 뉴스 (최근 7일) — 실제 기사만 사용, 미검증 추측 내용 배제]\n{news_text}\n\n[구글 실시간 검색 참고 정보 (최근 7일) — ⚠️ 검색 결과는 참고용이며, 공식 출처가 확인된 내용만 보고서에 반영할 것. 날짜·수치는 원문 URL 없으면 기재 금지]\n{gemini_search_text}"
+    print("  🔍 Gemini 검색 완료")
+
+    # ── 4) 프롬프트 조합 ──
+    full_prompt = (
+        f"{prompt}\n\n"
+        f"[Google News RSS 수집 뉴스 (최근 7일) — 실제 기사만 사용, 미검증 추측 내용 배제]\n{news_text}\n\n"
+        f"[PubMed 최신 논문 (최근 7일) — 실제 등재된 논문만 참고]\n{pubmed_text}\n\n"
+        f"[구글 실시간 검색 참고 정보 (최근 7일) — ⚠️ 검색 결과는 참고용이며, 공식 출처가 확인된 내용만 보고서에 반영할 것. 날짜·수치는 원문 URL 없으면 기재 금지]\n{gemini_search_text}"
+    )
     return _deepseek(full_prompt)
 
 def send_email(body):
@@ -226,6 +279,13 @@ def send_email(body):
 if __name__ == "__main__":
     print("주간 학술 브리핑 수집 중...")
     briefing = get_weekly_briefing()
+
+    # ── 빈 브리핑 발송 방지 가드 ──
+    empty_count = briefing.count("확인된 정보 없음") + briefing.count("해당 없음")
+    if empty_count >= 8 and "※ AI 지식 기반" not in briefing:
+        print(f"⚠️ 브리핑 내용이 대부분 비어있습니다 (빈 항목 {empty_count}개). 발송을 건너뜁니다.")
+        sys.exit(1)
+
     print("이메일 발송 중...")
     send_email(briefing)
     # vault 직접 저장 — 같은 파일명 재실행 시 sha 덮어쓰기라 중복 파일이 생기지 않음
