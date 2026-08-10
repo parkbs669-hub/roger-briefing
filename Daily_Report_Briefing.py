@@ -138,18 +138,35 @@ def collect_g2b():
 def collect_kdca():
     url = "https://apis.data.go.kr/1790387/EIDAPIService/Disease"
     def fetch_by_year(year):
-        params = {"serviceKey": PUBLIC_DATA_API_KEY, "resType": "2", "searchType": "1", 
+        params = {"serviceKey": PUBLIC_DATA_API_KEY, "resType": "2", "searchType": "1",
                   "searchYear": year, "patntType": "1", "pageNo": 1, "numOfRows": 100}
         try:
             resp = requests.get(url, params=params, timeout=30)
-            data = resp.json()
-            items = (data.get("body", {}).get("items", {}) or 
-                     data.get("response", {}).get("body", {}).get("items", {}) or 
+            print(f"  KDCA /Disease({year}) HTTP: {resp.status_code}")
+            text = resp.text.strip()
+            try:
+                data = resp.json()
+            except ValueError:
+                # data.go.kr gateway often returns an XML error envelope
+                # (e.g. quota exceeded / 활용신청 만료) even when JSON is requested.
+                print(f"  KDCA /Disease({year}) JSON 파싱 실패 — raw 응답: {text[:300]}")
+                return []
+            code = (data.get("header", {}).get("resultCode", "") or
+                    data.get("response", {}).get("header", {}).get("resultCode", ""))
+            msg  = (data.get("header", {}).get("resultMsg", "") or
+                    data.get("response", {}).get("header", {}).get("resultMsg", ""))
+            if code not in ("", "00", "0"):
+                print(f"  KDCA /Disease({year}) resultCode: '{code}' / {msg} / raw: {text[:200]}")
+            items = (data.get("body", {}).get("items", {}) or
+                     data.get("response", {}).get("body", {}).get("items", {}) or
                      data.get("items", {}) or {})
             if isinstance(items, dict): items = items.get("item", []) or []
             if isinstance(items, dict): items = [items]
+            print(f"  KDCA /Disease({year}) 수신 건수: {len(items)}")
             return items or []
-        except: return []
+        except Exception as e:
+            print(f"  KDCA /Disease({year}) 오류: {e}")
+            return []
 
     current_year = datetime.date.today().strftime("%Y")
     items = fetch_by_year(current_year)
@@ -571,6 +588,9 @@ def build_markdown_report(data: dict, today: str) -> str:
         ("타파미디스", t_data, f"💊 타파미디스 관련 통계 (총 {t_t}건)"),
         ("RSV", r_data_md, f"🫁 RSV 관련 통계 (총 {r_t}건)")
     ]
+
+    if not data["KDCA"]:
+        lines.append("\n> ⚠️ 질병관리청 API 수집 실패 또는 응답 없음 — Actions 로그의 'KDCA /Disease' 항목을 확인하세요.")
 
     for cat_id, items, sec_title in kdca_cats:
         # 5월 27일자 파일과 동일하게 데이터가 없는 KDCA 섹션은 건너뜀
