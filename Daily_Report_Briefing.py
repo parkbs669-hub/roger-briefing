@@ -158,12 +158,14 @@ def collect_kdca():
     res = []
     maternal_kws = ["백일해", "풍진", "매독", "지카"]
     for i in items:
-        nm = i.get("icdNm", i.get("diseaseNm", ""))
-        if "폐렴구균" in nm: i['category'] = "백신"; res.append(i)
+        # Use 'or' fallback to prevent NoneType issues
+        nm = (i.get("icdNm") or i.get("diseaseNm") or "").strip()
+        nm_upper = nm.upper()
+        if "폐렴구균" in nm or "STREPTOCOCCUS" in nm_upper: i['category'] = "백신"; res.append(i)
         elif any(kw in nm for kw in maternal_kws): i['category'] = "임산부감염병"; res.append(i)
         elif "대상포진" in nm or "수두" in nm: i['category'] = "대상포진"; res.append(i)
         elif "아밀로이드" in nm: i['category'] = "타파미디스"; res.append(i)
-        elif "호흡기세포융합" in nm or "RSV" in nm.upper(): i['category'] = "RSV"; res.append(i)
+        elif "호흡기세포융합" in nm or "RSV" in nm_upper: i['category'] = "RSV"; res.append(i)
     return res
 
 # ==========================================
@@ -357,7 +359,15 @@ def build_kdca_section(title, all_data, icon, color):
     t_data = [i for i in all_data if i.get('category') == '타파미디스']
     r_data = [i for i in all_data if i.get('category') == 'RSV']
 
-    def ct(items): return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+    def ct(items):
+        total = 0
+        for i in items:
+            val_str = str(i.get("resultVal") or i.get("patntCnt") or "0").strip().replace(",", "")
+            if "." in val_str:
+                val_str = val_str.split(".")[0]
+            if val_str.isdigit():
+                total += int(val_str)
+        return total
     v_t, z_t, m_t, t_t, r_t = ct(v_data), ct(z_data), ct(m_data), ct(t_data), ct(r_data)
 
     def mc(items):
@@ -541,8 +551,14 @@ def build_markdown_report(data: dict, today: str) -> str:
     t_data = kdca_by_cat.get("타파미디스", [])
 
     def ct(items):
-        return sum(int(i.get("resultVal", i.get("patntCnt", "0")) or 0) 
-                   for i in items if str(i.get("resultVal", i.get("patntCnt", ""))).isdigit())
+        total = 0
+        for i in items:
+            val_str = str(i.get("resultVal") or i.get("patntCnt") or "0").strip().replace(",", "")
+            if "." in val_str:
+                val_str = val_str.split(".")[0]
+            if val_str.isdigit():
+                total += int(val_str)
+        return total
 
     v_t, z_t, m_t, t_t = ct(v_data), ct(z_data), ct(m_data), ct(t_data)
 
