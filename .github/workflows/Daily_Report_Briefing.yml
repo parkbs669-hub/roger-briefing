@@ -1,7 +1,7 @@
 name: Daily_Report_Briefing
 on:
   schedule:
-    - cron: '15 21 * * *' # 한국 시간 오전 6시 15분 (UTC 21:15)
+    - cron: '15 1 * * *' # 한국 시간 오전 10시 15분 (UTC 01:15)
 
   workflow_dispatch:
 jobs:

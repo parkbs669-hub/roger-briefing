@@ -15,8 +15,8 @@ from urllib.parse import quote
 # 🔑 공통 API 키 설정
 # ==========================================
 PUBLIC_DATA_API_KEY = os.environ.get("PUBLIC_DATA_API_KEY", "")
-NAVER_CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "")
-NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "")
+NAVER_CLIENT_ID = os.environ.get("NCP_CLIENT_ID") or os.environ.get("NAVER_CLIENT_ID", "")
+NAVER_CLIENT_SECRET = os.environ.get("NCP_CLIENT_SECRET") or os.environ.get("NAVER_CLIENT_SECRET", "")
 
 # ==========================================
 # 1️⃣ PubMed (글로벌 학술 논문) 수집기
@@ -75,7 +75,8 @@ def collect_pubmed():
 # 2️⃣ 네이버 뉴스 수집기
 # ==========================================
 def collect_naver_news():
-    url = "https://openapi.naver.com/v1/search/news.json"
+    # NCP NAVER API HUB 뉴스 검색 엔드포인트 URL로 변경
+    url = "https://naverapihub.apigw.ntruss.com/search/v1/news"
     kw_map = {
         "백신": ["폐렴구균 백신", "캡박시브", "프리베나"],
         "영양제": ["임산부 엽산", "임산부 철분제"],
@@ -84,7 +85,12 @@ def collect_naver_news():
         "RSV": ["RSV 백신", "호흡기세포융합바이러스", "니르세비맙", "아브리스보", "엔플론시아", "아렉스비", "mResvia"]
     }
     all_news, seen = [], set()
-    headers = {"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET}
+    
+    # NCP API HUB 인증 규격에 맞게 헤더 키 변경 (X-NCP-APIGW-API-KEY-ID / X-NCP-APIGW-API-KEY)
+    headers = {
+        "X-NCP-APIGW-API-KEY-ID": NAVER_CLIENT_ID, 
+        "X-NCP-APIGW-API-KEY": NAVER_CLIENT_SECRET
+    }
     
     for cat, kws in kw_map.items():
         for kw in kws:
@@ -140,33 +146,45 @@ def collect_kdca():
     def fetch_by_year(year):
         params = {"serviceKey": PUBLIC_DATA_API_KEY, "resType": "2", "searchType": "1",
                   "searchYear": year, "patntType": "1", "pageNo": 1, "numOfRows": 100}
-        try:
-            resp = requests.get(url, params=params, timeout=30)
-            print(f"  KDCA /Disease({year}) HTTP: {resp.status_code}")
-            text = resp.text.strip()
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
             try:
-                data = resp.json()
-            except ValueError:
-                # data.go.kr gateway often returns an XML error envelope
-                # (e.g. quota exceeded / 활용신청 만료) even when JSON is requested.
-                print(f"  KDCA /Disease({year}) JSON 파싱 실패 — raw 응답: {text[:300]}")
-                return []
-            code = (data.get("header", {}).get("resultCode", "") or
-                    data.get("response", {}).get("header", {}).get("resultCode", ""))
-            msg  = (data.get("header", {}).get("resultMsg", "") or
-                    data.get("response", {}).get("header", {}).get("resultMsg", ""))
-            if code not in ("", "00", "0"):
-                print(f"  KDCA /Disease({year}) resultCode: '{code}' / {msg} / raw: {text[:200]}")
-            items = (data.get("body", {}).get("items", {}) or
-                     data.get("response", {}).get("body", {}).get("items", {}) or
-                     data.get("items", {}) or {})
-            if isinstance(items, dict): items = items.get("item", []) or []
-            if isinstance(items, dict): items = [items]
-            print(f"  KDCA /Disease({year}) 수신 건수: {len(items)}")
-            return items or []
-        except Exception as e:
-            print(f"  KDCA /Disease({year}) 오류: {e}")
-            return []
+                resp = requests.get(url, params=params, timeout=30)
+                print(f"  KDCA /Disease({year}) HTTP: {resp.status_code} (시도 {attempt}/{max_retries})")
+                text = resp.text.strip()
+                
+                if resp.status_code != 200:
+                    time.sleep(3)
+                    continue
+                try:
+                    data = resp.json()
+                except ValueError:
+                    # data.go.kr gateway often returns an XML error envelope
+                    # (e.g. quota exceeded / 활용신청 만료) even when JSON is requested.
+                    print(f"  KDCA /Disease({year}) JSON 파싱 실패 — raw 응답: {text[:300]} (시도 {attempt}/{max_retries})")
+                    time.sleep(3)
+                    continue
+                
+                code = (data.get("header", {}).get("resultCode", "") or
+                        data.get("response", {}).get("header", {}).get("resultCode", ""))
+                msg  = (data.get("header", {}).get("resultMsg", "") or
+                        data.get("response", {}).get("header", {}).get("resultMsg", ""))
+                if code not in ("", "00", "0"):
+                    print(f"  KDCA /Disease({year}) resultCode: '{code}' / {msg} (시도 {attempt}/{max_retries})")
+                    time.sleep(3)
+                    continue
+                
+                items = (data.get("body", {}).get("items", {}) or
+                         data.get("response", {}).get("body", {}).get("items", {}) or
+                         data.get("items", {}) or {})
+                if isinstance(items, dict): items = items.get("item", []) or []
+                if isinstance(items, dict): items = [items]
+                print(f"  KDCA /Disease({year}) 수신 건수: {len(items)}")
+                return items or []
+            except Exception as e:
+                print(f"  KDCA /Disease({year}) 시도 {attempt}/{max_retries} 오류: {e}")
+                time.sleep(3)
+        return []
 
     current_year = datetime.date.today().strftime("%Y")
     items = fetch_by_year(current_year)
