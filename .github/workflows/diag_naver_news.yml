@@ -13,6 +13,8 @@ jobs:
           python-version: "3.11"
       - run: pip install requests
       - env:
+          NCP_CLIENT_ID: ${{ secrets.NCP_CLIENT_ID }}
+          NCP_CLIENT_SECRET: ${{ secrets.NCP_CLIENT_SECRET }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: python diag_naver_news.py
