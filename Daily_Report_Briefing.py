@@ -15,8 +15,15 @@ from urllib.parse import quote
 # 🔑 공통 API 키 설정
 # ==========================================
 PUBLIC_DATA_API_KEY = os.environ.get("PUBLIC_DATA_API_KEY", "")
-NAVER_CLIENT_ID = os.environ.get("NCP_CLIENT_ID") or os.environ.get("NAVER_CLIENT_ID", "")
-NAVER_CLIENT_SECRET = os.environ.get("NCP_CLIENT_SECRET") or os.environ.get("NAVER_CLIENT_SECRET", "")
+
+# 뉴스 수집은 NCP NAVER API HUB(apigw.ntruss.com)를 사용한다.
+# 이 게이트웨이는 NCP 발급 키만 인증하며, 기존 Naver Developers 키(NAVER_CLIENT_ID)로는
+# 통과하지 않는다. 폴백이 조용히 동작하면 전 카테고리 0건이 되므로 폴백 여부를 기록해 둔다.
+NCP_CLIENT_ID = os.environ.get("NCP_CLIENT_ID", "")
+NCP_CLIENT_SECRET = os.environ.get("NCP_CLIENT_SECRET", "")
+NCP_CREDS_PRESENT = bool(NCP_CLIENT_ID and NCP_CLIENT_SECRET)
+NAVER_CLIENT_ID = NCP_CLIENT_ID or os.environ.get("NAVER_CLIENT_ID", "")
+NAVER_CLIENT_SECRET = NCP_CLIENT_SECRET or os.environ.get("NAVER_CLIENT_SECRET", "")
 
 # ==========================================
 # 1️⃣ PubMed (글로벌 학술 논문) 수집기
@@ -85,18 +92,36 @@ def collect_naver_news():
         "RSV": ["RSV 백신", "호흡기세포융합바이러스", "니르세비맙", "아브리스보", "엔플론시아", "아렉스비", "mResvia"]
     }
     all_news, seen = [], set()
-    
+
     # NCP API HUB 인증 규격에 맞게 헤더 키 변경 (X-NCP-APIGW-API-KEY-ID / X-NCP-APIGW-API-KEY)
     headers = {
-        "X-NCP-APIGW-API-KEY-ID": NAVER_CLIENT_ID, 
+        "X-NCP-APIGW-API-KEY-ID": NAVER_CLIENT_ID,
         "X-NCP-APIGW-API-KEY": NAVER_CLIENT_SECRET
     }
-    
+
+    if not NCP_CREDS_PRESENT:
+        print("  ⚠️ NCP_CLIENT_ID/NCP_CLIENT_SECRET 미설정 — 구 Naver Developers 키로 "
+              "NCP 게이트웨이에 요청합니다. 인증 실패(401/403)로 전 카테고리 0건이 됩니다. "
+              "GitHub Secrets에 NCP 키를 등록하세요.")
+
+    err_count = 0
     for cat, kws in kw_map.items():
         for kw in kws:
             try:
                 resp = requests.get(url, headers=headers, params={"query": kw, "display": 5, "sort": "date"}, timeout=15)
-                items = resp.json().get("items", [])
+                if resp.status_code != 200:
+                    err_count += 1
+                    print(f"  네이버 뉴스 '{kw}' HTTP {resp.status_code} — {resp.text[:200]}")
+                    continue
+                try:
+                    payload = resp.json()
+                except ValueError:
+                    err_count += 1
+                    print(f"  네이버 뉴스 '{kw}' JSON 파싱 실패 — raw: {resp.text[:200]}")
+                    continue
+                items = payload.get("items", [])
+                if not items:
+                    print(f"  네이버 뉴스 '{kw}' 0건 — 응답: {str(payload)[:200]}")
                 for i in items:
                     title = i.get("title","").replace("<b>","").replace("</b>","")
                     if title not in seen:
@@ -105,7 +130,12 @@ def collect_naver_news():
                             "title": title, "link": i.get("link",""),
                             "pubDate": i.get("pubDate","")[:16], "category": cat
                         })
-            except: continue
+            except Exception as e:
+                err_count += 1
+                print(f"  네이버 뉴스 '{kw}' 오류: {e}")
+                continue
+
+    print(f"  네이버 뉴스 총 {len(all_news)}건 수집 (실패 키워드 {err_count}개)")
     return all_news
 
 # ==========================================
@@ -509,7 +539,12 @@ def build_markdown_report(data: dict, today: str) -> str:
     for item in data["NEWS"]:
         cat = item.get("category", "기타")
         news_by_cat.setdefault(cat, []).append(item)
-        
+
+    if not data["NEWS"]:
+        lines.append("\n> ⚠️ 네이버 뉴스 수집 실패 — 전 카테고리 0건입니다. 키워드 문제가 아니라 "
+                     "API 인증/엔드포인트 장애일 가능성이 높습니다. "
+                     "Actions 로그의 '네이버 뉴스' 항목을 확인하세요.")
+
     for cat in ["백신", "대상포진", "영양제", "타파미디스", "RSV"]:
         items = news_by_cat.get(cat, [])
         sec_title = cat_names_default[cat]

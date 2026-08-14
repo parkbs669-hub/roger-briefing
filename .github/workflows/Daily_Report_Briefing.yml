@@ -15,6 +15,10 @@ jobs:
       - run: pip install requests
       - env:
           PUBLIC_DATA_API_KEY: ${{ secrets.PUBLIC_DATA_API_KEY }}
+          # NCP NAVER API HUB 뉴스 검색용 (2026-08-12 엔드포인트 이전).
+          # 미등록 시 아래 NAVER_* 폴백이 쓰이는데 NCP 게이트웨이는 이를 인증하지 않는다.
+          NCP_CLIENT_ID: ${{ secrets.NCP_CLIENT_ID }}
+          NCP_CLIENT_SECRET: ${{ secrets.NCP_CLIENT_SECRET }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
