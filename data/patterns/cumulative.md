@@ -806,3 +806,8 @@ Gemini: HTTP Error 404: Not Found
 <!-- 2026-W32 | 2026-08-07 -->
 [AI 처리 실패]
 Gemini: HTTP Error 404: Not Found
+
+---
+<!-- 2026-W33 | 2026-08-14 -->
+[AI 처리 실패]
+Gemini: HTTP Error 404: Not Found
