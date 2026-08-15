@@ -7,6 +7,7 @@ import requests
 import datetime
 import xml.etree.ElementTree as ET
 import smtplib
+from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.parse import quote
@@ -488,7 +489,7 @@ def _clean(text: str) -> str:
     return html_lib.unescape(str(text)).strip()
 
 
-def build_markdown_report(data: dict, today: str) -> str:
+def build_markdown_report(data: dict, today: str, govdata_note: str = "") -> str:
     # 1. KST Time and ISO formatted datetime
     KST = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(KST)
@@ -573,6 +574,9 @@ def build_markdown_report(data: dict, today: str) -> str:
 
     # 2. 나라장터 입찰공고
     lines.append("\n---\n\n## 🏛️ 나라장터 입찰공고")
+    if govdata_note:
+        # 공공데이터 4개 섹션 중 첫 섹션에 한 번만 안내를 붙인다.
+        lines.append(f"\n{govdata_note}")
     g2b_by_cat = {}
     for item in data["G2B"]:
         cat = item.get("category", "기타")
@@ -756,6 +760,62 @@ def commit_to_vault(markdown: str, date_str: str, gh_pat: str):
 
 
 # ==========================================
+# 🇰🇷 공공데이터 스냅샷 폴백
+# ==========================================
+GOVDATA_SNAPSHOT = "data/govdata/latest.json"
+GOVDATA_SOURCES = ("G2B", "KDCA", "MFDS", "HIRA")
+
+
+def apply_govdata_fallback(data):
+    """apis.data.go.kr 수집이 빈 소스를 PC가 올려둔 스냅샷으로 메운다.
+
+    data.go.kr이 해외 IP를 차단해(2026-08-15 확정) GitHub 러너에서는 이 4개
+    소스가 전부 비는데, 한국의 PC가 govdata_local_collect.py로 올려둔 값을
+    대신 쓴다. 실시간 수집을 먼저 시도하므로 차단이 풀리면 자동으로 원복된다.
+
+    반환값: 리포트에 표시할 안내 문구(폴백을 안 썼으면 빈 문자열).
+    """
+    empty = [s for s in GOVDATA_SOURCES if not data.get(s)]
+    if not empty:
+        return ""
+
+    path = Path(GOVDATA_SNAPSHOT)
+    if not path.exists():
+        print(f"  ⚠️ 공공데이터 {empty} 수집 실패 — 스냅샷({GOVDATA_SNAPSHOT})도 없어 빈 채로 둡니다.")
+        return ("> ⚠️ 공공데이터포털(나라장터·질병청·식약처·심평원) 수집 실패. "
+                "해외 IP 차단으로 GitHub에서 접속되지 않으며, PC 수집 스냅샷도 아직 없습니다.")
+
+    try:
+        snap = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  ⚠️ 스냅샷 읽기 실패: {e}")
+        return "> ⚠️ 공공데이터 스냅샷 파일을 읽지 못했습니다."
+
+    snap_data = snap.get("data", {})
+    filled = []
+    for s in empty:
+        if snap_data.get(s):
+            data[s] = snap_data[s]
+            filled.append(s)
+    if not filled:
+        return "> ⚠️ 공공데이터 수집 실패 — 스냅샷에도 해당 데이터가 없습니다."
+
+    when = snap.get("collected_date", "알 수 없음")
+    print(f"  ℹ️ 공공데이터 {filled} 를 스냅샷({when})으로 대체했습니다.")
+
+    stale = ""
+    try:
+        days = (datetime.date.today() - datetime.date.fromisoformat(when)).days
+        if days >= 2:
+            stale = f" **{days}일 지난 자료이니 주의하십시오.**"
+    except Exception:
+        pass
+    return (f"> ℹ️ 아래 공공데이터({', '.join(filled)})는 실시간 수집이 아니라 "
+            f"**{when}에 PC에서 수집한 자료**입니다. "
+            f"공공데이터포털이 해외 IP를 차단해 GitHub에서 직접 받을 수 없습니다.{stale}")
+
+
+# ==========================================
 # 🚀 메인 실행부
 # ==========================================
 def main():
@@ -770,14 +830,16 @@ def main():
         return
 
     data = {
-        "G2B": collect_g2b(), 
-        "NEWS": collect_naver_news(), 
-        "PUBMED": collect_pubmed(), 
-        "KDCA": collect_kdca(), 
-        "MFDS": collect_mfds(), 
+        "G2B": collect_g2b(),
+        "NEWS": collect_naver_news(),
+        "PUBMED": collect_pubmed(),
+        "KDCA": collect_kdca(),
+        "MFDS": collect_mfds(),
         "HIRA": collect_hira()
     }
-    
+
+    govdata_note = apply_govdata_fallback(data)
+
     html_body = f"""<html><body style='font-family:"Malgun Gothic", sans-serif; padding:20px; background:#f0f2f5;'>
         <div style='max-width:800px; margin:0 auto;'>
             <div style='text-align:center; margin-bottom:30px;'><h1 style='color:#2c3e50;'>📊 [통합 브리핑] 데일리 리포트</h1><p style='color:#7f8c8d;'>{today} 기준 자동화 리포트</p></div>
@@ -813,7 +875,7 @@ def main():
     gh_pat = os.environ.get("GH_PAT", "")
     if gh_pat:
         date_str = today_kst.strftime("%Y-%m-%d")
-        markdown = build_markdown_report(data, today)
+        markdown = build_markdown_report(data, today, govdata_note)
         commit_to_vault(markdown, date_str, gh_pat)
     else:
         print("⚠️  GH_PAT 없음 — vault 직접 커밋 건너뜀")
