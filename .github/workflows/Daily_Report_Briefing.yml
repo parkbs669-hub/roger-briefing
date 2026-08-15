@@ -23,6 +23,12 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
-          REPORT_RECIPIENTS: ${{ secrets.REPORT_RECIPIENTS }}
+          # [임시 조치 2026-08-15] 수신자를 발신자 본인(NAVER_ADDRESS)으로만 제한.
+          # 네이버 뉴스(NCP 키 개행) + apis.data.go.kr 연결 타임아웃으로 뉴스·나라장터·
+          # 질병청·식약처·심평원 섹션이 빈 채 발송되고 있어, 수집이 복구될 때까지
+          # 외부 수신자(beomseo.park@pfizer.com, s3sun@naver.com) 발송을 중단한다.
+          # 이 env가 없으면 Daily_Report_Briefing.py가 NAVER_ADDRESS로 폴백한다.
+          # ▶ 복구 시: 아래 주석 한 줄만 되살리면 원래 수신자로 돌아간다.
+          # REPORT_RECIPIENTS: ${{ secrets.REPORT_RECIPIENTS }}
           GH_PAT: ${{ secrets.GH_PAT }}
         run: python Daily_Report_Briefing.py
