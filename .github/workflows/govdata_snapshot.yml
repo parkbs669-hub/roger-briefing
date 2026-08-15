@@ -1,0 +1,36 @@
+name: govdata_snapshot
+
+# 공공데이터포털(apis.data.go.kr) 스냅샷 수집 — 이메일 발송 없음.
+#
+# data.go.kr은 GitHub 러너에서 간헐적으로만 도달한다(2026-08 실측 성공률 약 1/3).
+# 실패 원인이 러너별 출발 IP로 보이므로, 같은 실행 안에서 재시도해도 소용이 없고
+# '실행을 다시 하는 것'만 효과가 있다. 그래서 하루 몇 차례 시도해 성공한 회차의
+# 결과만 data/govdata/latest.json 에 저장해 둔다.
+# 통합브리핑은 실시간 수집이 실패하면 이 스냅샷으로 섹션을 채운다.
+#
+# 이 워크플로는 메일을 보내지 않고 스냅샷 JSON만 커밋한다.
+# 불필요해지면(차단이 풀리면) schedule 블록만 지우면 된다.
+
+on:
+  schedule:
+    # 3시간 간격 (UTC). 브리핑 실행(01:15 UTC) 직전인 00:20에 한 번 걸리도록 배치.
+    - cron: '20 0,3,6,9,12,15,18,21 * * *'
+  workflow_dispatch:
+
+jobs:
+  collect-govdata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - env:
+          PUBLIC_DATA_API_KEY: ${{ secrets.PUBLIC_DATA_API_KEY }}
+          # GH_PAT가 있으면 GitHub API로 스냅샷을 커밋한다.
+          GH_PAT: ${{ secrets.GH_PAT }}
+          # Daily_Report_Briefing 모듈 import 시 필요 (수집 함수 재사용 목적).
+          NAVER_ADDRESS: ${{ secrets.NAVER_ADDRESS }}
+        # 수집 실패는 정상적인 결과(다음 회차에 재시도)이므로 잡을 실패시키지 않는다.
+        run: python govdata_local_collect.py || true

@@ -21,7 +21,8 @@ from pathlib import Path
 
 # 수집 로직은 Daily_Report_Briefing.py 것을 그대로 재사용한다.
 # (여기서 따로 구현하면 키워드·파싱 규칙이 갈라져 두 경로가 어긋난다.)
-from Daily_Report_Briefing import collect_g2b, collect_kdca, collect_mfds, collect_hira
+from Daily_Report_Briefing import (collect_g2b, collect_kdca, collect_mfds, collect_hira,
+                                   save_govdata_snapshot)
 
 OUT_PATH = Path("data/govdata/latest.json")
 SOURCES = {"G2B": collect_g2b, "KDCA": collect_kdca, "MFDS": collect_mfds, "HIRA": collect_hira}
@@ -52,8 +53,16 @@ def main():
     if not collected:
         # 전부 실패면 기존 스냅샷을 덮어쓰지 않는다. 오래된 데이터라도 없는 것보단 낫다.
         print("❌ 4개 소스 전부 0건 — 기존 스냅샷을 보존하고 종료합니다.")
-        print("   (한국 IP에서도 실패했다면 서비스키·API 신청상태를 확인하세요.)")
+        print("   (GitHub에서 실행했다면 러너 IP가 막힌 것이므로 다음 실행에 다시 시도됩니다.)")
+        print("   (한국 PC에서도 실패했다면 서비스키·API 신청상태를 확인하세요.)")
         return 1
+
+    # GH_PAT가 있으면 저장소에 API로 직접 커밋한다 (GitHub Actions·PC 공통).
+    # 없으면 로컬 파일로 저장 후 git 명령으로 푸시한다 (PAT 없는 PC).
+    gh_pat = os.environ.get("GH_PAT", "").strip()
+    if gh_pat:
+        save_govdata_snapshot(collected, gh_pat)
+        return 0
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     prev = {}
