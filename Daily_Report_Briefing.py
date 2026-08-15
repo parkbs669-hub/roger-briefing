@@ -796,6 +796,67 @@ GOVDATA_SNAPSHOT = "data/govdata/latest.json"
 GOVDATA_SOURCES = ("G2B", "KDCA", "MFDS", "HIRA")
 
 
+def save_govdata_snapshot(live_gov, gh_pat):
+    """실시간 수집에 성공한 공공데이터를 저장소에 스냅샷으로 남긴다.
+
+    apis.data.go.kr은 GitHub 러너에서 간헐적으로 connect timeout이 난다
+    (2026-08-07~15 실측 9회 중 3회만 성공). 실행마다 러너와 출발 IP가 바뀌는데
+    일부 IP만 도달하는 것으로 보인다. 성공한 날 자료를 남겨두면 실패한 날
+    apply_govdata_fallback()이 그것으로 섹션을 채운다.
+
+    live_gov: 이번 실행에서 '실제로' 수집된 소스만 담긴 dict (폴백분 제외).
+    """
+    owner, repo = "parkbs669-hub", "roger-briefing"
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{quote(GOVDATA_SNAPSHOT)}"
+    headers = {
+        "Authorization": f"token {gh_pat}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+    }
+
+    sha, prev = None, {}
+    try:
+        r = requests.get(api_url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+            prev = json.loads(base64.b64decode(r.json().get("content", "")).decode("utf-8"))
+    except Exception:
+        pass
+
+    # 이번에 실패한 소스는 직전 스냅샷 값을 지키고, 성공한 소스만 갱신한다.
+    merged = dict(prev.get("data", {}))
+    merged.update(live_gov)
+
+    if merged == prev.get("data"):
+        print("  ℹ️ 공공데이터 스냅샷 변경 없음 — 커밋 생략")
+        return
+
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    now_kst = datetime.datetime.now(KST)
+    payload = {
+        "collected_at": now_kst.isoformat(),
+        "collected_date": now_kst.strftime("%Y-%m-%d"),
+        "ok_sources": sorted(live_gov),
+        "data": merged,
+    }
+    content = json.dumps(payload, ensure_ascii=False, indent=2)
+
+    body = {
+        "message": f"chore: 공공데이터 스냅샷 갱신 {now_kst:%Y-%m-%d} ({','.join(sorted(live_gov))})",
+        "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+    }
+    if sha:
+        body["sha"] = sha
+    try:
+        r = requests.put(api_url, headers=headers, data=json.dumps(body), timeout=30)
+        if r.status_code in (200, 201):
+            print(f"  ✅ 공공데이터 스냅샷 저장: {sorted(live_gov)}")
+        else:
+            print(f"  ⚠️ 스냅샷 저장 실패 ({r.status_code}): {r.text[:160]}")
+    except Exception as e:
+        print(f"  ⚠️ 스냅샷 저장 오류: {e}")
+
+
 def apply_govdata_fallback(data):
     """apis.data.go.kr 수집이 빈 소스를 PC가 올려둔 스냅샷으로 메운다.
 
@@ -868,6 +929,8 @@ def main():
         "HIRA": collect_hira()
     }
 
+    # 폴백으로 채우기 '전에' 실제 수집된 것만 기록해 둔다 (옛 자료를 새 것으로 저장하지 않도록).
+    live_gov = {s: data[s] for s in GOVDATA_SOURCES if data.get(s)}
     govdata_note = apply_govdata_fallback(data)
 
     html_body = f"""<html><body style='font-family:"Malgun Gothic", sans-serif; padding:20px; background:#f0f2f5;'>
@@ -907,6 +970,8 @@ def main():
         date_str = today_kst.strftime("%Y-%m-%d")
         markdown = build_markdown_report(data, today, govdata_note)
         commit_to_vault(markdown, date_str, gh_pat)
+        if live_gov:
+            save_govdata_snapshot(live_gov, gh_pat)
     else:
         print("⚠️  GH_PAT 없음 — vault 직접 커밋 건너뜀")
 
