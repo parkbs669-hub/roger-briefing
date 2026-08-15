@@ -5,10 +5,13 @@ import os
 import time
 import requests
 
-NCP_ID = os.environ.get("NCP_CLIENT_ID", "")
-NCP_SECRET = os.environ.get("NCP_CLIENT_SECRET", "")
-DEV_ID = os.environ.get("NAVER_CLIENT_ID", "")
-DEV_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "")
+RAW = {n: os.environ.get(n, "") for n in
+       ("NCP_CLIENT_ID", "NCP_CLIENT_SECRET", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET")}
+
+NCP_ID = RAW["NCP_CLIENT_ID"].strip()
+NCP_SECRET = RAW["NCP_CLIENT_SECRET"].strip()
+DEV_ID = RAW["NAVER_CLIENT_ID"].strip()
+DEV_SECRET = RAW["NAVER_CLIENT_SECRET"].strip()
 
 NCP_URL = "https://naverapihub.apigw.ntruss.com/search/v1/news"
 LEGACY_URL = "https://openapi.naver.com/v1/search/news.json"
@@ -23,17 +26,24 @@ KW_MAP = {
 }
 
 
-def mask(v):
-    """값은 절대 출력하지 않고 설정 여부와 길이만 보고한다."""
-    return f"설정됨(길이 {len(v)})" if v else "❌ 미설정"
+def mask(name):
+    """값은 절대 출력하지 않고 설정 여부·길이·공백혼입 여부만 보고한다."""
+    raw = RAW[name]
+    if not raw.strip():
+        return "❌ 미설정"
+    note = ""
+    if raw != raw.strip():
+        # 붙여넣기 시 끼어든 개행/공백은 HTTP 헤더 생성 단계에서 요청을 실패시킨다.
+        note = f"  ⚠️ 앞뒤 공백/개행 혼입 (원본 {len(raw)}자 → 정리 후 {len(raw.strip())}자, 코드에서 자동 제거함)"
+    return f"설정됨(길이 {len(raw.strip())}){note}"
 
 
 print("=" * 72)
 print("[0] 자격증명 주입 상태")
-print(f"  NCP_CLIENT_ID       : {mask(NCP_ID)}")
-print(f"  NCP_CLIENT_SECRET   : {mask(NCP_SECRET)}")
-print(f"  NAVER_CLIENT_ID     : {mask(DEV_ID)}  (구 Developers 폴백용)")
-print(f"  NAVER_CLIENT_SECRET : {mask(DEV_SECRET)}")
+print(f"  NCP_CLIENT_ID       : {mask('NCP_CLIENT_ID')}")
+print(f"  NCP_CLIENT_SECRET   : {mask('NCP_CLIENT_SECRET')}")
+print(f"  NAVER_CLIENT_ID     : {mask('NAVER_CLIENT_ID')}  (구 Developers 폴백용)")
+print(f"  NAVER_CLIENT_SECRET : {mask('NAVER_CLIENT_SECRET')}")
 if not (NCP_ID and NCP_SECRET):
     print("  ⚠️ NCP 키가 워크플로에 주입되지 않았습니다. "
           "Secrets 등록명이 NCP_CLIENT_ID / NCP_CLIENT_SECRET 인지 확인하세요.")

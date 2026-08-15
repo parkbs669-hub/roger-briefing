@@ -14,16 +14,26 @@ from urllib.parse import quote
 # ==========================================
 # 🔑 공통 API 키 설정
 # ==========================================
-PUBLIC_DATA_API_KEY = os.environ.get("PUBLIC_DATA_API_KEY", "")
+def _env_key(name):
+    """자격증명 환경변수를 읽어 앞뒤 공백·개행을 제거한다.
+
+    GitHub Secrets에 값을 붙여넣을 때 끝에 줄바꿈이 섞여 들어가는 일이 잦다.
+    그 값이 HTTP 헤더로 들어가면 requests가 요청을 만들기도 전에
+    'Invalid ... return character(s) in header value'로 실패한다(2026-08-15 발생).
+    """
+    return os.environ.get(name, "").strip()
+
+
+PUBLIC_DATA_API_KEY = _env_key("PUBLIC_DATA_API_KEY")
 
 # 뉴스 수집은 NCP NAVER API HUB(apigw.ntruss.com)를 사용한다.
 # 이 게이트웨이는 NCP 발급 키만 인증하며, 기존 Naver Developers 키(NAVER_CLIENT_ID)로는
 # 통과하지 않는다. 폴백이 조용히 동작하면 전 카테고리 0건이 되므로 폴백 여부를 기록해 둔다.
-NCP_CLIENT_ID = os.environ.get("NCP_CLIENT_ID", "")
-NCP_CLIENT_SECRET = os.environ.get("NCP_CLIENT_SECRET", "")
+NCP_CLIENT_ID = _env_key("NCP_CLIENT_ID")
+NCP_CLIENT_SECRET = _env_key("NCP_CLIENT_SECRET")
 NCP_CREDS_PRESENT = bool(NCP_CLIENT_ID and NCP_CLIENT_SECRET)
-NAVER_CLIENT_ID = NCP_CLIENT_ID or os.environ.get("NAVER_CLIENT_ID", "")
-NAVER_CLIENT_SECRET = NCP_CLIENT_SECRET or os.environ.get("NAVER_CLIENT_SECRET", "")
+NAVER_CLIENT_ID = NCP_CLIENT_ID or _env_key("NAVER_CLIENT_ID")
+NAVER_CLIENT_SECRET = NCP_CLIENT_SECRET or _env_key("NAVER_CLIENT_SECRET")
 
 # ==========================================
 # 1️⃣ PubMed (글로벌 학술 논문) 수집기
