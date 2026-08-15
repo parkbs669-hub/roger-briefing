@@ -1,6 +1,6 @@
 {
-  "collected_at": "2026-08-15T21:59:47.998178+09:00",
-  "collected_date": "2026-08-15",
+  "collected_at": "2026-08-16T00:36:33.060516+09:00",
+  "collected_date": "2026-08-16",
   "ok_sources": [
     "G2B",
     "HIRA",
@@ -182,6 +182,28 @@
     ],
     "MFDS": [
       {
+        "RECEIPT_NO": "20260127725",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2604A",
+        "RESULT_TIME": "20260729",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280425",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260113459",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2603B",
+        "RESULT_TIME": "20260707",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280224",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20260097698",
         "SAMPLE_TYPE": "프리베나20프리필드시린지",
         "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
@@ -204,6 +226,17 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20260109414",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2603A",
+        "RESULT_TIME": "20260702",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280224",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20260092940",
         "SAMPLE_TYPE": "프리베나20프리필드시린지",
         "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
@@ -213,6 +246,83 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20271031",
         "category": "백신"
+      },
+      {
+        "RECEIPT_NO": "20260083187",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "4P42A",
+        "RESULT_TIME": "20260609",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260083244",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "59E4B",
+        "RESULT_TIME": "20260609",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271130",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260083287",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "ZY4XG",
+        "RESULT_TIME": "20260609",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271130",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260081640",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "4BF4A",
+        "RESULT_TIME": "20260526",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260078210",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "G7AC4",
+        "RESULT_TIME": "20260526",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271130",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260073694",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "4BF4A",
+        "RESULT_TIME": "20260520",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260073677",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "D75N2",
+        "RESULT_TIME": "20260518",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280930",
+        "category": "대상포진"
       },
       {
         "RECEIPT_NO": "20260053260",
@@ -226,6 +336,28 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20260064248",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2602A",
+        "RESULT_TIME": "20260430",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280111",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260058912",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2601A",
+        "RESULT_TIME": "20260427",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20280101",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20260026098",
         "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
         "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
@@ -235,6 +367,28 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20280819",
         "category": "백신"
+      },
+      {
+        "RECEIPT_NO": "20260028144",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2504A",
+        "RESULT_TIME": "20260323",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271212",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20260034841",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2505A",
+        "RESULT_TIME": "20260323",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271217",
+        "category": "대상포진"
       },
       {
         "RECEIPT_NO": "20260008960",
@@ -248,6 +402,17 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20260009252",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2503A",
+        "RESULT_TIME": "20260226",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271127",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20260001863",
         "SAMPLE_TYPE": "프리베나20프리필드시린지",
         "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
@@ -259,6 +424,17 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20250236218",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2501A",
+        "RESULT_TIME": "20260212",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271102",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20250220161",
         "SAMPLE_TYPE": "캡박시브프리필드시린지",
         "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
@@ -268,6 +444,28 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20280317",
         "category": "백신"
+      },
+      {
+        "RECEIPT_NO": "20250225797",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "74CL7",
+        "RESULT_TIME": "20260209",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271231",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250225851",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "7BP4J",
+        "RESULT_TIME": "20260209",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271231",
+        "category": "대상포진"
       },
       {
         "RECEIPT_NO": "20250222515",
@@ -325,6 +523,17 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20250226368",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "VFCP2502A",
+        "RESULT_TIME": "20260116",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20271117",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20250187047",
         "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
         "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
@@ -336,6 +545,17 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20250188313",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0425004",
+        "RESULT_TIME": "20251126",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270717",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20250171662",
         "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
         "GOODS_NAME": "폐렴구균백신",
@@ -345,6 +565,28 @@
         "PROVT_UNIT": "0.00000ml",
         "VALID_TERM": "20270814",
         "category": "백신"
+      },
+      {
+        "RECEIPT_NO": "20250165950",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "2545G",
+        "RESULT_TIME": "20251104",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250160664",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0425003",
+        "RESULT_TIME": "20251022",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270708",
+        "category": "대상포진"
       },
       {
         "RECEIPT_NO": "20250150506",
@@ -380,6 +622,50 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20250141083",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "2LY4A",
+        "RESULT_TIME": "20250924",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250142385",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "2LY4A",
+        "RESULT_TIME": "20250924",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250136694",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "243D9",
+        "RESULT_TIME": "20250923",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270930",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250136763",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "243D9",
+        "RESULT_TIME": "20250923",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270930",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20250142198",
         "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
         "GOODS_NAME": "폐렴구균백신",
@@ -400,6 +686,17 @@
         "PROVT_UNIT": "0.00000ml",
         "VALID_TERM": "20270720",
         "category": "백신"
+      },
+      {
+        "RECEIPT_NO": "20250132402",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "L49B3",
+        "RESULT_TIME": "20250908",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270930",
+        "category": "대상포진"
       },
       {
         "RECEIPT_NO": "20250134241",
@@ -490,6 +787,50 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20250095514",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0425002",
+        "RESULT_TIME": "20250707",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270402",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250095515",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0425002",
+        "RESULT_TIME": "20250707",
+        "PROVT_UNIT": "0.00000ml",
+        "VALID_TERM": "20270402",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250091999",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0425001",
+        "RESULT_TIME": "20250630",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20270328",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250050539",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0424012",
+        "RESULT_TIME": "20250610",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20261118",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20250081232",
         "SAMPLE_TYPE": "프리베나20프리필드시린지",
         "GOODS_NAME": "폐렴구균 디프테리아 CRM197단백 접합 백신",
@@ -556,6 +897,39 @@
         "category": "백신"
       },
       {
+        "RECEIPT_NO": "20250026032",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0424009",
+        "RESULT_TIME": "20250326",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20261017",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250027217",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0424010",
+        "RESULT_TIME": "20250326",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20261024",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20250027240",
+        "SAMPLE_TYPE": "스카이조스터주",
+        "GOODS_NAME": "대상포진생바이러스백신",
+        "MANUF_ENTP_NAME": "에스케이바이오사이언스(주)",
+        "MAKE_NO": "Z0424011",
+        "RESULT_TIME": "20250326",
+        "PROVT_UNIT": "",
+        "VALID_TERM": "20261109",
+        "category": "대상포진"
+      },
+      {
         "RECEIPT_NO": "20250019211",
         "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
         "GOODS_NAME": "폐렴구균백신",
@@ -565,6 +939,61 @@
         "PROVT_UNIT": "0.00000ml",
         "VALID_TERM": "20260824",
         "category": "백신"
+      },
+      {
+        "RECEIPT_NO": "20240234037",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "574KZ",
+        "RESULT_TIME": "20250310",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20260731",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20240235958",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "574KZ",
+        "RESULT_TIME": "20250306",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20260731",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20240228411",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "22D5F",
+        "RESULT_TIME": "20250227",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20260731",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20240228423",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "3427Y",
+        "RESULT_TIME": "20250227",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20260731",
+        "category": "대상포진"
+      },
+      {
+        "RECEIPT_NO": "20240228430",
+        "SAMPLE_TYPE": "싱그릭스주",
+        "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
+        "MANUF_ENTP_NAME": "(주)글락소스미스클라인",
+        "MAKE_NO": "PD4PX",
+        "RESULT_TIME": "20250227",
+        "PROVT_UNIT": "0.50000ml",
+        "VALID_TERM": "20260731",
+        "category": "대상포진"
       },
       {
         "RECEIPT_NO": "20240193185",
