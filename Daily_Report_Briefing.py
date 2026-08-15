@@ -92,62 +92,92 @@ def collect_pubmed():
 # ==========================================
 # 2️⃣ 네이버 뉴스 수집기
 # ==========================================
-def collect_naver_news():
-    # NCP NAVER API HUB 뉴스 검색 엔드포인트 URL로 변경
-    url = "https://naverapihub.apigw.ntruss.com/search/v1/news"
-    kw_map = {
-        "백신": ["폐렴구균 백신", "캡박시브", "프리베나"],
-        "영양제": ["임산부 엽산", "임산부 철분제"],
-        "대상포진": ["대상포진 백신", "싱그릭스", "스카이조스터"],
-        "타파미디스": ["타파미디스", "심장 아밀로이드증", "빈다맥스"],
-        "RSV": ["RSV 백신", "호흡기세포융합바이러스", "니르세비맙", "아브리스보", "엔플론시아", "아렉스비", "mResvia"]
-    }
-    all_news, seen = [], set()
+NEWS_KW_MAP = {
+    "백신": ["폐렴구균 백신", "캡박시브", "프리베나"],
+    "영양제": ["임산부 엽산", "임산부 철분제"],
+    "대상포진": ["대상포진 백신", "싱그릭스", "스카이조스터"],
+    "타파미디스": ["타파미디스", "심장 아밀로이드증", "빈다맥스"],
+    "RSV": ["RSV 백신", "호흡기세포융합바이러스", "니르세비맙", "아브리스보", "엔플론시아", "아렉스비", "mResvia"]
+}
 
-    # NCP API HUB 인증 규격에 맞게 헤더 키 변경 (X-NCP-APIGW-API-KEY-ID / X-NCP-APIGW-API-KEY)
-    headers = {
-        "X-NCP-APIGW-API-KEY-ID": NAVER_CLIENT_ID,
-        "X-NCP-APIGW-API-KEY": NAVER_CLIENT_SECRET
-    }
 
-    if not NCP_CREDS_PRESENT:
-        print("  ⚠️ NCP_CLIENT_ID/NCP_CLIENT_SECRET 미설정 — 구 Naver Developers 키로 "
-              "NCP 게이트웨이에 요청합니다. 인증 실패(401/403)로 전 카테고리 0건이 됩니다. "
-              "GitHub Secrets에 NCP 키를 등록하세요.")
+def _news_providers():
+    """뉴스 검색 공급자를 우선순위대로 돌려준다.
 
-    err_count = 0
-    for cat, kws in kw_map.items():
+    1순위 NCP API HUB(2026-08-12 이전 대상), 2순위 구 Naver Developers Open API.
+    NCP는 2026-08-15 기준 키가 주입돼 있는데도 401 'Authentication information
+    are missing'을 반환한다(헤더 규격/엔드포인트 불일치 추정). NCP가 정상화되면
+    1순위가 먼저 성공하므로 코드 수정 없이 자동으로 NCP로 돌아간다.
+    """
+    providers = []
+    if NCP_CREDS_PRESENT:
+        providers.append((
+            "NCP API HUB",
+            "https://naverapihub.apigw.ntruss.com/search/v1/news",
+            {"X-NCP-APIGW-API-KEY-ID": NCP_CLIENT_ID, "X-NCP-APIGW-API-KEY": NCP_CLIENT_SECRET},
+        ))
+    dev_id, dev_secret = _env_key("NAVER_CLIENT_ID"), _env_key("NAVER_CLIENT_SECRET")
+    if dev_id and dev_secret:
+        providers.append((
+            "Naver Developers",
+            "https://openapi.naver.com/v1/search/news.json",
+            {"X-Naver-Client-Id": dev_id, "X-Naver-Client-Secret": dev_secret},
+        ))
+    return providers
+
+
+def _collect_news_from(label, url, headers):
+    """한 공급자로 전체 키워드를 수집한다. (수집결과, 실패 키워드 수)"""
+    news, seen, err = [], set(), 0
+    for cat, kws in NEWS_KW_MAP.items():
         for kw in kws:
             try:
-                resp = requests.get(url, headers=headers, params={"query": kw, "display": 5, "sort": "date"}, timeout=15)
+                resp = requests.get(url, headers=headers,
+                                    params={"query": kw, "display": 5, "sort": "date"}, timeout=15)
                 if resp.status_code != 200:
-                    err_count += 1
-                    print(f"  네이버 뉴스 '{kw}' HTTP {resp.status_code} — {resp.text[:200]}")
+                    err += 1
+                    print(f"  [{label}] '{kw}' HTTP {resp.status_code} — {resp.text[:160]}")
                     continue
                 try:
                     payload = resp.json()
                 except ValueError:
-                    err_count += 1
-                    print(f"  네이버 뉴스 '{kw}' JSON 파싱 실패 — raw: {resp.text[:200]}")
+                    err += 1
+                    print(f"  [{label}] '{kw}' JSON 파싱 실패 — raw: {resp.text[:160]}")
                     continue
                 items = payload.get("items", [])
                 if not items:
-                    print(f"  네이버 뉴스 '{kw}' 0건 — 응답: {str(payload)[:200]}")
+                    print(f"  [{label}] '{kw}' 0건 — 응답: {str(payload)[:160]}")
                 for i in items:
-                    title = i.get("title","").replace("<b>","").replace("</b>","")
+                    title = i.get("title", "").replace("<b>", "").replace("</b>", "")
                     if title not in seen:
                         seen.add(title)
-                        all_news.append({
-                            "title": title, "link": i.get("link",""),
-                            "pubDate": i.get("pubDate","")[:16], "category": cat
+                        news.append({
+                            "title": title, "link": i.get("link", ""),
+                            "pubDate": i.get("pubDate", "")[:16], "category": cat
                         })
             except Exception as e:
-                err_count += 1
-                print(f"  네이버 뉴스 '{kw}' 오류: {e}")
-                continue
+                err += 1
+                print(f"  [{label}] '{kw}' 오류: {e}")
+    return news, err
 
-    print(f"  네이버 뉴스 총 {len(all_news)}건 수집 (실패 키워드 {err_count}개)")
-    return all_news
+
+def collect_naver_news():
+    providers = _news_providers()
+    if not providers:
+        print("  ⚠️ 네이버 뉴스 자격증명이 하나도 없습니다 (NCP_*/NAVER_CLIENT_* 모두 미설정).")
+        return []
+
+    for idx, (label, url, headers) in enumerate(providers):
+        news, err = _collect_news_from(label, url, headers)
+        if news:
+            note = "" if idx == 0 else f" ※ 1순위 실패로 '{label}'(으)로 대체 수집"
+            print(f"  네이버 뉴스 총 {len(news)}건 수집 [{label}] (실패 키워드 {err}개){note}")
+            return news
+        print(f"  ⚠️ [{label}] 0건 — 다음 공급자로 넘어갑니다." if idx + 1 < len(providers)
+              else f"  ⚠️ [{label}] 0건 — 사용할 수 있는 공급자가 더 없습니다.")
+
+    print("  네이버 뉴스 총 0건 수집 (모든 공급자 실패)")
+    return []
 
 # ==========================================
 # 3️⃣ 나라장터 (G2B) 입찰공고 수집기
