@@ -1,5 +1,5 @@
 {
-  "collected_at": "2026-08-16T00:36:33.060516+09:00",
+  "collected_at": "2026-08-16T10:58:47.717407+09:00",
   "collected_date": "2026-08-16",
   "ok_sources": [
     "G2B",
@@ -204,28 +204,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20260097698",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NW8152",
-        "RESULT_TIME": "20260702",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20271130",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20260100860",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NW8152",
-        "RESULT_TIME": "20260702",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20271130",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20260109414",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -235,17 +213,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20280224",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20260092940",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NX6728",
-        "RESULT_TIME": "20260623",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20271031",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20260083187",
@@ -325,17 +292,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20260053260",
-        "SAMPLE_TYPE": "캡박시브프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "A003690",
-        "RESULT_TIME": "20260513",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20280317",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20260064248",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -356,17 +312,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20280101",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20260026098",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z017797",
-        "RESULT_TIME": "20260420",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20280819",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20260028144",
@@ -391,17 +336,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20260008960",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z017974",
-        "RESULT_TIME": "20260309",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20271213",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20260009252",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -413,17 +347,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20260001863",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NM7671",
-        "RESULT_TIME": "20260220",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270531",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20250236218",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -433,17 +356,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20271102",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20250220161",
-        "SAMPLE_TYPE": "캡박시브프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z016726",
-        "RESULT_TIME": "20260209",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20280317",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20250225797",
@@ -468,61 +380,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20250222515",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NE1706",
-        "RESULT_TIME": "20260206",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270831",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250222586",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NJ0271",
-        "RESULT_TIME": "20260206",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270831",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250227799",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "NL7064",
-        "RESULT_TIME": "20260206",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270531",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250215501",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z014625",
-        "RESULT_TIME": "20260205",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20270820",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250211379",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z016362",
-        "RESULT_TIME": "20260116",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20271213",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20250226368",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -534,17 +391,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20250187047",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z011047",
-        "RESULT_TIME": "20260115",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20250188313",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -554,17 +400,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20270717",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20250171662",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z013172",
-        "RESULT_TIME": "20251105",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20270814",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20250165950",
@@ -587,39 +422,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20270708",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20250150506",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z011707",
-        "RESULT_TIME": "20251015",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250149527",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MG7417",
-        "RESULT_TIME": "20251013",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270228",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250150502",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z011706",
-        "RESULT_TIME": "20251002",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270816",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20250141083",
@@ -666,28 +468,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20250142198",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z010023",
-        "RESULT_TIME": "20250919",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20270724",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250133496",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z009864",
-        "RESULT_TIME": "20250910",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20270720",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20250132402",
         "SAMPLE_TYPE": "싱그릭스주",
         "GOODS_NAME": "대상포진바이러스백신(유전자재조합)",
@@ -697,94 +477,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20270930",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20250134241",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MW4150",
-        "RESULT_TIME": "20250902",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270331",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250134280",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MW5727",
-        "RESULT_TIME": "20250902",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270331",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250121625",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z008408",
-        "RESULT_TIME": "20250813",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270717",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250087671",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MC2416",
-        "RESULT_TIME": "20250801",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20261130",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250087737",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균ㆍ디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MC2956",
-        "RESULT_TIME": "20250801",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20261130",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250083973",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균 디프테리아 CMR197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MC2415",
-        "RESULT_TIME": "20250731",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20260930",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250084004",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균 디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MC2940",
-        "RESULT_TIME": "20250731",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20261130",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250087748",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z007076",
-        "RESULT_TIME": "20250714",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20250095514",
@@ -831,72 +523,6 @@
         "category": "대상포진"
       },
       {
-        "RECEIPT_NO": "20250081232",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균 디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MC2424",
-        "RESULT_TIME": "20250530",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20260731",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250081304",
-        "SAMPLE_TYPE": "프리베나20프리필드시린지",
-        "GOODS_NAME": "폐렴구균 디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국화이자제약(주)",
-        "MAKE_NO": "MC2958",
-        "RESULT_TIME": "20250530",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20260630",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250068640",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z004511",
-        "RESULT_TIME": "20250523",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20270214",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250037322",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Z004051",
-        "RESULT_TIME": "20250407",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20270219",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250024239",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Y018895",
-        "RESULT_TIME": "20250403",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20250016422",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Y018895",
-        "RESULT_TIME": "20250331",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
-      },
-      {
         "RECEIPT_NO": "20250026032",
         "SAMPLE_TYPE": "스카이조스터주",
         "GOODS_NAME": "대상포진생바이러스백신",
@@ -928,17 +554,6 @@
         "PROVT_UNIT": "",
         "VALID_TERM": "20261109",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20250019211",
-        "SAMPLE_TYPE": "프로디악스-23 프리필드시린지",
-        "GOODS_NAME": "폐렴구균백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Y020357",
-        "RESULT_TIME": "20250313",
-        "PROVT_UNIT": "0.00000ml",
-        "VALID_TERM": "20260824",
-        "category": "백신"
       },
       {
         "RECEIPT_NO": "20240234037",
@@ -994,28 +609,6 @@
         "PROVT_UNIT": "0.50000ml",
         "VALID_TERM": "20260731",
         "category": "대상포진"
-      },
-      {
-        "RECEIPT_NO": "20240193185",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Y014859",
-        "RESULT_TIME": "20250117",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
-      },
-      {
-        "RECEIPT_NO": "20240202983",
-        "SAMPLE_TYPE": "박스뉴반스프리필드시린지",
-        "GOODS_NAME": "폐렴구균·디프테리아 CRM197단백 접합 백신",
-        "MANUF_ENTP_NAME": "한국엠에스디(주)",
-        "MAKE_NO": "Y014859",
-        "RESULT_TIME": "20250117",
-        "PROVT_UNIT": "0.50000ml",
-        "VALID_TERM": "20270619",
-        "category": "백신"
       }
     ],
     "HIRA": [
