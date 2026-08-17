@@ -29,6 +29,10 @@ def main():
     print(f"🧪 주간 업무 보고 테스트 시작: {TEST_RECIPIENT} 한 곳에만 발송합니다.")
     generated_report = report.get_weekly_report()
 
+    if not generated_report or generated_report.startswith("(") or len(generated_report.strip()) < 200:
+        print(f"⚠️ 보고서 생성에 실패하였거나 내용이 유효하지 않습니다:\n{generated_report}\n발송을 건너뜁니다.")
+        sys.exit(1)
+
     empty_count = generated_report.count("확인된 정보 없음") + generated_report.count("해당 없음")
     if empty_count >= 10 and "※ AI 분석 정보" not in generated_report:
         print(f"⚠️ 보고서 내용이 대부분 비어있습니다 (빈 항목 {empty_count}개). 발송을 건너뜁니다.")
