@@ -16,7 +16,7 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
 def _deepseek(prompt: str) -> str:
     body = json.dumps({
-        "model": "deepseek-v4-pro",
+        "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": (
                 "당신은 제약회사 폐렴구균 백신 영업 전문가 어시스턴트입니다. 보고서를 작성할 때 다음 규칙을 반드시 준수하세요:\n"
