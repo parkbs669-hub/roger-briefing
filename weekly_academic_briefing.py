@@ -14,36 +14,63 @@ P = os.environ["NAVER_PASSWORD"]
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
 
-def _deepseek(prompt: str) -> str:
-    body = json.dumps({
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": (
-                "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다. 브리핑을 작성할 때 다음 규칙을 반드시 준수하세요:\n"
-                "1. 제공된 검색 결과나 뉴스에 명확히 나온 정보를 우선 사용하세요.\n"
-                "2. 날짜, 접종률, 통계 수치 등은 출처(URL 또는 기관명)가 확인된 경우에만 기재하세요.\n"
-                "3. 확인된 출처가 없는 항목은 '이번 주 확인된 정보 없음'으로 표시하세요.\n"
-                "4. 근거 없는 수치나 날짜를 절대 창작하거나 추측하지 마세요.\n"
-                "5. 양식의 빈칸을 채우기 위해 내용을 꾸며내지 마세요.\n"
-                "6. 단, 제공된 검색 결과가 모두 비어있거나 오류인 경우에도, "
-                "당신이 알고 있는 최근 공개된 학술 정보를 활용하여 브리핑을 작성하되, "
-                "해당 내용 앞에 '※ AI 지식 기반 참고 정보 (검색 미확인):' 표시를 붙이세요. "
-                "모든 항목이 '없음'인 브리핑은 작성하지 마세요."
-            )},
-            {"role": "user", "content": prompt},
-        ],
-        "max_tokens": 6000,
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        "https://api.deepseek.com/chat/completions", data=body,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+def _generate_briefing(prompt: str) -> str:
+    system_instruction = (
+        "당신은 제약회사 폐렴구균 백신 학술 전문가 어시스턴트입니다. 브리핑을 작성할 때 다음 규칙을 반드시 준수하세요:\n"
+        "1. 제공된 검색 결과나 뉴스에 명확히 나온 정보를 우선 사용하세요.\n"
+        "2. 날짜, 접종률, 통계 수치 등은 출처(URL 또는 기관명)가 확인된 경우에만 기재하세요.\n"
+        "3. 확인된 출처가 없는 항목은 '이번 주 확인된 정보 없음'으로 표시하세요.\n"
+        "4. 근거 없는 수치나 날짜를 절대 창작하거나 추측하지 마세요.\n"
+        "5. 양식의 빈칸을 채우기 위해 내용을 꾸며내지 마세요.\n"
+        "6. 단, 제공된 검색 결과가 모두 비어있거나 오류인 경우에도, "
+        "당신이 알고 있는 최근 공개된 학술 정보를 활용하여 브리핑을 작성하되, "
+        "해당 내용 앞에 '※ AI 지식 기반 참고 정보 (검색 미확인):' 표시를 붙이세요. "
+        "모든 항목이 '없음'인 브리핑은 작성하지 마세요."
     )
-    try:
-        with urllib.request.urlopen(req, timeout=120) as r:
-            return json.loads(r.read())["choices"][0]["message"]["content"]
-    except Exception as e:
-        print(f"  ⚠️  DeepSeek API 오류: {e}")
-        return f"(DeepSeek API 오류: {e})"
+
+    # 1. DeepSeek 시도
+    if DEEPSEEK_API_KEY:
+        try:
+            body = json.dumps({
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": prompt},
+                ],
+                "max_tokens": 6000,
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                "https://api.deepseek.com/chat/completions", data=body,
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+            )
+            with urllib.request.urlopen(req, timeout=120) as r:
+                content = json.loads(r.read())["choices"][0]["message"]["content"]
+                if content and len(content.strip()) > 200:
+                    return content
+        except Exception as e:
+            print(f"  ⚠️  DeepSeek API 오류 ({e}), Gemini로 대체 시도합니다...")
+
+    # 2. Gemini 폴백 시도
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if gemini_key:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+            body = json.dumps({
+                "system_instruction": {"parts": [{"text": system_instruction}]},
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"maxOutputTokens": 6000}
+            }).encode("utf-8")
+            req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                res_data = json.loads(resp.read())
+                content = res_data["candidates"][0]["content"]["parts"][0]["text"]
+                if content and len(content.strip()) > 200:
+                    print("  ✨ Gemini 대체 생성 성공")
+                    return content
+        except Exception as e:
+            print(f"  ⚠️  Gemini 폴백 API 오류: {e}")
+
+    return "(AI 학술 브리핑 생성 실패: DeepSeek 및 Gemini 모두 실패)"
 
 RECIPIENTS = [
     "parkbs669@naver.com",
@@ -259,7 +286,7 @@ def get_weekly_briefing():
         f"[PubMed 최신 논문 (최근 7일) — 실제 등재된 논문만 참고]\n{pubmed_text}\n\n"
         f"[구글 실시간 검색 참고 정보 (최근 7일) — ⚠️ 검색 결과는 참고용이며, 공식 출처가 확인된 내용만 보고서에 반영할 것. 날짜·수치는 원문 URL 없으면 기재 금지]\n{gemini_search_text}"
     )
-    return _deepseek(full_prompt)
+    return _generate_briefing(full_prompt)
 
 def send_email(body):
     KST = datetime.timezone(datetime.timedelta(hours=9))
@@ -268,7 +295,7 @@ def send_email(body):
     msg["Subject"] = f"[폐렴구균 주간 학술 브리핑] {today}"
     msg["From"] = N
     msg["To"] = ", ".join(RECIPIENTS)
-    text = f"안녕하세요,\n\n{today} 폐렴구균 백신 주간 학술 브리핑입니다.\n\n{body}\n\n---\nDeepSeek AI 자동 발송"
+    text = f"안녕하세요,\n\n{today} 폐렴구균 백신 주간 학술 브리핑입니다.\n\n{body}\n\n---\nAI 자동 발송"
     msg.attach(MIMEText(text, "plain", "utf-8"))
     with smtplib.SMTP("smtp.naver.com", 587) as s:
         s.starttls()
@@ -280,7 +307,11 @@ if __name__ == "__main__":
     print("주간 학술 브리핑 수집 중...")
     briefing = get_weekly_briefing()
 
-    # ── 빈 브리핑 발송 방지 가드 ──
+    # ── 유효성 및 빈 브리핑 발송 방지 가드 ──
+    if not briefing or briefing.startswith("(") or len(briefing.strip()) < 200:
+        print(f"⚠️ 브리핑 생성에 실패하였거나 내용이 유효하지 않습니다:\n{briefing}\n발송을 건너뜁니다.")
+        sys.exit(1)
+
     empty_count = briefing.count("확인된 정보 없음") + briefing.count("해당 없음")
     if empty_count >= 8 and "※ AI 지식 기반" not in briefing:
         print(f"⚠️ 브리핑 내용이 대부분 비어있습니다 (빈 항목 {empty_count}개). 발송을 건너뜁니다.")
