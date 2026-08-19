@@ -1,8 +1,7 @@
 {
-  "collected_at": "2026-08-19T06:38:34.074548+09:00",
-  "collected_date": "2026-08-19",
+  "collected_at": "2026-08-20T06:42:21.965739+09:00",
+  "collected_date": "2026-08-20",
   "ok_sources": [
-    "G2B",
     "HIRA",
     "KDCA",
     "MFDS"
@@ -120,7 +119,7 @@
         "patntType": "계",
         "icdGroupNm": "제2급",
         "icdNm": "수두",
-        "resultVal": "21,688",
+        "resultVal": "21,816",
         "category": "대상포진"
       },
       {
@@ -128,7 +127,7 @@
         "patntType": "계",
         "icdGroupNm": "제2급",
         "icdNm": "백일해",
-        "resultVal": "253",
+        "resultVal": "260",
         "category": "임산부감염병"
       },
       {
@@ -168,7 +167,7 @@
         "patntType": "계",
         "icdGroupNm": "제3급",
         "icdNm": "매독",
-        "resultVal": "1,300",
+        "resultVal": "1,305",
         "category": "임산부감염병"
       },
       {
