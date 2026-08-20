@@ -1,6 +1,6 @@
 {
-  "collected_at": "2026-08-20T16:07:09.296804+09:00",
-  "collected_date": "2026-08-20",
+  "collected_at": "2026-08-21T06:44:39.941508+09:00",
+  "collected_date": "2026-08-21",
   "ok_sources": [
     "HIRA",
     "KDCA",
@@ -119,7 +119,7 @@
         "patntType": "계",
         "icdGroupNm": "제2급",
         "icdNm": "수두",
-        "resultVal": "21,816",
+        "resultVal": "21,867",
         "category": "대상포진"
       },
       {
@@ -151,7 +151,7 @@
         "patntType": "계",
         "icdGroupNm": "제2급",
         "icdNm": "폐렴구균 감염증",
-        "resultVal": "281",
+        "resultVal": "282",
         "category": "백신"
       },
       {
@@ -167,7 +167,7 @@
         "patntType": "계",
         "icdGroupNm": "제3급",
         "icdNm": "매독",
-        "resultVal": "1,305",
+        "resultVal": "1,308",
         "category": "임산부감염병"
       },
       {
